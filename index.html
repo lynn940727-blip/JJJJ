@@ -3852,8 +3852,18 @@ const SharedStore = (function(){
     try{
       const d = init(); if(!d) return;
       opts = opts || {};
-      d.ref(LOG_PATH).push({u: (window.Auth&&Auth.uid())||"", n: (window.Auth&&Auth.nick())||"", ts: firebase.database.ServerValue.TIMESTAMP, k: "evt", msg: String(msg),
-                            g: opts.g || "", dead: !!opts.dead}).catch(err => console.warn("log failed", err));
+      const _base = {u: (window.Auth&&Auth.uid())||"", n: (window.Auth&&Auth.nick())||"", ts: firebase.database.ServerValue.TIMESTAMP, k: "evt", msg: String(msg),
+                            g: opts.g || "", dead: !!opts.dead};
+      const _lref = d.ref(LOG_PATH);
+      if(opts.ud){
+        // ud = 這次行動改動的欄位（行動前／後），供「撤銷」使用；若資料庫規則不收這個欄位，退回成沒有 ud 的普通紀錄
+        _lref.push(Object.assign({ud: String(opts.ud)}, _base)).catch(err => {
+          console.warn("log with undo data failed, retry without it", err);
+          _lref.push(_base).catch(e2 => console.warn("log failed", e2));
+        });
+      } else {
+        _lref.push(_base).catch(err => console.warn("log failed", err));
+      }
       if(opts.to) notify(opts.to, opts.kind, msg);   // 被行動的角色有綁定者 → 通知他
     }catch(err){ console.warn("log failed", err); }
   }
@@ -3886,7 +3896,7 @@ const SharedStore = (function(){
       const t = e.ts ? new Date(e.ts).toLocaleString("zh-TW", {hour12:false, year:"numeric", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit"}) : "—";
       return {k: e._k, t: t, g: e.g || "", msg: e.msg || "", dead: !!e.dead};
     };
-    let editKey = null, editText = "", delArmed = false;
+    let editKey = null, editText = "", delArmed = false, undoBusy = false;
     const draw = () => {
       const q = qEl.value.trim().toLowerCase(), g = gEl.value;
       out = rows.filter(e => e.k === "evt").map(fmt).filter(r => (!g || r.g === g) && (!q || r.msg.toLowerCase().includes(q)));
@@ -3912,10 +3922,10 @@ const SharedStore = (function(){
         const editing = r.k === editKey;
         return '<div class="log-row' + cls + '" data-k="' + esc(r.k) + '">' +
           '<div class="log-main"><div class="log-what">' + colorize(esc(r.msg), r.dead) + '</div><div class="log-time">' + esc(r.t) + '</div></div>' +
-          '<button class="log-edit-btn" data-act="' + (editing ? 'cancel' : 'edit') + '" title="' + (editing ? '收起' : '編輯') + '">' + (editing ? '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg>') + '</button>' +
-          (editing ? '<div class="log-edit-panel"><textarea class="log-edit-text" rows="3">' + esc(editText) + '</textarea>' +
-            '<div class="log-confirm"><button class="log-save" data-act="save">儲存</button>' +
-            '<button class="log-del" data-act="del">' + (delArmed ? '確認刪除' : '刪除') + '</button>' +
+          '<button class="log-edit-btn" data-act="' + (editing ? 'cancel' : 'edit') + '" title="' + (editing ? '收起' : '撤銷／刪除') + '">' + (editing ? '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg>') + '</button>' +
+          (editing ? '<div class="log-edit-panel"><div class="log-undo-hint" style="font-size:12px;line-height:1.7;color:var(--bone-dim)">撤銷：還原這次行動改動的數值與狀態，並刪除此紀錄。<br>刪除：只刪除此紀錄，不會改變任何數值。</div>' +
+            '<div class="log-confirm"><button class="log-save" data-act="undo"' + (undoBusy ? ' disabled' : '') + '>' + (undoBusy ? '撤銷中…' : '撤銷') + '</button>' +
+            '<button class="log-del" data-act="del"' + (undoBusy ? ' disabled' : '') + '>刪除</button>' +
             '<button class="log-cancel" data-act="cancel">取消</button></div></div>' : '') + '</div>';
       }).join("") : '<div class="log-empty">目前沒有符合的紀錄。</div>';
       meta.textContent = "紀錄數量 " + String(out.length).padStart(3, "0");
@@ -3962,15 +3972,32 @@ const SharedStore = (function(){
       }
       if(act === "cancel"){ editKey = null; delArmed = false; draw(); return; }
       const d = init();
-      if(act === "save"){
-        const txt = editText.trim();
-        if(!txt){ alert("內容不能是空的。"); return; }
-        if(d) d.ref(LOG_PATH + "/" + k).update({msg: txt}).catch(err => alert("儲存失敗（" + ((err && err.code) || "未知原因") + "），請檢查 Firebase 規則是否允許修改紀錄。"));
-        const cur = rows.find(x => x._k === k); if(cur) cur.msg = txt;
-        editKey = null; delArmed = false; draw(); return;
+      if(act === "undo"){
+        if(undoBusy) return;
+        const cur = rows.find(x => x._k === k);
+        if(!cur) return;
+        if(!window.Auth || !Auth.uid()){ alert("請先登入再撤銷。"); return; }
+        if(!Auth.isAdmin && cur.u !== Auth.uid()){ alert("只有管理員或這筆行動的執行者可以撤銷。"); return; }
+        if(!cur.ud){ alert("這是舊版留下的紀錄，沒有保存行動前的數值，無法自動撤銷。\n\n請到角色卡用「編輯」手動改回數值；紀錄本身可以按「刪除」移除。"); return; }
+        if(typeof window.__undoLogAction !== "function"){ alert("頁面還沒載入完成，請稍後再試。"); return; }
+        if(!confirm("確定要撤銷這筆行動嗎？\n\n這次行動改動的數值與狀態會回到行動之前，這筆紀錄也會一併刪除。")) return;
+        undoBusy = true; draw();
+        Promise.resolve(window.__undoLogAction(cur.ud)).then(r => {
+          if(r && r.ok){
+            const dd = init();
+            const done = () => { undoBusy = false; editKey = null; delArmed = false; draw(); };
+            if(dd) dd.ref(LOG_PATH + "/" + k).remove().then(done, err => { done(); alert("數值已還原，但紀錄刪除失敗（" + ((err && err.code) || "未知原因") + "），請再按一次「刪除」。"); });
+            else done();
+          } else {
+            undoBusy = false; draw();
+            alert("撤銷失敗：" + ((r && r.msg) || "未知原因") + "\n數值沒有被改動。");
+          }
+        }).catch(err => { undoBusy = false; draw(); alert("撤銷失敗（" + ((err && (err.code || err.message)) || "未知原因") + "）。數值沒有被改動。"); });
+        return;
       }
       if(act === "del"){
-        if(!delArmed){ delArmed = true; draw(); return; }
+        if(undoBusy) return;
+        if(!confirm("確定要刪除這筆紀錄嗎？\n\n只會刪除紀錄本身，不會改變任何數值或狀態。")) return;
         if(d) d.ref(LOG_PATH + "/" + k).remove().catch(err => alert("刪除失敗（" + ((err && err.code) || "未知原因") + "），請檢查 Firebase 規則是否允許刪除紀錄。"));
         editKey = null; delArmed = false;
       }
@@ -6292,6 +6319,16 @@ function reportBlock(t, deltaTxt, tailTxt, killed){
 }
 
 function auditWho(){ return ""; }
+// 撤銷用：只記「這位角色這次真的有變的欄位」的行動前／後值，存成 JSON 字串放在行動紀錄的 ud 欄位
+function buildUndo(before, after, id){
+  const b = before[id], a = after[id];
+  if(!b || !a) return "";
+  const o = {};
+  WRITE_FIELDS.forEach(f => { if(JSON.stringify(b[f]) !== JSON.stringify(a[f])) o[f] = [b[f], a[f]]; });
+  if(!Object.keys(o).length) return "";
+  const r = {}; r[id] = o;
+  return JSON.stringify(r);
+}
 /* ---------- 寫入確認：等資料庫確認收到才算成功，失敗就還原並且不記行動紀錄 ---------- */
 const WRITE_FIELDS = ["hp","san","statuses","bandages","syringes","deathCount","madCount"];
 let writeBusy = false;
@@ -6338,7 +6375,7 @@ function showWriteFail(eyebrow, r, retryLabel){
 async function applyAction(){
   if(writeBusy) return;
   const _evts = [];
-  const _log = (m, o) => _evts.push([m, o]);   // 先收著，確認寫入成功才真的記進行動紀錄
+  const _log = (m, o, tid) => _evts.push([m, o, tid]);   // 先收著，確認寫入成功才真的記進行動紀錄
   const _list = ((wizard.mode === "medical" || wizard.mode === "support")
     ? [subjects.find(s => s.id === wizard.targetId)]
     : wizard.targetIds.map(id => subjects.find(s => s.id === id))).filter(Boolean);
@@ -6359,10 +6396,10 @@ async function applyAction(){
     }
     if(wizard.mode === "medical"){
       _log("「" + actorLabel() + "」治療「" + subjLabel(target) + "」\n" + _statTxt + "+1，解除狀態：" +
-        (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "heal"});
+        (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "heal"}, target.id);
     } else {
       _log("「" + actorLabel() + "」資助「" + subjLabel(target) + "」\n" + _statTxt + "+1（" + wizard.natureLabel + "），解除狀態：" +
-        (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "support"});
+        (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "support"}, target.id);
     }
   } else {
     const lastAddedMap = {};
@@ -6393,7 +6430,7 @@ async function applyAction(){
         else if(wizard.mode === "accident"){ msg = A + "造成醫療事故，" + S + "\n" + statTxt + "，附加狀態：" + addedTxt + "。"; }
         else { msg = A + "攻擊" + S + "（" + statTxt + "），附加狀態：" + addedTxt + "。"; }
         _log(msg, {g: wizard.faction, dead: dead, to: t.owner,
-          kind: diedNow ? "kill" : madNow ? "mad" : wizard.mode === "torture" ? "torture" : wizard.mode === "accident" ? "accident" : "hit"});
+          kind: diedNow ? "kill" : madNow ? "mad" : wizard.mode === "torture" ? "torture" : wizard.mode === "accident" ? "accident" : "hit"}, t.id);
       }
       // 只有「這一下」才讓 HP／SAN 歸零才算擊殺／瘋狂；對已經死亡（或瘋狂）的目標只是普通攻擊／折磨
       const _wasAlive2 = _hp0 > 0 && _san0 > 0;
@@ -6418,7 +6455,7 @@ async function applyAction(){
   let _r;
   try{ _r = await awaitWrite(_list, _before, _after); } finally { writeBusy = false; }
   if(_r.ok){
-    _evts.forEach(e => SharedStore.logEvent(e[0], e[1]));
+    _evts.forEach(e => SharedStore.logEvent(e[0], Object.assign({}, e[1], {ud: buildUndo(_before, _after, e[2])})));
     if(modalOverlay.classList.contains("open")) goStep("actionResult");
     return;
   }
@@ -6440,7 +6477,7 @@ async function applyRespawn(){
   let r;
   try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
   if(r.ok){
-    SharedStore.logEvent("「" + subjLabel(self) + "」重生。", {g: "實驗體"});
+    SharedStore.logEvent("「" + subjLabel(self) + "」重生。", {g: "實驗體", ud: buildUndo(before, after, self.id)});
     if(modalOverlay.classList.contains("open")) goStep("respawnResult");
     return;
   }
@@ -6480,12 +6517,52 @@ async function applyItem(){
   let r;
   try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
   if(r.ok){
-    SharedStore.logEvent("「" + subjLabel(self) + "」使用" + itemName + (isBandage ? "（HP+1）。" : "（SAN+1）。"), {g: "實驗體"});
+    SharedStore.logEvent("「" + subjLabel(self) + "」使用" + itemName + (isBandage ? "（HP+1）。" : "（SAN+1）。"), {g: "實驗體", ud: buildUndo(before, after, self.id)});
     if(modalOverlay.classList.contains("open")) goStep("itemResult");
     return;
   }
   showWriteFail("道具使用", r, "重新使用");
 }
+
+/* ---------- 撤銷行動（行動紀錄的「撤銷」按鈕呼叫） ---------- */
+// 用「差值」還原：HP／SAN／道具／次數 減回這次行動的變化量；狀態則移除這次附加的、補回這次解除的。
+// 這樣就算行動之後別人又改過其他欄位，也不會被一起蓋回舊值。
+async function undoLogAction(udStr){
+  if(writeBusy) return {ok: false, msg: "系統正在處理其他寫入，請稍後再試。"};
+  let ud;
+  try{ ud = JSON.parse(udStr); }catch(e){ return {ok: false, msg: "紀錄裡的還原資料壞掉了。"}; }
+  const ids = Object.keys(ud || {});
+  const list = ids.map(id => subjects.find(s => String(s.id) === String(id))).filter(Boolean);
+  if(!list.length) return {ok: false, msg: "找不到這位角色（可能已被刪除）。"};
+  const before = snapFields(list);
+  list.forEach(s => {
+    const ch = ud[s.id] || ud[String(s.id)];
+    Object.keys(ch || {}).forEach(f => {
+      const b = ch[f][0], a = ch[f][1];
+      if(f === "statuses"){
+        const bArr = Array.isArray(b) ? b : [], aArr = Array.isArray(a) ? a : [];
+        const cur = (s.statuses || []).slice();
+        const added = aArr.slice(); bArr.forEach(x => { const i = added.indexOf(x); if(i > -1) added.splice(i, 1); });
+        const removed = bArr.slice(); aArr.forEach(x => { const i = removed.indexOf(x); if(i > -1) removed.splice(i, 1); });
+        added.forEach(x => { const i = cur.indexOf(x); if(i > -1) cur.splice(i, 1); });
+        removed.forEach(x => { if(cur.length < 5) cur.push(x); });
+        s.statuses = cur;
+      } else if(typeof b === "number" && typeof a === "number"){
+        const max = (f === "hp" || f === "san") ? 3 : (f === "bandages" || f === "syringes") ? 9 : 99;
+        s[f] = Math.max(0, Math.min(max, (Number(s[f]) || 0) - (a - b)));
+      }
+    });
+  });
+  const after = snapFields(list);
+  SharedStore.setCtx("撤銷行動", true);
+  writeBusy = true;
+  renderGrid();   // 內部會 saveState() → SharedStore.save()
+  let r;
+  try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
+  if(r.ok) return {ok: true};
+  return {ok: false, msg: r.msg + "（錯誤代碼 " + r.code + "）"};
+}
+window.__undoLogAction = undoLogAction;
 
 /* ---------- EDIT SUBJECT (stats/name only) ---------- */
 
