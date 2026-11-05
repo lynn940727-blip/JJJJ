@@ -2041,8 +2041,8 @@
     border:1px solid var(--line);
   }
 
-  .medic-page .seg.hp-fill{background:var(--c-hp); border-color:var(--c-hp-dark);}
-  .medic-page .seg.san-fill{background:var(--c-san); border-color:var(--c-san-dark);}
+  .medic-page .seg.hp-fill{background:#8c8c8c; border-color:#4a4a4a;}
+  .medic-page .seg.san-fill{background:#8c8c8c; border-color:#4a4a4a;}
   .medic-page .seg.empty{background:transparent;}
 
   .medic-page .note{
@@ -5756,6 +5756,25 @@ const modeLabels = {
 
 const DAMAGE_MODES = ["attack", "torture", "accident"];
 
+/* ---------- 攻擊／事故的目標：實驗體或醫療隊（兩邊編號會重複，所以另外區分）---------- */
+const MEDIC_F = "醫療清潔部隊";
+function isMedicObj(o){ try{ return !!(window.medicApp && window.medicApp.getSubjects().indexOf(o) > -1); }catch(e){ return false; } }
+function tKey(o){ return (isMedicObj(o) ? "M" : "") + o.id; }   // 行動紀錄／撤銷用的鍵：醫療隊加 M 前綴
+function tList(){ return wizard.targetFaction === MEDIC_F && window.medicApp ? window.medicApp.getSubjects() : subjects; }
+function findT(id){ return tList().find(x => x.id === id); }
+function tWord(){ return wizard.targetFaction === MEDIC_F ? "醫療隊員" : "實驗體"; }
+function resolveKey(k){
+  k = String(k);
+  if(k.charAt(0) === "M" && window.medicApp) return window.medicApp.getSubjects().find(x => String(x.id) === k.slice(1));
+  return subjects.find(x => String(x.id) === k);
+}
+// 依目標所屬名冊重畫並存檔（存檔結果由 awaitWrite 接著確認）
+function refreshFor(list){
+  const hasM = list.some(isMedicObj), hasE = list.some(o => !isMedicObj(o));
+  if(hasE) renderGrid();
+  if(hasM && window.medicApp && window.medicApp.refresh) window.medicApp.refresh();
+}
+
 let wizard = {};
 const modalOverlay = document.getElementById("modalOverlay");
 const modalBody = document.getElementById("modalBody");
@@ -5769,6 +5788,7 @@ function resetWizard(startStep){
     mode:null,
     targetId:null,
     targetIds:[],
+    targetFaction:"實驗體",
     statKey:null,
     natureLabel:null,
     slotsAvailable:0,
@@ -5818,6 +5838,7 @@ function viewResultChar(){
   let f = "實驗體", id = null;
   if(wizard.step === "actionResult"){
     id = (wizard.targetIds && wizard.targetIds.length) ? wizard.targetIds[0] : wizard.targetId;
+    if(wizard.targetFaction === MEDIC_F && DAMAGE_MODES.includes(wizard.mode)) f = MEDIC_F;
   } else {
     id = wizard.selfId; f = wizard.faction || "實驗體";
   }
@@ -5921,6 +5942,7 @@ function goStep(next){
 function goBack(){
   const prev = wizard.history.pop();
   if(prev){
+    if(prev === "targetSelect" && wizard.step === "targetSelect") wizard.targetFaction = "實驗體";   // 從醫療隊名單退回實驗體名單
     wizard.step = prev;
     renderModalBody();
   }
@@ -5942,7 +5964,7 @@ function rosterOf(faction){
   }catch(e){}
   return subjects;
 }
-function subjLabel(t){ return "實驗體" + t.id + "——" + t.name; }
+function subjLabel(t){ return isMedicObj(t) ? "醫療清潔部隊——" + t.name : "實驗體" + t.id + "——" + t.name; }
 function actorLabel(){
   const me = rosterOf(wizard.faction).find(x => x.id === wizard.selfId);
   return me ? (wizard.faction || "實驗體") + "——" + me.name : (wizard.faction || "實驗體");
@@ -6056,18 +6078,23 @@ function renderModalBody(){
   } else if(step === "targetSelect"){
     if(DAMAGE_MODES.includes(wizard.mode)){
       const L = modeLabels[wizard.mode];
+      const medicT = wizard.targetFaction === MEDIC_F;
+      const tl = medicT ? tList() : favFirst(subjects);
+      const medicBtn = (!medicT && (wizard.mode === "attack" || wizard.mode === "accident"))
+        ? '<button class="modify-btn" onclick="askAttackMedics()">' + (wizard.mode === "attack" ? "攻擊醫療隊" : "事故醫療隊") + '</button>' : "";
       html =
         backBtn() +
-        '<div class="modal-eyebrow">目標選擇</div>' +
+        '<div class="modal-eyebrow">目標選擇' + (medicT ? ' ／ 醫療隊' : '') + '</div>' +
         '<div class="modal-title">' + L.targetPrompt + '（可複選）</div>' +
         '<div class="target-bar">' +
           '<button class="choice-btn" id="selectAllBtn" onclick="toggleSelectAllTargets()">全選</button>' +
-          '<input type="text" class="text-input" id="targetSearch" placeholder="搜尋實驗體" autocomplete="off" oninput="filterMultiTargets(this.value)">' +
+          '<input type="text" class="text-input" id="targetSearch" placeholder="' + (medicT ? '搜尋隊員' : '搜尋實驗體') + '" autocomplete="off" oninput="filterMultiTargets(this.value)">' +
         '</div>' +
         '<div class="check-list" id="targetCheckList">' +
-          favFirst(subjects).map(s => '<label class="check-item"><input type="checkbox" class="target-check" value="' + s.id + '"> ' + (isFavSubject(s) ? '☆ ' : '') + s.id + ' ' + s.name + '</label>').join("") +
+          tl.map(s => '<label class="check-item"><input type="checkbox" class="target-check" value="' + s.id + '"> ' + (!medicT && isFavSubject(s) ? '☆ ' : '') + s.id + ' ' + escapeHTML(s.name) + '</label>').join("") +
         '</div>' +
-        '<button class="confirm-btn" onclick="confirmMultiTarget()">確認目標</button>';
+        '<button class="confirm-btn" onclick="confirmMultiTarget()">確認目標</button>' +
+        medicBtn;
     } else {
       const prompt = wizard.mode === "medical" ? "請選擇醫療對象" :
                      wizard.mode === "support" ? "請選擇資助對象" :
@@ -6081,10 +6108,17 @@ function renderModalBody(){
         '<button class="confirm-btn" onclick="confirmTarget()">確認目標</button>';
     }
 
+  } else if(step === "medicConsent"){
+    html =
+      '<div class="modal-eyebrow">警告</div>' +
+      '<div class="modal-title">您是否已徵求對方同意？</div>' +
+      '<button class="choice-btn" onclick="medicConsentYes()">是</button>' +
+      '<button class="modify-btn" onclick="goBack()">否</button>';
+
   } else if(step === "damageType"){
     const names = wizard.targetIds.length === 1
-      ? (function(){ const t = subjects.find(s => s.id === wizard.targetIds[0]); return "目標：實驗體 " + t.id + " " + t.name; })()
-      : "已選擇 " + wizard.targetIds.length + " 位實驗體";
+      ? (function(){ const t = findT(wizard.targetIds[0]); return "目標：" + tWord() + " " + t.id + " " + t.name; })()
+      : "已選擇 " + wizard.targetIds.length + " 位" + tWord();
     const L = modeLabels[wizard.mode];
     html =
       backBtn() +
@@ -6127,7 +6161,7 @@ function renderModalBody(){
     }
 
   } else if(step === "statusInput1"){
-    const eyebrow = wizard.targetIds.length === 1 ? ("目標：實驗體 " + wizard.targetIds[0]) : ("已選擇 " + wizard.targetIds.length + " 位實驗體");
+    const eyebrow = wizard.targetIds.length === 1 ? ("目標：" + tWord() + " " + wizard.targetIds[0]) : ("已選擇 " + wizard.targetIds.length + " 位" + tWord());
     html =
       backBtn() +
       '<div class="modal-eyebrow">' + eyebrow + '</div>' +
@@ -6144,7 +6178,7 @@ function renderModalBody(){
       '<button class="choice-btn" onclick="goStep(\'actionPreview\')">不用了，前往確認</button>';
 
   } else if(step === "statusInput2"){
-    const eyebrow = wizard.targetIds.length === 1 ? ("目標：實驗體 " + wizard.targetIds[0]) : ("已選擇 " + wizard.targetIds.length + " 位實驗體");
+    const eyebrow = wizard.targetIds.length === 1 ? ("目標：" + tWord() + " " + wizard.targetIds[0]) : ("已選擇 " + wizard.targetIds.length + " 位" + tWord());
     html =
       backBtn() +
       '<div class="modal-eyebrow">' + eyebrow + '</div>' +
@@ -6181,8 +6215,8 @@ function renderModalBody(){
       const L = modeLabels[wizard.mode];
       const statText = wizard.pendingStatuses.length ? wizard.pendingStatuses.join("、") : "無";
       const targetsText = wizard.targetIds.length === 1
-        ? (function(){ const t = subjects.find(s => s.id === wizard.targetIds[0]); return "實驗體 " + t.id + " " + t.name; })()
-        : wizard.targetIds.map(id => { const t = subjects.find(s => s.id === id); return t.id + " " + t.name; }).join("、");
+        ? (function(){ const t = findT(wizard.targetIds[0]); return tWord() + " " + t.id + " " + t.name; })()
+        : wizard.targetIds.map(id => { const t = findT(id); return t.id + " " + t.name; }).join("、");
       const fullNote = wizard.slotsAvailable <= 0 ? '<div class="modal-note">此實驗體狀態欄已滿（上限 5 個），不會新增狀態。</div>' : "";
       html =
         '<div class="modal-eyebrow">' + L.previewEyebrow + '</div>' +
@@ -6209,7 +6243,7 @@ function renderModalBody(){
     } else {
       const dTxt = wizard.statKey === "hp" ? "HP-1" : "SAN-1";
       const blocks = wizard.targetIds.map(id => {
-        const t = subjects.find(x => x.id === id);
+        const t = findT(id);
         const kd = (wizard.killedMap || {})[id];
         return reportBlock(t, dTxt, kd === "dead" ? "☠ 死亡" : kd === "mad" ? "☠ 瘋狂" : "", !!kd);
       }).join("");
@@ -6320,6 +6354,13 @@ function confirmTarget(){
   }
 }
 
+function askAttackMedics(){ goStep("medicConsent"); }
+function medicConsentYes(){
+  wizard.targetFaction = MEDIC_F;
+  wizard.step = "targetSelect";   // 不新增歷史：上一步會回到實驗體名單
+  renderModalBody();
+}
+
 function targetMatch(s, q){
   q = String(q || "").trim().toLowerCase();
   return !q || (s.id + " " + s.name).toLowerCase().indexOf(q) > -1;
@@ -6328,7 +6369,7 @@ function targetMatch(s, q){
 function filterMultiTargets(q){
   document.querySelectorAll("#targetCheckList .check-item").forEach(l => {
     const cb = l.querySelector(".target-check");
-    const t = cb && subjects.find(x => x.id === cb.value);
+    const t = cb && findT(cb.value);
     l.style.display = (t && targetMatch(t, q)) ? "" : "none";
   });
 }
@@ -6374,7 +6415,7 @@ function chooseDamageType(key){
   wizard.natureLabel = key === "hp" ? L.physicalNature : L.mentalNature;
   wizard.pendingStatuses = [];
   if(wizard.targetIds.length === 1){
-    const target = subjects.find(s => s.id === wizard.targetIds[0]);
+    const target = findT(wizard.targetIds[0]);
     wizard.slotsAvailable = Math.min(2, 5 - target.statuses.length);
   } else {
     wizard.slotsAvailable = 2;
@@ -6418,7 +6459,7 @@ function confirmStatus2(){
 
 function reportBlock(t, deltaTxt, tailTxt, killed){
   return '<div class="target-report' + (killed ? ' killed' : '') + '">' +
-    '<div class="modal-title">實驗體' + t.id + ' ' + escapeHTML(t.name) + ' ' + deltaTxt + '</div>' +
+    '<div class="modal-title">' + (isMedicObj(t) ? '醫療隊員' : '實驗體') + t.id + ' ' + escapeHTML(t.name) + ' ' + deltaTxt + '</div>' +
     '<div class="result-line">目前 HP：' + t.hp + '／3　SAN：' + t.san + '／3' + (tailTxt ? '　' + tailTxt : '') + '</div>' +
   '</div>';
 }
@@ -6440,7 +6481,7 @@ let writeBusy = false;
 function _cp(v){ return JSON.parse(JSON.stringify(v === undefined ? null : v)); }
 function snapFields(list){
   const m = {};
-  list.forEach(s => { const o = {}; WRITE_FIELDS.forEach(f => { o[f] = _cp(s[f]); }); m[s.id] = o; });
+  list.forEach(s => { const o = {}; WRITE_FIELDS.forEach(f => { o[f] = _cp(s[f]); }); m[tKey(s)] = o; });
   return m;
 }
 function showWritePending(eyebrow){
@@ -6462,10 +6503,10 @@ async function awaitWrite(list, before, after){
   // 失敗：只還原這次改到的欄位（期間別人又改了同一欄就不動它）
   list.forEach(s => {
     WRITE_FIELDS.forEach(f => {
-      if(JSON.stringify(_cp(s[f])) === JSON.stringify(after[s.id][f])) s[f] = _cp(before[s.id][f]);
+      if(JSON.stringify(_cp(s[f])) === JSON.stringify(after[tKey(s)][f])) s[f] = _cp(before[tKey(s)][f]);
     });
   });
-  renderGrid();
+  refreshFor(list);
   return {
     ok: false,
     code: _failCode,
@@ -6483,7 +6524,7 @@ async function applyAction(){
   const _log = (m, o, tid) => _evts.push([m, o, tid]);   // 先收著，確認寫入成功才真的記進行動紀錄
   const _list = ((wizard.mode === "medical" || wizard.mode === "support")
     ? [subjects.find(s => s.id === wizard.targetId)]
-    : wizard.targetIds.map(id => subjects.find(s => s.id === id))).filter(Boolean);
+    : wizard.targetIds.map(id => findT(id))).filter(Boolean);
   const _before = snapFields(_list);
   const _vb = ({medical:"醫療", support:"資助"})[wizard.mode] || (modeLabels[wizard.mode] && modeLabels[wizard.mode].verb) || wizard.mode;
   SharedStore.setCtx(_vb + "・" + (wizard.natureLabel || "") + auditWho(), true);
@@ -6511,7 +6552,7 @@ async function applyAction(){
     const killedMap = {};
     let anyDead = false;
     wizard.targetIds.forEach(id => {
-      const t = subjects.find(s => s.id === id);
+      const t = findT(id);
       const _hp0 = t.hp, _san0 = t.san;
       t[wizard.statKey] = Math.max(0, t[wizard.statKey] - 1);
       const added = [];
@@ -6535,7 +6576,7 @@ async function applyAction(){
         else if(wizard.mode === "accident"){ msg = A + "造成醫療事故，" + S + "\n" + statTxt + "，附加狀態：" + addedTxt + "。"; }
         else { msg = A + "攻擊" + S + "（" + statTxt + "），附加狀態：" + addedTxt + "。"; }
         _log(msg, {g: wizard.faction, dead: dead, to: t.owner,
-          kind: diedNow ? "kill" : madNow ? "mad" : wizard.mode === "torture" ? "torture" : wizard.mode === "accident" ? "accident" : "hit"}, t.id);
+          kind: diedNow ? "kill" : madNow ? "mad" : wizard.mode === "torture" ? "torture" : wizard.mode === "accident" ? "accident" : "hit"}, tKey(t));
       }
       // 只有「這一下」才讓 HP／SAN 歸零才算擊殺／瘋狂；對已經死亡（或瘋狂）的目標只是普通攻擊／折磨
       const _wasAlive2 = _hp0 > 0 && _san0 > 0;
@@ -6560,7 +6601,7 @@ async function applyAction(){
   const _actApp = _actFaction === "醫療清潔部隊" ? window.medicApp : _actFaction === "資助者" ? window.sponsorApp : null;
   writeBusy = true;
   showWritePending("行動");
-  renderGrid();   // 內部會 saveState() → SharedStore.save()
+  refreshFor(_list);   // 內部會 saveState() → SharedStore.save()
   let _r;
   try{ _r = await awaitWrite(_list, _before, _after); } finally { writeBusy = false; }
   if(_r.ok){
@@ -6659,7 +6700,7 @@ async function undoLogAction(udStr){
   const act = (ud && ud.__a) || null;   // 行動者的計數變化（醫療／事故／資助／折磨次數）
   if(ud) delete ud.__a;
   const ids = Object.keys(ud || {});
-  const list = ids.map(id => subjects.find(s => String(s.id) === String(id))).filter(Boolean);
+  const list = ids.map(id => resolveKey(id)).filter(Boolean);
   if(!list.length && (ids.length || !act)) return {ok: false, msg: "找不到這位角色（可能已被刪除）。"};
   const undoActorCount = () => {
     if(!act || !act.c) return;
@@ -6674,7 +6715,7 @@ async function undoLogAction(udStr){
   if(!list.length){ undoActorCount(); return {ok: true}; }   // 這筆紀錄只有計數要還原
   const before = snapFields(list);
   list.forEach(s => {
-    const ch = ud[s.id] || ud[String(s.id)];
+    const ch = ud[tKey(s)] || ud[s.id];
     Object.keys(ch || {}).forEach(f => {
       const b = ch[f][0], a = ch[f][1];
       if(f === "statuses"){
@@ -6694,7 +6735,7 @@ async function undoLogAction(udStr){
   const after = snapFields(list);
   SharedStore.setCtx("撤銷行動", true);
   writeBusy = true;
-  renderGrid();   // 內部會 saveState() → SharedStore.save()
+  refreshFor(list);   // 內部會 saveState() → SharedStore.save()
   let r;
   try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
   if(r.ok){ undoActorCount(); return {ok: true}; }
@@ -8325,6 +8366,7 @@ window.medicApp = {
   checkAdminPassword, goStepAdmin, adminAddSubject,
   adminDeleteSubject, adminSaveNames, adminResetAll, adminResetAvatars, openAdminModal,
   adminDownloadBackup,
+  refresh: renderGrid,
   getSubjects: () => subjects.slice()
 };
 
