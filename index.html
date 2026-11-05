@@ -668,6 +668,9 @@
   }
 
   .legend-item{display:flex; align-items:center; gap:8px;}
+  .legend-btn{background:none; border:1px solid transparent; border-radius:4px; color:inherit; font:inherit; cursor:pointer; padding:5px 10px; margin:-5px -10px; transition:background .2s ease, border-color .2s ease, color .2s ease;}
+  .legend-btn:hover{background:rgba(255,255,255,0.06); color:var(--bone);}
+  .legend-btn.active{border-color:var(--bone-dim); background:rgba(255,255,255,0.1); color:var(--bone);}
 
   .legend-dot{width:9px; height:9px; display:inline-block; border:1px solid rgba(255,255,255,0.15);}
   .legend-dot.ok{background:var(--c-ok);}
@@ -3283,11 +3286,11 @@
 
   <div class="roster-divider"></div>
 
-  <div class="legend">
-    <div class="legend-item"><span class="legend-dot ok"></span>良好</div>
-    <div class="legend-item"><span class="legend-dot warn"></span>異常</div>
-    <div class="legend-item"><span class="legend-dot crit"></span>瀕死</div>
-    <div class="legend-item"><span class="legend-dot dead"></span>死亡</div>
+  <div class="legend" id="expLegend">
+    <button type="button" class="legend-item legend-btn" data-f="ok" onclick="setStatusFilter('ok')" title="只顯示「良好」，再點一次取消"><span class="legend-dot ok"></span>良好</button>
+    <button type="button" class="legend-item legend-btn" data-f="warn" onclick="setStatusFilter('warn')" title="只顯示「異常」，再點一次取消"><span class="legend-dot warn"></span>異常</button>
+    <button type="button" class="legend-item legend-btn" data-f="crit" onclick="setStatusFilter('crit')" title="只顯示「瀕死」，再點一次取消"><span class="legend-dot crit"></span>瀕死</button>
+    <button type="button" class="legend-item legend-btn" data-f="dead" onclick="setStatusFilter('dead')" title="只顯示「死亡」，再點一次取消"><span class="legend-dot dead"></span>死亡</button>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -3323,11 +3326,11 @@
 
   <div class="roster-divider"></div>
 
-  <div class="legend">
-    <div class="legend-item"><span class="legend-dot ok"></span>良好</div>
-    <div class="legend-item"><span class="legend-dot warn"></span>異常</div>
-    <div class="legend-item"><span class="legend-dot crit"></span>瀕死</div>
-    <div class="legend-item"><span class="legend-dot dead"></span>死亡</div>
+  <div class="legend" id="medicLegend">
+    <button type="button" class="legend-item legend-btn" data-f="ok" onclick="medicApp.setStatusFilter('ok')" title="只顯示「良好」，再點一次取消"><span class="legend-dot ok"></span>良好</button>
+    <button type="button" class="legend-item legend-btn" data-f="warn" onclick="medicApp.setStatusFilter('warn')" title="只顯示「異常」，再點一次取消"><span class="legend-dot warn"></span>異常</button>
+    <button type="button" class="legend-item legend-btn" data-f="crit" onclick="medicApp.setStatusFilter('crit')" title="只顯示「瀕死」，再點一次取消"><span class="legend-dot crit"></span>瀕死</button>
+    <button type="button" class="legend-item legend-btn" data-f="dead" onclick="medicApp.setStatusFilter('dead')" title="只顯示「死亡」，再點一次取消"><span class="legend-dot dead"></span>死亡</button>
   </div>
 
   <div class="grid" id="medicGrid"></div>
@@ -5326,6 +5329,11 @@ function escapeHTML(str){
 
 const grid = document.getElementById("grid");
 const metaLine = document.getElementById("metaLine");
+let statusFilter = null;   // 點上方「良好／異常／瀕死／死亡」可只顯示該類，再點一次取消
+function setStatusFilter(k){ statusFilter = (statusFilter === k) ? null : k; renderGrid(); }
+function syncLegend(){
+  document.querySelectorAll("#expLegend .legend-btn").forEach(b => b.classList.toggle("active", b.dataset.f === statusFilter));
+}
 
 function renderGrid(){
   grid.innerHTML = "";
@@ -5334,6 +5342,7 @@ function renderGrid(){
   subjects.forEach(s => {
     const c = classify(s.hp, s.san);
     counts[c.dead ? "dead" : c.cardClass]++;
+    if(statusFilter && (c.dead ? "dead" : c.cardClass) !== statusFilter) return;
 
     let noteHTML;
     if(s.statuses.length > 0){   // 死亡後狀態照樣顯示，重生才會清除
@@ -5374,6 +5383,8 @@ function renderGrid(){
     grid.appendChild(card);
   });
 
+  if(statusFilter && !grid.children.length) grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px 0; font-family:var(--mono); font-size:12px; color:var(--bone-dim);">目前沒有符合的實驗體</div>';
+  syncLegend();
   metaLine.innerHTML = "收容數量 " + String(subjects.length).padStart(3, "0") + " ／ 良好 " + counts.ok + " ／ 死亡 " + counts.dead;
   saveState();
 }
@@ -7568,7 +7579,8 @@ function jumpToSubject(id){
   }
   if(input) input.value = "";
 
-  const card = document.getElementById("card-" + id);
+  let card = document.getElementById("card-" + id);
+  if(!card && statusFilter){ statusFilter = null; renderGrid(); card = document.getElementById("card-" + id); }
   if(card){
     card.scrollIntoView({behavior: "smooth", block: "center"});
     card.classList.remove("card-highlight");
@@ -7777,6 +7789,11 @@ function escapeHTML(str){
 
 const grid = document.getElementById("medicGrid");
 const metaLine = document.getElementById("medicMetaLine");
+let statusFilter = null;   // 點上方「良好／異常／瀕死／死亡」可只顯示該類，再點一次取消
+function setStatusFilter(k){ statusFilter = (statusFilter === k) ? null : k; renderGrid(); }
+function syncLegend(){
+  document.querySelectorAll("#medicLegend .legend-btn").forEach(b => b.classList.toggle("active", b.dataset.f === statusFilter));
+}
 
 function classify(hp, san){
   if(hp === 0 || san === 0){
@@ -7803,6 +7820,7 @@ function renderGrid(){
     const san = typeof s.san === "number" ? s.san : 3;
     const c = classify(hp, san);
     counts[c.dead ? "dead" : c.cardClass]++;
+    if(statusFilter && (c.dead ? "dead" : c.cardClass) !== statusFilter) return;
 
     const sts = Array.isArray(s.statuses) ? s.statuses : [];
     let noteHTML;
@@ -7838,6 +7856,8 @@ function renderGrid(){
     });
     grid.appendChild(card);
   });
+  if(statusFilter && !grid.children.length) grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px 0; font-family:var(--mono); font-size:12px; color:var(--bone-dim);">目前沒有符合的隊員</div>';
+  syncLegend();
   metaLine.innerHTML = "隊員數量 " + String(subjects.length).padStart(3, "0") + " ／ 良好 " + counts.ok + " ／ 死亡 " + counts.dead;
   saveState();
 }
@@ -8325,7 +8345,8 @@ function jumpToSubject(id){
   }
   if(input) input.value = "";
 
-  const card = document.getElementById("medic-card-" + id);
+  let card = document.getElementById("medic-card-" + id);
+  if(!card && statusFilter){ statusFilter = null; renderGrid(); card = document.getElementById("medic-card-" + id); }
   if(card){
     card.scrollIntoView({behavior: "smooth", block: "center"});
     card.classList.remove("card-highlight");
@@ -8366,7 +8387,7 @@ window.medicApp = {
   checkAdminPassword, goStepAdmin, adminAddSubject,
   adminDeleteSubject, adminSaveNames, adminResetAll, adminResetAvatars, openAdminModal,
   adminDownloadBackup,
-  refresh: renderGrid,
+  refresh: renderGrid, setStatusFilter,
   getSubjects: () => subjects.slice()
 };
 
