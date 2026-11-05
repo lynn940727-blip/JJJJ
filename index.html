@@ -2558,7 +2558,7 @@
 .log-row.dead .log-what{color:#f2b8b3}
 .log-row.dead .log-time{color:#c98d88}
 .log-row.mad{color:#e08a7d}
-.log-edit-btn{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--bone-dim);cursor:pointer;transition:color .2s ease,transform .2s ease}
+.log-edit-btn{flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--bone-dim);cursor:pointer;transition:color .2s ease,transform .2s ease}
 .log-edit-btn:hover{color:var(--bone);transform:translateY(-1px)}
 .log-edit-panel{flex-basis:100%;margin-top:6px}
 .log-edit-text{width:100%;background:#0a0706;border:1px solid var(--line);color:var(--bone);font-family:var(--sans);font-size:13px;padding:8px 10px;border-radius:0;resize:vertical}
@@ -3826,7 +3826,7 @@ const SharedStore = (function(){
       return d;
     }catch(e){ return "----"; }
   })();
-  const FIELD_LABEL = {name:"名稱", hp:"HP", san:"SAN", bandages:"繃帶", syringes:"針筒", deathCount:"死亡次數", madCount:"瘋狂次數", statuses:"狀態", avatarUrl:"頭像"};
+  const FIELD_LABEL = {name:"名稱", hp:"HP", san:"SAN", bandages:"繃帶", syringes:"針筒", deathCount:"死亡次數", madCount:"瘋狂次數", medicCount:"醫療次數", accidentCount:"事故次數", supportCount:"資助次數", tortureCount:"折磨次數", statuses:"狀態", avatarUrl:"頭像"};
   function groupOf(path){ return /medic/.test(path) ? "隊員" : /sponsor/.test(path) ? "資助者" : "實驗體"; }
   function norm(f, v){
     if(v === undefined || v === null) return "";
@@ -3871,7 +3871,7 @@ const SharedStore = (function(){
   // 手動編輯（編輯視窗按儲存）也留紀錄：只記真的有變的欄位
   function logEdit(group, label, before, after){
     try{
-      const fields = ["hp", "san", "bandages", "syringes", "deathCount", "madCount", "statuses"];  // 名字修改不記錄
+      const fields = ["hp", "san", "bandages", "syringes", "deathCount", "madCount", "medicCount", "accidentCount", "supportCount", "tortureCount", "statuses"];  // 名字修改不記錄
       const parts = [];
       fields.forEach(f => {
         if(before[f] === undefined && after[f] === undefined) return;
@@ -3922,7 +3922,7 @@ const SharedStore = (function(){
         const editing = r.k === editKey;
         return '<div class="log-row' + cls + '" data-k="' + esc(r.k) + '">' +
           '<div class="log-main"><div class="log-what">' + colorize(esc(r.msg), r.dead) + '</div><div class="log-time">' + esc(r.t) + '</div></div>' +
-          '<button class="log-edit-btn" data-act="' + (editing ? 'cancel' : 'edit') + '" title="' + (editing ? '收起' : '撤銷／刪除') + '">' + (editing ? '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg>') + '</button>' +
+          '<button class="log-edit-btn" data-act="' + (editing ? 'cancel' : 'edit') + '" title="' + (editing ? '收起' : '撤銷／刪除') + '">' + (editing ? '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg>') + '</button>' +
           (editing ? '<div class="log-edit-panel"><div class="log-undo-hint" style="font-size:12px;line-height:1.7;color:var(--bone-dim)">撤銷：還原這次行動改動的數值與狀態，並刪除此紀錄。<br>刪除：只刪除此紀錄，不會改變任何數值。</div>' +
             '<div class="log-confirm"><button class="log-save" data-act="undo"' + (undoBusy ? ' disabled' : '') + '>' + (undoBusy ? '撤銷中…' : '撤銷') + '</button>' +
             '<button class="log-del" data-act="del"' + (undoBusy ? ' disabled' : '') + '>刪除</button>' +
@@ -4429,12 +4429,13 @@ const Auth=(function(){
     const st=Array.isArray(s.statuses)?s.statuses:[];
     if(st.length) h+='<div style="margin-top:12px">'+st.map(x=>'<span style="display:inline-block;font-size:11px;padding:2px 9px;margin:2px 4px 2px 0;background:'+th.pill+';color:'+th.txt+'">'+esc(x)+'</span>').join("")+'</div>';
     const bits=[];
-    if(f==="資助者"){ bits.push("繃帶 ∞","針筒 ∞"); }
+    if(f==="資助者"){ bits.push("繃帶 ∞","針筒 ∞"); if(s.supportCount) bits.push("資助 x"+s.supportCount); if(s.tortureCount) bits.push("折磨 x"+s.tortureCount); }
     else{
       if(typeof s.bandages==="number") bits.push("繃帶 x"+s.bandages);
       if(typeof s.syringes==="number") bits.push("針筒 x"+s.syringes);
       if(s.deathCount) bits.push("死亡 x"+s.deathCount);
       if(s.madCount) bits.push("瘋狂 x"+s.madCount);
+      if(f==="醫療清潔部隊"){ if(s.medicCount) bits.push("醫療 x"+s.medicCount); if(s.accidentCount) bits.push("事故 x"+s.accidentCount); }
     }
     if(bits.length) h+='<div style="margin-top:12px;font-size:12px;color:'+th.dim+'">'+bits.join("　／　")+'</div>';
     h+='<div style="text-align:right;margin-top:10px">'+(mode==="fav"
@@ -5115,6 +5116,69 @@ document.addEventListener("DOMContentLoaded", function(){
 
 <script>
 const subjects = [
+  {id: "001", name: "瑕", hp: 3, san: 3},
+  {id: "002", name: "幻狂", hp: 3, san: 3},
+  {id: "003", name: "以賽亞", hp: 3, san: 3},
+  {id: "004", name: "諾伊艾瓦", hp: 3, san: 3},
+  {id: "005", name: "奧西里斯", hp: 3, san: 3},
+  {id: "006", name: "澤努里亞", hp: 3, san: 3},
+  {id: "007", name: "得道者", hp: 3, san: 3},
+  {id: "008", name: "朔牙", hp: 3, san: 3},
+  {id: "009", name: "Pollux", hp: 3, san: 3},
+  {id: "010", name: "玲奈月", hp: 3, san: 3},
+  {id: "011", name: "薨", hp: 3, san: 3},
+  {id: "012", name: "墨影", hp: 3, san: 3},
+  {id: "013", name: "暴食", hp: 3, san: 3},
+  {id: "014", name: "威廉森", hp: 3, san: 3},
+  {id: "015", name: "佘舠", hp: 3, san: 3},
+  {id: "016", name: "Unknown", hp: 3, san: 3},
+  {id: "017", name: "托林", hp: 3, san: 3},
+  {id: "018", name: "汐見", hp: 3, san: 3},
+  {id: "019", name: "Martha", hp: 3, san: 3},
+  {id: "020", name: "羅盤草", hp: 3, san: 3},
+  {id: "021", name: "艾許", hp: 3, san: 3},
+  {id: "022", name: "V", hp: 3, san: 3},
+  {id: "023", name: "費多特", hp: 3, san: 3},
+  {id: "024", name: "勒米", hp: 3, san: 3},
+  {id: "025", name: "十字", hp: 3, san: 3},
+  {id: "026", name: "邦尼", hp: 3, san: 3},
+  {id: "027", name: "努布爾", hp: 3, san: 3},
+  {id: "028", name: "吉恩", hp: 3, san: 3},
+  {id: "029", name: "天蠶蛾", hp: 3, san: 3},
+  {id: "030", name: "蟹妮", hp: 3, san: 3},
+  {id: "031", name: "柯洛", hp: 3, san: 3},
+  {id: "032", name: "1", hp: 3, san: 3},
+  {id: "033", name: "嵐", hp: 3, san: 3},
+  {id: "034", name: "楓希莫", hp: 3, san: 3},
+  {id: "035", name: "烏伏子兔", hp: 3, san: 3},
+  {id: "036", name: "含笑", hp: 3, san: 3},
+  {id: "037", name: "墨墨", hp: 3, san: 3},
+  {id: "038", name: "歐陽倩由", hp: 3, san: 3},
+  {id: "039", name: "On", hp: 3, san: 3},
+  {id: "040", name: "穆", hp: 3, san: 3},
+  {id: "041", name: "木馬", hp: 3, san: 3},
+  {id: "042", name: "彼列", hp: 3, san: 3},
+  {id: "043", name: "Raven", hp: 3, san: 3},
+  {id: "044", name: "妮樂絲", hp: 3, san: 3},
+  {id: "045", name: "瑟蕾卡", hp: 3, san: 3},
+  {id: "046", name: "八古", hp: 3, san: 3},
+  {id: "047", name: "澪柒", hp: 3, san: 3},
+  {id: "048", name: "Love", hp: 3, san: 3},
+  {id: "049", name: "卡納森．海塔", hp: 3, san: 3},
+  {id: "050", name: "絡塞卡納", hp: 3, san: 3},
+  {id: "051", name: "螳螂先生", hp: 3, san: 3},
+  {id: "052", name: "翡翠星", hp: 3, san: 3},
+  {id: "053", name: "魅", hp: 3, san: 3},
+  {id: "054", name: "時雨蝶", hp: 3, san: 3},
+  {id: "055", name: "蛸", hp: 3, san: 3},
+  {id: "056", name: "iZ", hp: 3, san: 3},
+  {id: "057", name: "結花", hp: 3, san: 3},
+  {id: "058", name: "竹蝕弍", hp: 3, san: 3},
+  {id: "059", name: "雷諾茲", hp: 3, san: 3},
+  {id: "060", name: "巴特", hp: 3, san: 3},
+  {id: "061", name: "克萊門特", hp: 3, san: 3},
+  {id: "062", name: "哈米", hp: 3, san: 3},
+  {id: "063", name: "葵苑", hp: 3, san: 3}
 ];
 subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.deathCount = 0; s.madCount = 0; s.avatarUrl = null; });
 
@@ -6449,13 +6513,33 @@ async function applyAction(){
   }
 
   const _after = snapFields(_list);
+  // 行動者自己的計數：醫療→醫療次數、醫療事故→事故次數、資助→資助次數、折磨→折磨次數（每一筆行動紀錄 +1）
+  const _cntField = ({medical: "medicCount", accident: "accidentCount", support: "supportCount", torture: "tortureCount"})[wizard.mode];
+  const _actFaction = wizard.faction, _actId = wizard.selfId;
+  const _actApp = _actFaction === "醫療清潔部隊" ? window.medicApp : _actFaction === "資助者" ? window.sponsorApp : null;
   writeBusy = true;
   showWritePending("行動");
   renderGrid();   // 內部會 saveState() → SharedStore.save()
   let _r;
   try{ _r = await awaitWrite(_list, _before, _after); } finally { writeBusy = false; }
   if(_r.ok){
-    _evts.forEach(e => SharedStore.logEvent(e[0], Object.assign({}, e[1], {ud: buildUndo(_before, _after, e[2])})));
+    let _cntBase = null;
+    if(_cntField && _actApp && _actApp.getCount && _actApp.adjustCount) _cntBase = _actApp.getCount(_actId, _cntField);
+    _evts.forEach((e, i) => {
+      let ud = buildUndo(_before, _after, e[2]);
+      if(_cntBase !== null){
+        let o = {};
+        try{ o = ud ? JSON.parse(ud) : {}; }catch(err){ o = {}; }
+        const c = {}; c[_cntField] = [_cntBase + i, _cntBase + i + 1];
+        o.__a = {f: _actFaction, id: String(_actId), c: c};   // 行動者的計數變化：撤銷時一併還原
+        ud = JSON.stringify(o);
+      }
+      SharedStore.logEvent(e[0], Object.assign({}, e[1], {ud: ud}));
+    });
+    if(_cntBase !== null){
+      SharedStore.setCtx(_vb + "・次數", true);
+      _actApp.adjustCount(_actId, _cntField, _evts.length);
+    }
     if(modalOverlay.classList.contains("open")) goStep("actionResult");
     return;
   }
@@ -6531,9 +6615,22 @@ async function undoLogAction(udStr){
   if(writeBusy) return {ok: false, msg: "系統正在處理其他寫入，請稍後再試。"};
   let ud;
   try{ ud = JSON.parse(udStr); }catch(e){ return {ok: false, msg: "紀錄裡的還原資料壞掉了。"}; }
+  const act = (ud && ud.__a) || null;   // 行動者的計數變化（醫療／事故／資助／折磨次數）
+  if(ud) delete ud.__a;
   const ids = Object.keys(ud || {});
   const list = ids.map(id => subjects.find(s => String(s.id) === String(id))).filter(Boolean);
-  if(!list.length) return {ok: false, msg: "找不到這位角色（可能已被刪除）。"};
+  if(!list.length && (ids.length || !act)) return {ok: false, msg: "找不到這位角色（可能已被刪除）。"};
+  const undoActorCount = () => {
+    if(!act || !act.c) return;
+    const app = act.f === "醫療清潔部隊" ? window.medicApp : act.f === "資助者" ? window.sponsorApp : null;
+    if(!app || !app.adjustCount) return;
+    SharedStore.setCtx("撤銷行動", true);
+    Object.keys(act.c).forEach(f => {
+      const b = act.c[f][0], a = act.c[f][1];
+      if(typeof a === "number" && typeof b === "number") app.adjustCount(act.id, f, b - a);
+    });
+  };
+  if(!list.length){ undoActorCount(); return {ok: true}; }   // 這筆紀錄只有計數要還原
   const before = snapFields(list);
   list.forEach(s => {
     const ch = ud[s.id] || ud[String(s.id)];
@@ -6559,7 +6656,7 @@ async function undoLogAction(udStr){
   renderGrid();   // 內部會 saveState() → SharedStore.save()
   let r;
   try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
-  if(r.ok) return {ok: true};
+  if(r.ok){ undoActorCount(); return {ok: true}; }
   return {ok: false, msg: r.msg + "（錯誤代碼 " + r.code + "）"};
 }
 window.__undoLogAction = undoLogAction;
@@ -7413,17 +7510,17 @@ document.addEventListener("click", function(e){
 
 const subjects = [
 ];
-subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.deathCount = 0; s.madCount = 0; s.avatarUrl = null; });
+subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.deathCount = 0; s.madCount = 0; s.medicCount = 0; s.accidentCount = 0; s.avatarUrl = null; });
 
 const STORAGE_KEY = "bloodpool_medic_subjects_v2";   // 同時是 Firebase 節點名稱、也是離線備援用的 localStorage key
 const CODE_IDS = new Set(subjects.map(s => s.id));   // 寫在程式裡的隊員名冊：編號以程式為準
 const CODE_NAMES = {};                                 // 程式裡目前寫的名字；資料庫裡記著「改名當下程式的名字」，程式一改就以程式為準
 subjects.forEach(s => { CODE_NAMES[s.id] = s.name; });
 const tombstones = [];   // 在網頁上被刪掉的「程式名冊」角色：資料庫留一筆刪除紀錄，重新整理後才不會又跑出來
-const RUNTIME_FIELDS = ["hp","san","statuses","bandages","syringes","deathCount","madCount","avatarUrl","owner"];
+const RUNTIME_FIELDS = ["hp","san","statuses","bandages","syringes","deathCount","madCount","medicCount","accidentCount","avatarUrl","owner"];
 
 function subjectDefaults(){
-  return {statuses: [], bandages: 2, syringes: 2, deathCount: 0, madCount: 0, avatarUrl: null, owner: null};
+  return {statuses: [], bandages: 2, syringes: 2, deathCount: 0, madCount: 0, medicCount: 0, accidentCount: 0, avatarUrl: null, owner: null};
 }
 
 // 把資料庫傳來的資料合併進 subjects（就地修改）。有任何變動回傳 true。
@@ -7550,7 +7647,7 @@ function renderGrid(){
         (s.avatarUrl ? '<div class="avatar-shape avatar-square has-avatar" onclick="medicApp.openAvatarModal(\'' + s.id + '\')" title="點擊編輯頭像"><img src="' + s.avatarUrl + '" alt=""></div>' : '<div class="avatar-shape avatar-square avatar-empty" onclick="medicApp.openAvatarModal(\'' + s.id + '\')" title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>') +
         '<div class="codename">' + s.name + '</div>' +
       '</div>' +
-      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b></div>' +
+      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>　　　醫療 x<b>' + (s.medicCount || 0) + '</b>／事故 x<b>' + (s.accidentCount || 0) + '</b></div>' +
       '<div class="note">該隊員狀態良好。</div>' +
       '<button class="edit-btn" onclick="medicApp.openEditModal(\'' + s.id + '\')" title="編輯"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg></button>';
     card.addEventListener("click", e => {
@@ -7597,6 +7694,8 @@ function renderEditForm(){
     '<span class="field-label">名稱</span><input type="text" class="text-input" id="medicEditName" value="' + escapeHTML(s.name) + '" maxlength="20">' +
     '<div class="field-row"><div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="medicEditBandages" value="' + s.bandages + '" min="0" max="9"></div>' +
     '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="medicEditSyringes" value="' + s.syringes + '" min="0" max="9"></div></div>' +
+    '<div class="field-row"><div><span class="field-label">醫療次數</span><input type="number" class="text-input" id="medicEditMedicCount" value="' + (s.medicCount || 0) + '" min="0" max="99"></div>' +
+    '<div><span class="field-label">事故次數</span><input type="number" class="text-input" id="medicEditAccidentCount" value="' + (s.accidentCount || 0) + '" min="0" max="99"></div></div>' +
     '<span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span>' +
     '<textarea class="text-input" id="medicEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">' + escapeHTML(s.egg || "") + '</textarea>' +
     '<button class="confirm-btn" onclick="medicApp.saveEdit()">儲存</button><button class="modify-btn" onclick="medicApp.closeModal()">取消</button>' +
@@ -7626,13 +7725,15 @@ function clampInt(val, min, max){
 
 function saveEdit(){
   const s = subjects.find(x => x.id === editId);
-  const _before = {name: s.name, bandages: s.bandages, syringes: s.syringes, egg: s.egg || ""};
+  const _before = {name: s.name, bandages: s.bandages, syringes: s.syringes, medicCount: s.medicCount || 0, accidentCount: s.accidentCount || 0, egg: s.egg || ""};
   const name = document.getElementById("medicEditName").value.trim();
   if(name) s.name = name;
   s.bandages = clampInt(document.getElementById("medicEditBandages").value, 0, 9);
   s.syringes = clampInt(document.getElementById("medicEditSyringes").value, 0, 9);
+  s.medicCount = clampInt(document.getElementById("medicEditMedicCount").value, 0, 99);
+  s.accidentCount = clampInt(document.getElementById("medicEditAccidentCount").value, 0, 99);
   s.egg = document.getElementById("medicEditEgg").value.slice(0, 300);
-  if(window.SharedStore) SharedStore.logEdit("醫療清潔部隊", "醫療清潔部隊——" + _before.name, _before, {name: s.name, bandages: s.bandages, syringes: s.syringes, egg: s.egg || ""});
+  if(window.SharedStore) SharedStore.logEdit("醫療清潔部隊", "醫療清潔部隊——" + _before.name, _before, {name: s.name, bandages: s.bandages, syringes: s.syringes, medicCount: s.medicCount, accidentCount: s.accidentCount, egg: s.egg || ""});
   renderGrid();
   closeModal();
 }
@@ -7946,7 +8047,7 @@ function createSubject(name){
     owner: Auth.newOwner(), id: newId, name: name || ("新隊員" + newNum),
     hp: 3, san: 3, statuses: [],
     bandages: 2, syringes: 2,
-    deathCount: 0, madCount: 0,
+    deathCount: 0, madCount: 0, medicCount: 0, accidentCount: 0,
     avatarUrl: null
   });
   renderGrid();
@@ -8057,7 +8158,22 @@ document.addEventListener("click", function(e){
 });
 
 
+// 行動計數：行動成功時由主程式呼叫（+1）；撤銷行動時呼叫（-1）。回傳 false 代表找不到這位隊員
+function adjustCount(id, field, delta){
+  if(field !== "medicCount" && field !== "accidentCount") return false;
+  const s = subjects.find(x => x.id === id);
+  if(!s) return false;
+  s[field] = Math.max(0, Math.min(99, (Number(s[field]) || 0) + delta));
+  renderGrid();   // 內部會 saveState()
+  return true;
+}
+function getCount(id, field){
+  const s = subjects.find(x => x.id === id);
+  return s ? (Number(s[field]) || 0) : null;
+}
+
 window.medicApp = {
+  adjustCount, getCount,
   openAvatarModal, openEditModal, saveEdit, closeModal, renderEditForm, createSubject, openDeleteConfirm, confirmDeleteSubject,
   loadCropImage, onZoomInput, confirmCrop, removeAvatarDirect,
   exitAvatarModal, handleRosterSearch, jumpToSubject, openAmbraSms,
@@ -8105,6 +8221,7 @@ function mergeRemote(list){
       const av=r.avatarUrl!==undefined?r.avatarUrl:null;
       if(s.avatarUrl!==av){s.avatarUrl=av;changed=true}
       const ne=r.egg||"";if((s.egg||"")!==ne){if(ne)s.egg=ne;else delete s.egg;changed=true}
+      ["supportCount","tortureCount"].forEach(f=>{const nv=r[f]!==undefined?r[f]:0;if((s[f]||0)!==nv){s[f]=nv;changed=true}});
       const nn=(r.name&&r.codeName===CODE_NAMES[s.id])?r.name:CODE_NAMES[s.id];
       if(s.name!==nn){s.name=nn;changed=true}
     }else{
@@ -8124,7 +8241,7 @@ function mergeRemote(list){
   });
   return changed;
 }
-function toRecord(s){if(s.deleted)return s;if(!CODE_IDS.has(s.id))return s;const o={id:s.id,name:s.name,codeName:CODE_NAMES[s.id],avatarUrl:s.avatarUrl,owner:s.owner};if(s.egg)o.egg=s.egg;return o}
+function toRecord(s){if(s.deleted)return s;if(!CODE_IDS.has(s.id))return s;const o={id:s.id,name:s.name,codeName:CODE_NAMES[s.id],avatarUrl:s.avatarUrl,owner:s.owner,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0};if(s.egg)o.egg=s.egg;return o}
 function saveState(){
   if(SharedStore.save(KEY,subjects.concat(tombstones),{toRecord,canDelete:id=>!CODE_IDS.has(id)}))return;
   try{localStorage.setItem(KEY,JSON.stringify(subjects.concat(tombstones)))}catch(e){console.warn("local save failed",e)}
@@ -8155,7 +8272,7 @@ function renderGrid(){
         ?`<div class="avatar-shape has-avatar" ${avatar} title="點擊編輯頭像"><img src="${s.avatarUrl}" alt=""></div>`
         :`<div class="avatar-shape avatar-empty" ${avatar} title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>`)+
       `<div class="codename">${s.name}</div></div>`+
-      '<div class="item-count">繃帶 <b>∞</b>　／　針筒 <b>∞</b></div>'+
+      '<div class="item-count">繃帶 <b>∞</b>　／　針筒 <b>∞</b>　　　資助 x<b>'+(s.supportCount||0)+'</b>／折磨 x<b>'+(s.tortureCount||0)+'</b></div>'+
       '<div class="note">感謝資助者的支持。</div>'+
       `<button class="edit-btn" onclick="sponsorApp.openEdit('${s.id}')" title="編輯">${EDIT_ICON}</button>`;
     card.addEventListener("click", e => {
@@ -8180,7 +8297,7 @@ function openEdit(id){
   if(!Auth.canEdit(subjects.find(s=>s.id===id))) return;
   editId=id;
   const s=find(id);
-  modalBody.innerHTML=`<div class="modal-eyebrow">編輯資助者資料</div><div class="modal-title">編輯資料</div><span class="field-label">名稱</span><input type="text" class="text-input" id="spEditName" value="${esc(s.name)}" maxlength="20"><span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span><textarea class="text-input" id="spEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">${esc(s.egg||"")}</textarea><button class="confirm-btn" onclick="sponsorApp.saveEdit()">儲存</button><button class="modify-btn" onclick="sponsorApp.closeModal()">取消</button><button class="danger-btn" onclick="sponsorApp.openDeleteConfirm()">刪除此資助者</button>`;
+  modalBody.innerHTML=`<div class="modal-eyebrow">編輯資助者資料</div><div class="modal-title">編輯資料</div><span class="field-label">名稱</span><input type="text" class="text-input" id="spEditName" value="${esc(s.name)}" maxlength="20"><div class="field-row"><div><span class="field-label">資助次數</span><input type="number" class="text-input" id="spEditSupport" value="${s.supportCount||0}" min="0" max="99"></div><div><span class="field-label">折磨次數</span><input type="number" class="text-input" id="spEditTorture" value="${s.tortureCount||0}" min="0" max="99"></div></div><span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span><textarea class="text-input" id="spEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">${esc(s.egg||"")}</textarea><button class="confirm-btn" onclick="sponsorApp.saveEdit()">儲存</button><button class="modify-btn" onclick="sponsorApp.closeModal()">取消</button><button class="danger-btn" onclick="sponsorApp.openDeleteConfirm()">刪除此資助者</button>`;
   modal.classList.add("open");
 }
 function openDeleteConfirm(){
@@ -8191,10 +8308,13 @@ function confirmDeleteSubject(){deleteSubject(editId);closeModal()}
 function saveEdit(){
   const name=$("spEditName").value.trim();
   const s=find(editId);
-  const _before={name:s.name,egg:s.egg||""};
+  const _before={name:s.name,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0,egg:s.egg||""};
   if(name)s.name=name;
+  const _ci=(v)=>{let n=parseInt(v,10);if(isNaN(n))n=0;return Math.min(99,Math.max(0,n))};
+  s.supportCount=_ci($("spEditSupport").value);
+  s.tortureCount=_ci($("spEditTorture").value);
   s.egg=$("spEditEgg").value.slice(0,300);
-  if(window.SharedStore)SharedStore.logEdit("資助者","資助者——"+_before.name,_before,{name:s.name,egg:s.egg||""});
+  if(window.SharedStore)SharedStore.logEdit("資助者","資助者——"+_before.name,_before,{name:s.name,supportCount:s.supportCount,tortureCount:s.tortureCount,egg:s.egg||""});
   renderGrid();
   closeModal();
 }
@@ -8328,7 +8448,7 @@ function createSubject(name){
   const max=Math.max(0,...subjects.concat(tombstones).map(s=>parseInt(s.id,10)).filter(n=>!isNaN(n)));
   const n=max+1;
   const id=String(n).padStart(3,"0");
-  subjects.push({id,name:name||("新資助者"+n),avatarUrl:null,owner:Auth.newOwner()});
+  subjects.push({id,name:name||("新資助者"+n),avatarUrl:null,supportCount:0,tortureCount:0,owner:Auth.newOwner()});
   renderGrid();
   return id;
 }
@@ -8386,7 +8506,17 @@ document.addEventListener("click",e=>{
   if(!$("sponsorSearchWrap").contains(e.target))$("sponsorSearchDropdown").classList.remove("show");
 });
 
-window.sponsorApp={getSubjects:()=>subjects.slice(),openAvatar,openEdit,createSubject,openDeleteConfirm,confirmDeleteSubject,saveEdit,closeModal,loadCrop,onZoom,confirmCrop,removeAvatar,exitAvatar,search,jumpTo,checkPass,goStep,addSubject,delSubject,saveNames,resetAvatars};
+// 行動計數：行動成功時由主程式呼叫（+1）；撤銷行動時呼叫（-1）。回傳 false 代表找不到這位資助者
+function adjustCount(id,field,delta){
+  if(field!=="supportCount"&&field!=="tortureCount")return false;
+  const s=find(id);
+  if(!s)return false;
+  s[field]=Math.max(0,Math.min(99,(Number(s[field])||0)+delta));
+  renderGrid();   // 內部會 saveState()
+  return true;
+}
+function getCount(id,field){const s=find(id);return s?(Number(s[field])||0):null}
+window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAvatar,openEdit,createSubject,openDeleteConfirm,confirmDeleteSubject,saveEdit,closeModal,loadCrop,onZoom,confirmCrop,removeAvatar,exitAvatar,search,jumpTo,checkPass,goStep,addSubject,delSubject,saveNames,resetAvatars};
 })();
 </script>
 
