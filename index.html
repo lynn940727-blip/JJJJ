@@ -668,9 +668,10 @@
   }
 
   .legend-item{display:flex; align-items:center; gap:8px;}
-  .legend-btn{background:none; border:1px solid transparent; border-radius:4px; color:inherit; font:inherit; cursor:pointer; padding:5px 10px; margin:-5px -10px; transition:background .2s ease, border-color .2s ease, color .2s ease;}
-  .legend-btn:hover{background:rgba(255,255,255,0.06); color:var(--bone);}
-  .legend-btn.active{border-color:var(--bone-dim); background:rgba(255,255,255,0.1); color:var(--bone);}
+  .legend:has(.legend-btn){gap:10px;}
+  .legend-btn{background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.13); border-radius:4px; color:inherit; font:inherit; cursor:pointer; padding:6px 13px; margin:0; transition:background .2s ease, border-color .2s ease, color .2s ease;}
+  .legend-btn:hover{background:rgba(255,255,255,0.09); border-color:rgba(255,255,255,0.26); color:var(--bone);}
+  .legend-btn.active{border-color:var(--bone-dim); background:rgba(255,255,255,0.16); color:var(--bone);}
 
   .legend-dot{width:9px; height:9px; display:inline-block; border:1px solid rgba(255,255,255,0.15);}
   .legend-dot.ok{background:var(--c-ok);}
@@ -2044,8 +2045,8 @@
     border:1px solid var(--line);
   }
 
-  .medic-page .seg.hp-fill{background:#8c8c8c; border-color:#4a4a4a;}
-  .medic-page .seg.san-fill{background:#8c8c8c; border-color:#4a4a4a;}
+  .medic-page .seg.hp-fill{background:#65c6c7; border-color:#3d8586;}
+  .medic-page .seg.san-fill{background:#65c6c7; border-color:#3d8586;}
   .medic-page .seg.empty{background:transparent;}
 
   .medic-page .note{
@@ -2595,6 +2596,11 @@
 .log-admin-time{margin-top:2px;font-family:var(--mono);font-size:10.5px;color:var(--bone-dim)}
 .log-admin-del{flex-shrink:0;padding:4px 10px;background:transparent;border:1px solid rgba(194,68,82,.45);color:rgba(194,68,82,.9);font-family:var(--mono);font-size:11px;cursor:pointer}
 .log-admin-del:hover{background:rgba(194,68,82,.18);color:#e8b3ba}
+.log-admin-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.log-admin-undo{flex-shrink:0;padding:4px 10px;background:transparent;border:1px solid rgba(108,166,201,.55);color:#8fc0de;font-family:var(--mono);font-size:11px;cursor:pointer}
+.log-admin-undo:hover{background:rgba(108,166,201,.18);color:#d4e8f4}
+.log-admin-undo[disabled]{opacity:.35;cursor:not-allowed}
+.log-admin-undo[disabled]:hover{background:transparent;color:#8fc0de}
 .log-admin-empty{padding:28px 0;text-align:center;font-size:12.5px;color:var(--bone-dim)}
 .danger-btn.solid[disabled]{opacity:.4;cursor:not-allowed}
 
@@ -3906,7 +3912,7 @@ const SharedStore = (function(){
     const adminSubs = [];
     const fmt = e => {
       const t = e.ts ? new Date(e.ts).toLocaleString("zh-TW", {hour12:false, year:"numeric", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit"}) : "—";
-      return {k: e._k, t: t, g: e.g || "", msg: e.msg || "", dead: !!e.dead};
+      return {k: e._k, t: t, g: e.g || "", msg: e.msg || "", dead: !!e.dead, u: !!e.ud};
     };
     let editKey = null, editText = "", delArmed = false, undoBusy = false;
     const draw = () => {
@@ -4022,6 +4028,24 @@ const SharedStore = (function(){
         const d = init();
         if(!d) return Promise.reject({code: "no-db"});
         return Promise.all(keys.map(k => d.ref(LOG_PATH + "/" + k).remove()));
+      },
+      // 批量撤銷：一筆一筆做（新的先撤），成功就連紀錄一起刪除；沒有還原資料的舊紀錄會略過
+      undoMany: async keys => {
+        const d = init();
+        if(!d) throw {code: "no-db"};
+        if(typeof window.__undoLogAction !== "function") throw {code: "not-ready"};
+        const res = {ok: 0, skipped: 0, failed: []};
+        const items = keys.map(k => rows.find(x => x._k === k)).filter(Boolean).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        for(const cur of items){
+          if(!cur.ud){ res.skipped++; continue; }
+          let r;
+          try{ r = await window.__undoLogAction(cur.ud); }catch(e){ r = {ok: false, msg: (e && (e.code || e.message)) || "未知原因"}; }
+          if(!r || !r.ok){ res.failed.push((r && r.msg) || "未知原因"); continue; }
+          try{ await d.ref(LOG_PATH + "/" + cur._k).remove(); }
+          catch(e){ res.failed.push("數值已還原，但紀錄刪除失敗（" + ((e && e.code) || "未知原因") + "）"); continue; }
+          res.ok++;
+        }
+        return res;
       }
     };
     draw(); start();
@@ -5002,7 +5026,7 @@ document.addEventListener("DOMContentLoaded", function(){
   const ov = document.getElementById("logAdminOverlay");
   const body = document.getElementById("logAdminBody");
   const esc = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  let step = "password", sel = new Set(), pending = [], filter = "", busy = false, subscribed = false;
+  let step = "password", sel = new Set(), pending = [], filter = "", busy = false, subscribed = false, mode = "delete";
 
   const all = () => (window.__logAdmin ? window.__logAdmin.list() : []);
   const shown = () => {
@@ -5042,6 +5066,7 @@ document.addEventListener("DOMContentLoaded", function(){
         '<div class="log-admin-tools"><input type="text" class="text-input" id="logAdminSearch" placeholder="搜尋內容、時間或陣營" autocomplete="off" value="' + esc(filter) + '"><button id="logAdminAll"></button></div>' +
         '<div class="log-admin-count" id="logAdminCount"></div>' +
         '<div class="log-admin-list" id="logAdminList"></div>' +
+        '<button class="modify-btn" id="logAdminUndoBatch"></button>' +
         '<button class="danger-btn solid" id="logAdminBatch"></button>' +
         '<button class="modify-btn" data-a="close">關閉</button>';
       document.getElementById("logAdminSearch").addEventListener("input", e => { filter = e.target.value; renderList(); });
@@ -5052,19 +5077,27 @@ document.addEventListener("DOMContentLoaded", function(){
         renderList();
       });
       document.getElementById("logAdminBatch").addEventListener("click", () => {
-        pending = Array.from(sel);
+        pending = Array.from(sel); mode = "delete";
+        if(pending.length){ step = "confirm"; render(); }
+      });
+      document.getElementById("logAdminUndoBatch").addEventListener("click", () => {
+        pending = Array.from(sel); mode = "undo";
         if(pending.length){ step = "confirm"; render(); }
       });
       renderList();
     } else if(step === "confirm"){
       body.innerHTML =
         '<div class="modal-eyebrow">管理員模式</div>' +
-        '<div class="modal-title">確定要刪除' + (pending.length > 1 ? '這 ' + pending.length + ' 筆' : '這筆') + '紀錄嗎？</div>' +
-        '<div class="modal-note">刪除後所有人重新整理都看不到，此動作無法復原。</div>' +
-        '<button class="danger-btn solid" id="logAdminGo"' + (busy ? ' disabled' : '') + '>' + (busy ? '刪除中…' : '確認刪除') + '</button>' +
+        (mode === "undo"
+          ? '<div class="modal-title">確定要撤銷' + (pending.length > 1 ? '這 ' + pending.length + ' 筆' : '這筆') + '行動嗎？</div>' +
+            '<div class="modal-note">這些行動改動的數值與狀態會回到行動之前，紀錄也會一併刪除。沒有保存還原資料的舊版紀錄會被略過（不會被刪除）。</div>' +
+            '<button class="danger-btn solid" id="logAdminGo"' + (busy ? ' disabled' : '') + '>' + (busy ? '撤銷中…' : '確認撤銷') + '</button>'
+          : '<div class="modal-title">確定要刪除' + (pending.length > 1 ? '這 ' + pending.length + ' 筆' : '這筆') + '紀錄嗎？</div>' +
+            '<div class="modal-note">刪除後所有人重新整理都看不到，此動作無法復原。</div>' +
+            '<button class="danger-btn solid" id="logAdminGo"' + (busy ? ' disabled' : '') + '>' + (busy ? '刪除中…' : '確認刪除') + '</button>') +
         '<button class="modify-btn" id="logAdminBack">取消</button>';
       document.getElementById("logAdminBack").addEventListener("click", () => { if(busy) return; step = "panel"; render(); });
-      document.getElementById("logAdminGo").addEventListener("click", doDelete);
+      document.getElementById("logAdminGo").addEventListener("click", () => { if(mode === "undo") doUndo(); else doDelete(); });
     }
   }
 
@@ -5079,7 +5112,10 @@ document.addEventListener("DOMContentLoaded", function(){
       '<label class="log-admin-row' + (sel.has(r.k) ? ' sel' : '') + '" data-k="' + esc(r.k) + '">' +
         '<input type="checkbox"' + (sel.has(r.k) ? ' checked' : '') + '>' +
         '<div class="log-admin-main"><div class="log-admin-text">' + esc(r.msg) + '</div><div class="log-admin-time">' + esc(r.t) + (r.g ? ' ｜ ' + esc(r.g) : '') + '</div></div>' +
-        '<button class="log-admin-del" data-del="' + esc(r.k) + '" type="button">刪除</button>' +
+        '<div class="log-admin-btns">' +
+          '<button class="log-admin-undo" data-undo="' + esc(r.k) + '" type="button"' + (r.u ? '' : ' disabled title="舊版紀錄，沒有保存還原資料"') + '>撤銷</button>' +
+          '<button class="log-admin-del" data-del="' + esc(r.k) + '" type="button">刪除</button>' +
+        '</div>' +
       '</label>'
     ).join("") : '<div class="log-admin-empty">目前沒有符合的紀錄。</div>';
     box.scrollTop = keepScroll;
@@ -5089,12 +5125,31 @@ document.addEventListener("DOMContentLoaded", function(){
     const b = document.getElementById("logAdminBatch");
     b.disabled = sel.size === 0;
     b.textContent = sel.size ? "刪除選取的 " + sel.size + " 筆" : "請先勾選要刪除的紀錄";
+    const ub = document.getElementById("logAdminUndoBatch");
+    ub.disabled = sel.size === 0;
+    ub.textContent = sel.size ? "撤銷選取的 " + sel.size + " 筆" : "請先勾選要撤銷的紀錄";
   }
 
   function checkPw(){
     const f = document.getElementById("logAdminPw");
     if(Auth.isAdmin){ step = "panel"; render(); }
     else { const e = document.getElementById("logAdminPwErr"); if(e) e.style.display = "block"; }
+  }
+
+  function doUndo(){
+    if(busy || !window.__logAdmin) return;
+    busy = true; render();
+    window.__logAdmin.undoMany(pending).then(res => {
+      pending.forEach(k => sel.delete(k));
+      pending = []; busy = false; step = "panel"; render();
+      let m = "撤銷完成：成功 " + res.ok + " 筆。";
+      if(res.skipped) m += "\n略過 " + res.skipped + " 筆舊版紀錄（沒有還原資料，請到角色卡手動改回，紀錄可按「刪除」移除）。";
+      if(res.failed.length) m += "\n失敗 " + res.failed.length + " 筆：" + res.failed.slice(0, 3).join("；") + (res.failed.length > 3 ? "…" : "");
+      if(res.skipped || res.failed.length || res.ok === 0) alert(m);
+    }).catch(err => {
+      busy = false; step = "panel"; render();
+      alert("撤銷失敗（" + ((err && (err.code || err.message)) || "未知原因") + "）。");
+    });
   }
 
   function doDelete(){
@@ -5112,7 +5167,9 @@ document.addEventListener("DOMContentLoaded", function(){
   body.addEventListener("click", e => {
     if(e.target.closest("[data-a='close']")){ close(); return; }
     const del = e.target.closest("button[data-del]");
-    if(del){ e.preventDefault(); pending = [del.getAttribute("data-del")]; step = "confirm"; render(); return; }
+    if(del){ e.preventDefault(); pending = [del.getAttribute("data-del")]; mode = "delete"; step = "confirm"; render(); return; }
+    const un = e.target.closest("button[data-undo]");
+    if(un){ e.preventDefault(); if(un.disabled) return; pending = [un.getAttribute("data-undo")]; mode = "undo"; step = "confirm"; render(); return; }
   });
   body.addEventListener("change", e => {
     const row = e.target.closest && e.target.closest(".log-admin-row");
@@ -6098,7 +6155,7 @@ function renderModalBody(){
         '<div class="modal-eyebrow">目標選擇' + (medicT ? ' ／ 醫療隊' : '') + '</div>' +
         '<div class="modal-title">' + L.targetPrompt + '（可複選）</div>' +
         '<div class="target-bar">' +
-          '<button class="choice-btn" id="selectAllBtn" onclick="toggleSelectAllTargets()">全選</button>' +
+          (wizard.mode === "torture" ? '' : '<button class="choice-btn" id="selectAllBtn" onclick="toggleSelectAllTargets()">全選</button>') +
           '<input type="text" class="text-input" id="targetSearch" placeholder="' + (medicT ? '搜尋隊員' : '搜尋實驗體') + '" autocomplete="off" oninput="filterMultiTargets(this.value)">' +
         '</div>' +
         '<div class="check-list" id="targetCheckList">' +
@@ -6123,8 +6180,8 @@ function renderModalBody(){
     html =
       '<div class="modal-eyebrow">警告</div>' +
       '<div class="modal-title">您是否已徵求對方同意？</div>' +
-      '<button class="choice-btn" onclick="medicConsentYes()">是</button>' +
-      '<button class="modify-btn" onclick="goBack()">否</button>';
+      '<button class="choice-btn" style="text-align:center;" onclick="medicConsentYes()">是</button>' +
+      '<button class="modify-btn" style="text-align:center;" onclick="goBack()">否</button>';
 
   } else if(step === "damageType"){
     const names = wizard.targetIds.length === 1
