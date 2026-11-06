@@ -3404,7 +3404,7 @@
 <div class="roster-divider"></div>
 <div class="log-tools">
 <div class="roster-search"><input type="text" id="logSearchInput" placeholder="搜尋名稱、編號或內容" autocomplete="off"></div>
-<select id="logGroup"><option value="">全部陣營</option><option>實驗體</option><option>醫療清潔部隊</option><option>資助者</option></select>
+<select id="logGroup"><option value="">全部陣營</option><option>實驗體</option><option>醫療清潔部隊</option><option>資助者</option><option value="__item">道具</option></select>
 </div>
 <div id="logList"><div class="log-loading"><div class="log-spinner"></div><div class="log-loading-text">讀取紀錄中…</div></div></div>
 <div style="text-align:center; margin-top:56px;">
@@ -3917,7 +3917,7 @@ const SharedStore = (function(){
     let editKey = null, editText = "", delArmed = false, undoBusy = false;
     const draw = () => {
       const q = qEl.value.trim().toLowerCase(), g = gEl.value;
-      out = rows.filter(e => e.k === "evt").map(fmt).filter(r => (!g || r.g === g) && (!q || r.msg.toLowerCase().includes(q)));
+      out = rows.filter(e => e.k === "evt").map(fmt).filter(r => (!g || (g === "__item" ? /使用(繃帶|針筒)/.test(r.msg) : r.g === g)) && (!q || r.msg.toLowerCase().includes(q)));
       const ACTOR_COLOR = {"資助者":"#8c84ce", "醫療清潔部隊":"#6ca6c9", "實驗體":"#c23c45"};
       const colorOf = txt =>
         txt.indexOf("資助者") > -1 ? ACTOR_COLOR["資助者"] :
@@ -4812,7 +4812,9 @@ const Tutorial=(function(){
     {sel:"#menuToggle",h:"試試看：打開「目錄」",b:"• 請點擊左上角的目錄按鈕。",interactive:true,pulse:true,corner:true,wait:"#menuToggle",delay:0,enter:closeM},
     {sel:"#menuHelp",lit:"#menuPanel",corner:true,h:"新手教學",b:"• 點擊選單右下角「?」可隨時重看教學。",enter:openM},
     {sel:'.menu-item[data-target="5"]',lit:"#menuPanel",corner:true,h:"行動紀錄",b:"• 記錄全站所有玩家的行動。",enter:openM},
+    {sel:'.menu-item[data-target="5"]',lit:"#menuPanel",corner:true,h:"撤銷上一步行動",b:"• 做錯了？到「行動紀錄」找到那筆行動，點右側的編輯鍵，再按「撤銷」就能還原。<br>• 只能撤銷自己的行動。",enter:openM},
     {sel:'.menu-item[data-target="2"]',h:"試試看：點擊「實驗體名冊」",b:"• 點擊進入角色列表。",interactive:true,pulse:true,corner:true,lit:"#menuPanel",delay:0,wait:'.menu-item[data-target="2"]',enter:openM},
+    {sel:"#expLegend",h:"快速篩選狀態",b:"• 點擊「良好、異常、瀕死、死亡」可只顯示該類角色，方便查找。<br>• 再點一次同一個標籤即可取消。",enter:gotoRoster},
     {sel:"#card-001 .edit-btn",litClosest:".card",corner:true,avoidLit:true,h:"角色卡：編輯鍵",b:"• 點擊角色卡右下角 "+PENCIL+" 可修改資訊。<br>• 僅能編輯自己的角色。",enter:focusEdit},
     {sel:"#authBtn",h:"最後一步：個人檔案",b:"• 請點擊右上角的「個人檔案」。<br>• 選擇「＋ 申請角色」，審核通過後即可開始行動。",interactive:true,pulse:true,wait:"#authBtn",end:true,delay:150}
   ];
