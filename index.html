@@ -4350,7 +4350,13 @@ const Auth=(function(){
         // 資料庫沒有暱稱、只有這台裝置記著：規則要求資料庫有暱稱才能改別人的角色，否則一律 PERMISSION_DENIED → 自動補寫回去
         if(!dbNick && nick){ d.ref("users/"+user.uid).update({nick:nick}).catch(e=>console.warn("nick backfill failed",e)); }
       }).catch(e=>{ nick=localNick(); console.warn("nick read failed",e); }),
-      d.ref("admins/"+user.uid).once("value").then(s=>{admin=s.val()===true;}).catch(()=>{admin=false;}),
+      d.ref("admins/"+user.uid).once("value").then(s=>{ admin=s.val()===true;
+        if(admin||!user||!user.email) return;
+        const ik="adminInvites/"+String(user.email).toLowerCase().replace(/\./g,",");
+        return d.ref(ik).once("value").then(v=>{ if(!v.exists()) return;
+          return d.ref("admins/"+user.uid).set(true).then(()=>{ admin=true; d.ref(ik).remove().catch(()=>{}); });
+        }).catch(e=>console.warn("admin invite claim failed",e));
+      }).catch(()=>{admin=false;}),
       // 記下這個帳號的 Email（小寫），讓管理員能用 Email 找到「還沒有暱稱／角色」的人
       Promise.resolve().then(()=>{ const em=user&&user.email?String(user.email).toLowerCase():""; if(em) return d.ref("users/"+user.uid+"/email").set(em); }).catch(e=>console.warn("email save failed",e)),
       d.ref("claimRequests/"+user.uid).once("value").then(s=>{pend=s.val()||{};}).catch(()=>{pend={};}),
@@ -4555,8 +4561,8 @@ const Auth=(function(){
       h+='<span class="field-label">陣營</span><select class="pick" id="au_f">'+Object.keys(ST).map(f=>"<option>"+f+"</option>").join("")+'</select><span class="field-label">角色</span><select class="pick" id="au_c" size="5"></select><button class="confirm-btn" id="au_rq">送出申請</button>';
     }else if(view==="addadmin"){
       if(!admin){ view="home"; render(); return; }
-      h+=BACK+'<div class="modal-title" style="font-size:17px">新增管理員</div><div class="modal-note">輸入對方登入用的 Google Email，就能直接設為管理員（沒有角色、沒設暱稱也可以）。設為管理員後，他的權限跟你一樣。</div>'
-        +'<input class="text-input" id="au_adm_mail" type="email" inputmode="email" autocomplete="off" placeholder="輸入 Email" maxlength="120"><button class="confirm-btn" id="au_adm_mailbtn" style="width:100%">以 Email 設為管理員</button><div class="modal-note" id="au_adm_mailmsg" style="display:none;margin-top:10px"></div>'
+      h+=BACK+'<div class="modal-title" style="font-size:17px">新增管理員</div><div class="modal-note">輸入對方登入用的 Google Email，就能設為管理員（沒有角色、沒設暱稱、還沒登入過都可以）。還沒登入的人，等他第一次登入就會自動成為管理員。設為管理員後，他的權限跟你一樣。</div>'
+        +'<input class="text-input" id="au_adm_mail" type="email" inputmode="email" autocomplete="off" placeholder="輸入 Email" maxlength="120"><button class="confirm-btn" id="au_adm_mailbtn" style="width:100%">以 Email 設為管理員</button><div class="modal-note" id="au_adm_mailmsg" style="display:none;margin-top:10px"></div><div id="au_adm_inv"></div>'
         +'<div class="modal-note" style="margin-top:18px">或從下方已登入過的帳號中選擇：</div>'
         +'<input class="text-input" id="au_adm_q" placeholder="搜尋暱稱或 Email" maxlength="50"><div id="au_adm_list" class="modal-note">讀取中…</div>';
     }else if(view==="bind"){
@@ -4717,28 +4723,46 @@ const Auth=(function(){
       });
     };
     if(q) q.oninput=draw;
+    let invs={};
+    const ik=e=>String(e).toLowerCase().replace(/\./g,",");
+    const inv=b.querySelector("#au_adm_inv");
+    const drawInv=()=>{
+      if(!inv||!alive()) return;
+      const ks=Object.keys(invs);
+      inv.innerHTML=ks.length?'<div class="modal-note" style="margin-top:14px">預先設定、等待登入：</div>'+ks.map(k=>'<div class="au-req"><div class="au-req-n">'+esc(k.replace(/,/g,"."))+'</div><div class="au-req-t">尚未登入　登入後自動成為管理員</div><div class="au-req-b"><button class="au-btn au-danger" data-k="'+esc(k)+'">取消預先設定</button></div></div>').join(""):"";
+      inv.querySelectorAll("button[data-k]").forEach(bt=>bt.onclick=ev=>{ ev.preventDefault(); const k=bt.dataset.k; bt.disabled=true;
+        db().ref("adminInvites/"+k).remove().then(()=>{ delete invs[k]; drawInv(); }).catch(er=>{ bt.disabled=false; alert("取消失敗："+(er.code||er.message)); }); });
+    };
     const mail=b.querySelector("#au_adm_mail"), mbtn=b.querySelector("#au_adm_mailbtn"), msg=b.querySelector("#au_adm_mailmsg");
     const say=(t,bad)=>{ if(!msg) return; msg.style.display="block"; msg.style.color=bad?"var(--c-crit)":""; msg.textContent=t; };
     const byMail=()=>{
       const e=(mail&&mail.value||"").trim().toLowerCase();
-      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){ say("請輸入正確的 Email。",true); return; }
+      if(!/^[^@\s#$\[\]\/]+@[^@\s#$\[\]\/]+\.[^@\s#$\[\]\/]+$/.test(e)){ say("請輸入正確的 Email。",true); return; }
       if(!users){ say("還在讀取帳號，請稍後再試。",true); return; }
       const u=Object.keys(users).find(k=>users[k]&&String(users[k].email||"").toLowerCase()===e);
-      if(!u){ say("找不到這個 Email。對方需要先用這個信箱登入過網站（之前登入過的人，請對方重新登入一次）。",true); return; }
+      if(!u){
+        if(invs[ik(e)]){ say("這個 Email 已經在預先名單裡了。"); return; }
+        if(!confirm("這個 Email（"+e+"）還沒登入過網站。要先設定好，等他第一次登入就自動成為管理員嗎？")) return;
+        mbtn.disabled=true;
+        db().ref("adminInvites/"+ik(e)).set({by:user.uid,t:Date.now()}).then(()=>{
+          invs[ik(e)]={}; mbtn.disabled=false; if(mail) mail.value=""; say("已預先設定："+e+" 登入後會自動成為管理員。"); drawInv();
+        }).catch(er=>{ mbtn.disabled=false; say("設定失敗："+(er.code||er.message),true); });
+        return;
+      }
       if(adms[u]===true){ say("這個帳號已經是管理員了。"); return; }
       const n=users[u].nick||e;
       if(!confirm("確定要讓「"+n+"」（"+e+"）成為管理員嗎？他會擁有跟你一樣的權限。")) return;
       mbtn.disabled=true;
       db().ref("admins/"+u).set(true).then(()=>{
-        adms[u]=true;
+        adms[u]=true; if(invs[ik(e)]){ delete invs[ik(e)]; db().ref("adminInvites/"+ik(e)).remove().catch(()=>{}); drawInv(); }
         try{ SharedStore.notify(u,"sys","你已被設為管理員。"); }catch(er){}
         mbtn.disabled=false; if(mail) mail.value=""; say("已將 "+e+" 設為管理員。"); draw();
       }).catch(er=>{ mbtn.disabled=false; say("設定失敗："+(er.code||er.message),true); });
     };
     if(mbtn) mbtn.onclick=ev=>{ ev.preventDefault(); byMail(); };
     if(mail) mail.onkeydown=ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); byMail(); } };
-    Promise.all([db().ref("users").once("value"),db().ref("admins").once("value")]).then(r=>{
-      users=r[0].val()||{}; adms=r[1].val()||{}; draw();
+    Promise.all([db().ref("users").once("value"),db().ref("admins").once("value"),db().ref("adminInvites").once("value").catch(()=>null)]).then(r=>{
+      users=r[0].val()||{}; adms=r[1].val()||{}; invs=(r[2]&&r[2].val())||{}; draw(); drawInv();
     }).catch(e=>{ if(alive()) box.textContent="讀取失敗："+(e.code||e.message); });
   }
   function adminList(b){
