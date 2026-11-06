@@ -1818,6 +1818,7 @@
     color:var(--bone-dim);
   }
 
+  .medic-page .legend:has(.legend-btn){gap:10px;}
   .medic-page .legend-item{display:flex; align-items:center; gap:8px;}
 
   .medic-page .legend-dot{width:9px; height:9px; display:inline-block; border:1px solid rgba(255,255,255,0.15);}
@@ -3404,7 +3405,7 @@
 <div class="roster-divider"></div>
 <div class="log-tools">
 <div class="roster-search"><input type="text" id="logSearchInput" placeholder="搜尋名稱、編號或內容" autocomplete="off"></div>
-<select id="logGroup"><option value="">全部陣營</option><option>實驗體</option><option>醫療清潔部隊</option><option>資助者</option><option value="__item">道具</option></select>
+<select id="logGroup"><option value="">全部陣營</option><option>實驗體</option><option>醫療清潔部隊</option><option>資助者</option><option>NPC</option><option value="__item">道具</option></select>
 </div>
 <div id="logList"><div class="log-loading"><div class="log-spinner"></div><div class="log-loading-text">讀取紀錄中…</div></div></div>
 <div style="text-align:center; margin-top:56px;">
@@ -3917,7 +3918,7 @@ const SharedStore = (function(){
     let editKey = null, editText = "", delArmed = false, undoBusy = false;
     const draw = () => {
       const q = qEl.value.trim().toLowerCase(), g = gEl.value;
-      out = rows.filter(e => e.k === "evt").map(fmt).filter(r => (!g || (g === "__item" ? /使用(繃帶|針筒)/.test(r.msg) : r.g === g)) && (!q || r.msg.toLowerCase().includes(q)));
+      out = rows.filter(e => e.k === "evt").map(fmt).filter(r => (!g || (g === "__item" ? /(使用|消耗)(繃帶|針筒)/.test(r.msg) : r.g === g)) && (!q || r.msg.toLowerCase().includes(q)));
       const ACTOR_COLOR = {"資助者":"#8c84ce", "醫療清潔部隊":"#6ca6c9", "實驗體":"#c23c45"};
       const colorOf = txt =>
         txt.indexOf("資助者") > -1 ? ACTOR_COLOR["資助者"] :
@@ -4350,6 +4351,8 @@ const Auth=(function(){
         if(!dbNick && nick){ d.ref("users/"+user.uid).update({nick:nick}).catch(e=>console.warn("nick backfill failed",e)); }
       }).catch(e=>{ nick=localNick(); console.warn("nick read failed",e); }),
       d.ref("admins/"+user.uid).once("value").then(s=>{admin=s.val()===true;}).catch(()=>{admin=false;}),
+      // 記下這個帳號的 Email（小寫），讓管理員能用 Email 找到「還沒有暱稱／角色」的人
+      Promise.resolve().then(()=>{ const em=user&&user.email?String(user.email).toLowerCase():""; if(em) return d.ref("users/"+user.uid+"/email").set(em); }).catch(e=>console.warn("email save failed",e)),
       d.ref("claimRequests/"+user.uid).once("value").then(s=>{pend=s.val()||{};}).catch(()=>{pend={};}),
       d.ref("users/"+user.uid+"/tut").once("value").then(s=>{
         if(s.val()===true){ tutDone=true; try{ localStorage.setItem("bp_tut_"+user.uid,"1"); }catch(e){} }
@@ -4552,8 +4555,10 @@ const Auth=(function(){
       h+='<span class="field-label">陣營</span><select class="pick" id="au_f">'+Object.keys(ST).map(f=>"<option>"+f+"</option>").join("")+'</select><span class="field-label">角色</span><select class="pick" id="au_c" size="5"></select><button class="confirm-btn" id="au_rq">送出申請</button>';
     }else if(view==="addadmin"){
       if(!admin){ view="home"; render(); return; }
-      h+=BACK+'<div class="modal-title" style="font-size:17px">新增管理員</div><div class="modal-note">只要登入過網站、設定過暱稱的帳號，都會出現在這裡。設為管理員後，他的權限跟你一樣。</div>'
-        +'<input class="text-input" id="au_adm_q" placeholder="搜尋暱稱" maxlength="50"><div id="au_adm_list" class="modal-note">讀取中…</div>';
+      h+=BACK+'<div class="modal-title" style="font-size:17px">新增管理員</div><div class="modal-note">輸入對方登入用的 Google Email，就能直接設為管理員（沒有角色、沒設暱稱也可以）。設為管理員後，他的權限跟你一樣。</div>'
+        +'<input class="text-input" id="au_adm_mail" type="email" inputmode="email" autocomplete="off" placeholder="輸入 Email" maxlength="120"><button class="confirm-btn" id="au_adm_mailbtn" style="width:100%">以 Email 設為管理員</button><div class="modal-note" id="au_adm_mailmsg" style="display:none;margin-top:10px"></div>'
+        +'<div class="modal-note" style="margin-top:18px">或從下方已登入過的帳號中選擇：</div>'
+        +'<input class="text-input" id="au_adm_q" placeholder="搜尋暱稱或 Email" maxlength="50"><div id="au_adm_list" class="modal-note">讀取中…</div>';
     }else if(view==="bind"){
       if(!admin){ view="home"; render(); return; }
       ensureBindStyle();
@@ -4687,20 +4692,20 @@ const Auth=(function(){
     const draw=()=>{
       if(!users||!alive()) return;
       const kw=(q&&q.value||"").trim().toLowerCase();
-      const arr=Object.keys(users).map(u=>({u:u,n:(users[u]&&users[u].nick)||""}))
-        .filter(x=>x.n&&(!kw||x.n.toLowerCase().indexOf(kw)>=0||x.u.toLowerCase().indexOf(kw)>=0))
-        .sort((x,y)=>(adms[y.u]?1:0)-(adms[x.u]?1:0)||x.n.localeCompare(y.n,"zh-TW"));
+      const arr=Object.keys(users).map(u=>({u:u,n:(users[u]&&users[u].nick)||"",m:String((users[u]&&users[u].email)||"")}))
+        .filter(x=>(x.n||x.m)&&(!kw||x.n.toLowerCase().indexOf(kw)>=0||x.m.toLowerCase().indexOf(kw)>=0||x.u.toLowerCase().indexOf(kw)>=0))
+        .sort((x,y)=>(adms[y.u]?1:0)-(adms[x.u]?1:0)||(x.n||x.m).localeCompare(y.n||y.m,"zh-TW"));
       box.className="";
       box.innerHTML=arr.length?arr.map(x=>{
         const isAdm=adms[x.u]===true, me=user&&x.u===user.uid;
-        return '<div class="au-req"><div class="au-req-n">'+esc(x.n)+(me?'　（你）':'')+'</div><div class="au-req-t">'+(isAdm?'目前身分：管理員':'目前身分：一般玩家')+'　UID …'+esc(x.u.slice(-6))+'</div>'
+        return '<div class="au-req"><div class="au-req-n">'+esc(x.n||x.m)+(me?'　（你）':'')+'</div><div class="au-req-t">'+(x.n&&x.m?esc(x.m)+'　':'')+(isAdm?'目前身分：管理員':'目前身分：一般玩家')+'　UID …'+esc(x.u.slice(-6))+'</div>'
           +(me?'':'<div class="au-req-b">'+(isAdm
             ?'<button class="au-btn au-danger" data-u="'+esc(x.u)+'" data-a="del">取消管理員</button>'
             :'<button class="au-btn au-ok" data-u="'+esc(x.u)+'" data-a="add">設為管理員</button>')+'</div>')+'</div>';
-      }).join(""):'<div class="au-empty">找不到帳號。對方需要先登入網站並設定暱稱。</div>';
+      }).join(""):'<div class="au-empty">找不到帳號。對方需要先登入網站。</div>';
       box.querySelectorAll("button[data-a]").forEach(btn=>btn.onclick=ev=>{
         ev.preventDefault();
-        const u=btn.dataset.u, n=(users[u]&&users[u].nick)||"對方", add=btn.dataset.a==="add";
+        const u=btn.dataset.u, n=(users[u]&&(users[u].nick||users[u].email))||"對方", add=btn.dataset.a==="add";
         if(!confirm(add?"確定要讓「"+n+"」成為管理員嗎？他會擁有跟你一樣的權限。":"確定要取消「"+n+"」的管理員身分嗎？")) return;
         btn.disabled=true;
         const r=db().ref("admins/"+u);
@@ -4712,6 +4717,26 @@ const Auth=(function(){
       });
     };
     if(q) q.oninput=draw;
+    const mail=b.querySelector("#au_adm_mail"), mbtn=b.querySelector("#au_adm_mailbtn"), msg=b.querySelector("#au_adm_mailmsg");
+    const say=(t,bad)=>{ if(!msg) return; msg.style.display="block"; msg.style.color=bad?"var(--c-crit)":""; msg.textContent=t; };
+    const byMail=()=>{
+      const e=(mail&&mail.value||"").trim().toLowerCase();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){ say("請輸入正確的 Email。",true); return; }
+      if(!users){ say("還在讀取帳號，請稍後再試。",true); return; }
+      const u=Object.keys(users).find(k=>users[k]&&String(users[k].email||"").toLowerCase()===e);
+      if(!u){ say("找不到這個 Email。對方需要先用這個信箱登入過網站（之前登入過的人，請對方重新登入一次）。",true); return; }
+      if(adms[u]===true){ say("這個帳號已經是管理員了。"); return; }
+      const n=users[u].nick||e;
+      if(!confirm("確定要讓「"+n+"」（"+e+"）成為管理員嗎？他會擁有跟你一樣的權限。")) return;
+      mbtn.disabled=true;
+      db().ref("admins/"+u).set(true).then(()=>{
+        adms[u]=true;
+        try{ SharedStore.notify(u,"sys","你已被設為管理員。"); }catch(er){}
+        mbtn.disabled=false; if(mail) mail.value=""; say("已將 "+e+" 設為管理員。"); draw();
+      }).catch(er=>{ mbtn.disabled=false; say("設定失敗："+(er.code||er.message),true); });
+    };
+    if(mbtn) mbtn.onclick=ev=>{ ev.preventDefault(); byMail(); };
+    if(mail) mail.onkeydown=ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); byMail(); } };
     Promise.all([db().ref("users").once("value"),db().ref("admins").once("value")]).then(r=>{
       users=r[0].val()||{}; adms=r[1].val()||{}; draw();
     }).catch(e=>{ if(alive()) box.textContent="讀取失敗："+(e.code||e.message); });
@@ -4812,9 +4837,9 @@ const Tutorial=(function(){
     {sel:"#menuToggle",h:"試試看：打開「目錄」",b:"• 請點擊左上角的目錄按鈕。",interactive:true,pulse:true,corner:true,wait:"#menuToggle",delay:0,enter:closeM},
     {sel:"#menuHelp",lit:"#menuPanel",corner:true,h:"新手教學",b:"• 點擊選單右下角「?」可隨時重看教學。",enter:openM},
     {sel:'.menu-item[data-target="5"]',lit:"#menuPanel",corner:true,h:"行動紀錄",b:"• 記錄全站所有玩家的行動。",enter:openM},
-    {sel:'.menu-item[data-target="5"]',lit:"#menuPanel",corner:true,h:"撤銷上一步行動",b:"• 做錯了？到「行動紀錄」找到那筆行動，點右側的編輯鍵，再按「撤銷」就能還原。<br>• 只能撤銷自己的行動。",enter:openM},
+    {sel:'.menu-item[data-target="5"]',lit:"#menuPanel",corner:true,h:"撤銷行動",b:"• 至「行動紀錄」找到該筆紀錄，點擊編輯並選擇「撤銷」，即可回到上一步。<br>• 只能撤銷自己的行動。",enter:openM},
     {sel:'.menu-item[data-target="2"]',h:"試試看：點擊「實驗體名冊」",b:"• 點擊進入角色列表。",interactive:true,pulse:true,corner:true,lit:"#menuPanel",delay:0,wait:'.menu-item[data-target="2"]',enter:openM},
-    {sel:"#expLegend",h:"快速篩選狀態",b:"• 點擊「良好、異常、瀕死、死亡」可只顯示該類角色，方便查找。<br>• 再點一次同一個標籤即可取消。",enter:gotoRoster},
+    {sel:"#expLegend",h:"快速篩選狀態",b:"• 點擊標籤即可篩選角色，再點一次即可取消篩選。",enter:gotoRoster},
     {sel:"#card-001 .edit-btn",litClosest:".card",corner:true,avoidLit:true,h:"角色卡：編輯鍵",b:"• 點擊角色卡右下角 "+PENCIL+" 可修改資訊。<br>• 僅能編輯自己的角色。",enter:focusEdit},
     {sel:"#authBtn",h:"最後一步：個人檔案",b:"• 請點擊右上角的「個人檔案」。<br>• 選擇「＋ 申請角色」，審核通過後即可開始行動。",interactive:true,pulse:true,wait:"#authBtn",end:true,delay:150}
   ];
@@ -5068,7 +5093,7 @@ document.addEventListener("DOMContentLoaded", function(){
         '<div class="log-admin-tools"><input type="text" class="text-input" id="logAdminSearch" placeholder="搜尋內容、時間或陣營" autocomplete="off" value="' + esc(filter) + '"><button id="logAdminAll"></button></div>' +
         '<div class="log-admin-count" id="logAdminCount"></div>' +
         '<div class="log-admin-list" id="logAdminList"></div>' +
-        '<button class="modify-btn" id="logAdminUndoBatch"></button>' +
+        '<button class="danger-btn solid" id="logAdminUndoBatch"></button>' +
         '<button class="danger-btn solid" id="logAdminBatch"></button>' +
         '<button class="modify-btn" data-a="close">關閉</button>';
       document.getElementById("logAdminSearch").addEventListener("input", e => { filter = e.target.value; renderList(); });
@@ -5808,6 +5833,26 @@ const modeLabels = {
     resultEyebrow:"醫療事故成功",
     causedPrefix:"造成實驗體"
   },
+  npcHarm: {
+    verb:"傷害",
+    targetPrompt:"請選擇傷害對象",
+    typePrompt:"請選擇傷害性質",
+    physicalLabel:"物理傷害 ── HP -1",
+    mentalLabel:"精神傷害 ── SAN -1",
+    physicalNature:"物理傷害",
+    mentalNature:"精神傷害",
+    previewEyebrow:"確認傷害內容",
+    natureFieldLabel:"傷害性質",
+    confirmBtn:"確認傷害",
+    resultEyebrow:"傷害成功",
+    causedPrefix:"造成實驗體"
+  },
+  npcReward: {
+    verb:"獎勵",
+    targetPrompt:"請選擇獎勵對象",
+    previewEyebrow:"確認獎勵內容",
+    confirmBtn:"確認獎勵"
+  },
   torture: {
     verb:"折磨",
     targetPrompt:"請選擇折磨對象",
@@ -5824,7 +5869,7 @@ const modeLabels = {
   }
 };
 
-const DAMAGE_MODES = ["attack", "torture", "accident"];
+const DAMAGE_MODES = ["attack", "torture", "accident", "npcHarm", "npcReward"];
 
 /* ---------- 攻擊／事故的目標：實驗體或醫療隊（兩邊編號會重複，所以另外區分）---------- */
 const MEDIC_F = "醫療清潔部隊";
@@ -5868,7 +5913,10 @@ function resetWizard(startStep){
     anyDead:false,
     removeStatus:null,
     removedNow:null,
-    itemType:null
+    itemType:null,
+    rewardField:null,
+    rewardQty:1,
+    rewardMap:{}
   };
 }
 
@@ -5876,7 +5924,8 @@ const ALL_FACTIONS = ["實驗體", "醫療清潔部隊", "資助者"];
 function myFactions(){
   // 玩家（或管理員）實際擁有角色的陣營；一個都沒有時，維持顯示全部陣營
   const owned = ALL_FACTIONS.filter(f => Auth.mine(f, rosterOf(f)).length > 0);
-  return owned.length ? owned : ALL_FACTIONS;
+  const base = owned.length ? owned : ALL_FACTIONS;
+  return (window.Auth && Auth.isAdmin) ? base.concat(["NPC"]) : base;   // NPC：只有管理員有
 }
 function openModal(){
   resetWizard("faction");
@@ -6035,6 +6084,10 @@ function rosterOf(faction){
   return subjects;
 }
 function subjLabel(t){ return isMedicObj(t) ? "醫療清潔部隊——" + t.name : "實驗體" + t.id + "——" + t.name; }
+// 醫療隊治療：物理醫療消耗 1 個繃帶、精神醫療消耗 1 個針筒
+function medActor(){ return rosterOf(wizard.faction).find(x => x.id === wizard.selfId); }
+function medItemField(){ return wizard.statKey === "hp" ? "bandages" : "syringes"; }
+
 function actorLabel(){
   const me = rosterOf(wizard.faction).find(x => x.id === wizard.selfId);
   return me ? (wizard.faction || "實驗體") + "——" + me.name : (wizard.faction || "實驗體");
@@ -6149,6 +6202,7 @@ function renderModalBody(){
     if(DAMAGE_MODES.includes(wizard.mode)){
       const L = modeLabels[wizard.mode];
       const medicT = wizard.targetFaction === MEDIC_F;
+      const limit = targetLimit();
       const tl = medicT ? tList() : favFirst(subjects);
       const medicBtn = (!medicT && (wizard.mode === "attack" || wizard.mode === "accident"))
         ? '<button class="modify-btn" onclick="askAttackMedics()">' + (wizard.mode === "attack" ? "攻擊醫療隊" : "事故醫療隊") + '</button>' : "";
@@ -6156,12 +6210,13 @@ function renderModalBody(){
         backBtn() +
         '<div class="modal-eyebrow">目標選擇' + (medicT ? ' ／ 醫療隊' : '') + '</div>' +
         '<div class="modal-title">' + L.targetPrompt + '（可複選）</div>' +
+        (limit ? '<div class="modal-note">• 實驗體一次最多攻擊 ' + limit + ' 名醫療隊員。<br>• 已選滿時再點選第 ' + (limit + 1) + ' 名，會無法勾選。</div>' : '') +
         '<div class="target-bar">' +
-          (wizard.mode === "torture" ? '' : '<button class="choice-btn" id="selectAllBtn" onclick="toggleSelectAllTargets()">全選</button>') +
+          (wizard.mode === "torture" || limit ? '' : '<button class="choice-btn" id="selectAllBtn" onclick="toggleSelectAllTargets()">全選</button>') +
           '<input type="text" class="text-input" id="targetSearch" placeholder="' + (medicT ? '搜尋隊員' : '搜尋實驗體') + '" autocomplete="off" oninput="filterMultiTargets(this.value)">' +
         '</div>' +
         '<div class="check-list" id="targetCheckList">' +
-          tl.map(s => '<label class="check-item"><input type="checkbox" class="target-check" value="' + s.id + '"> ' + (!medicT && isFavSubject(s) ? '☆ ' : '') + s.id + ' ' + escapeHTML(s.name) + '</label>').join("") +
+          tl.map(s => '<label class="check-item"><input type="checkbox" class="target-check" value="' + s.id + '" onchange="limitTargetCheck(this)"> ' + (!medicT && isFavSubject(s) ? '☆ ' : '') + s.id + ' ' + escapeHTML(s.name) + '</label>').join("") +
         '</div>' +
         '<button class="confirm-btn" onclick="confirmMultiTarget()">確認目標</button>' +
         medicBtn;
@@ -6177,6 +6232,31 @@ function renderModalBody(){
         '<select class="pick" id="targetSelect" size="6">' + subjectOptions(favFirst(subjects), true) + '</select>' +
         '<button class="confirm-btn" onclick="confirmTarget()">確認目標</button>';
     }
+
+  } else if(step === "npcAction"){
+    html =
+      backBtn() +
+      '<div class="modal-eyebrow">NPC</div>' +
+      '<div class="modal-title">請選擇行動</div>' +
+      '<button class="choice-btn" onclick="startMode(\'npcHarm\')">傷害</button>' +
+      '<button class="choice-btn" onclick="startMode(\'npcReward\')">獎勵</button>';
+
+  } else if(step === "npcRewardItem"){
+    html =
+      backBtn() +
+      '<div class="modal-eyebrow">已選擇 ' + wizard.targetIds.length + ' 位實驗體</div>' +
+      '<div class="modal-title">請選擇獎勵物資</div>' +
+      '<button class="choice-btn" onclick="chooseRewardItem(\'bandages\')">繃帶 ── HP +1 道具</button>' +
+      '<button class="choice-btn" onclick="chooseRewardItem(\'syringes\')">針筒 ── SAN +1 道具</button>';
+
+  } else if(step === "npcRewardQty"){
+    html =
+      backBtn() +
+      '<div class="modal-eyebrow">獎勵：' + wizard.natureLabel + ' ／ ' + wizard.targetIds.length + ' 位實驗體</div>' +
+      '<div class="modal-title">請輸入每人獲得的數量</div>' +
+      '<input type="number" class="text-input" id="rewardQty" inputmode="numeric" min="1" max="99" value="' + (wizard.rewardQty || 1) + '" onkeydown="if(event.key===\'Enter\'){confirmRewardQty()}">' +
+      '<div class="modal-note">每人一次 1～99 個。NPC 發放的道具不受一般持有上限（2 個）限制。</div>' +
+      '<button class="confirm-btn" onclick="confirmRewardQty()">前往確認</button>';
 
   } else if(step === "medicConsent"){
     html =
@@ -6203,8 +6283,13 @@ function renderModalBody(){
       backBtn() +
       '<div class="modal-eyebrow">目標：實驗體 ' + target.id + ' ' + target.name + '</div>' +
       '<div class="modal-title">請選擇醫療方式</div>' +
-      '<button class="choice-btn" onclick="chooseMedicalType(\'hp\')">物理醫療 ── HP +1</button>' +
-      '<button class="choice-btn" onclick="chooseMedicalType(\'san\')">精神醫療 ── SAN +1</button>';
+      (function(){
+        const me = medActor() || {};
+        const b = Number(me.bandages) || 0, sy = Number(me.syringes) || 0;
+        return '<button class="choice-btn" ' + (b <= 0 ? 'disabled' : '') + ' onclick="chooseMedicalType(\'hp\')">物理醫療 ── HP +1（消耗繃帶，剩餘 ' + b + '）</button>' +
+          '<button class="choice-btn" ' + (sy <= 0 ? 'disabled' : '') + ' onclick="chooseMedicalType(\'san\')">精神醫療 ── SAN +1（消耗針筒，剩餘 ' + sy + '）</button>' +
+          ((b <= 0 && sy <= 0) ? '<div class="modal-note">你的繃帶和針筒都用完了，無法進行醫療。</div>' : '');
+      })();
 
   } else if(step === "supportType"){
     const target = subjects.find(s => s.id === wizard.targetId);
@@ -6266,6 +6351,10 @@ function renderModalBody(){
         '<div class="result-block">' +
           '<div class="result-line">目標：實驗體 ' + target.id + ' ' + target.name + '</div>' +
           '<div class="result-line">醫療方式：' + wizard.natureLabel + '</div>' +
+          (function(){
+            const me = medActor() || {}, f = medItemField(), n = Number(me[f]) || 0;
+            return '<div class="result-line">消耗道具：' + (f === "bandages" ? "繃帶" : "針筒") + ' x1（剩餘 ' + n + ' → ' + Math.max(0, n - 1) + '）</div>';
+          })() +
           '<div class="result-line">解除狀態：' + (wizard.removeStatus ? escapeHTML(wizard.removeStatus) : "無") + '</div>' +
         '</div>' +
         '<button class="confirm-btn" onclick="applyAction()">確認醫療</button>' +
@@ -6280,6 +6369,19 @@ function renderModalBody(){
           '<div class="result-line">解除狀態：' + (wizard.removeStatus ? escapeHTML(wizard.removeStatus) : "無") + '</div>' +
         '</div>' +
         '<button class="confirm-btn" onclick="applyAction()">確認資助</button>' +
+        '<button class="modify-btn" onclick="goBack()">修改</button>';
+    } else if(wizard.mode === "npcReward"){
+      const rTargets = wizard.targetIds.length === 1
+        ? (function(){ const t = findT(wizard.targetIds[0]); return "實驗體 " + t.id + " " + t.name; })()
+        : wizard.targetIds.map(id => { const t = findT(id); return t.id + " " + t.name; }).join("、");
+      html =
+        '<div class="modal-eyebrow">' + modeLabels.npcReward.previewEyebrow + '</div>' +
+        '<div class="modal-title">請確認以下內容</div>' +
+        '<div class="result-block">' +
+          '<div class="result-line">目標：' + rTargets + '</div>' +
+          '<div class="result-line">獎勵物資：' + wizard.natureLabel + ' x' + wizard.rewardQty + '（每人）</div>' +
+        '</div>' +
+        '<button class="confirm-btn" onclick="applyAction()">' + modeLabels.npcReward.confirmBtn + '</button>' +
         '<button class="modify-btn" onclick="goBack()">修改</button>';
     } else {
       const L = modeLabels[wizard.mode];
@@ -6307,7 +6409,19 @@ function renderModalBody(){
     if(wizard.mode === "medical" || wizard.mode === "support"){
       html =
         '<div class="reveal-box" id="revealBox">' +
-          reportBlock(target, (wizard.statKey === "hp" ? "HP" : "SAN") + "+1", "") +
+          reportBlock(target, (wizard.statKey === "hp" ? "HP" : "SAN") + "+1", wizard.mode === "medical" ? (wizard.itemUsedTxt || "") : "") +
+          resultBtns() +
+        '</div>';
+    } else if(wizard.mode === "npcReward"){
+      const _lbl = wizard.rewardField === "bandages" ? "繃帶" : "針筒";
+      const _blocks = wizard.targetIds.map(id => {
+        const t = findT(id);
+        const gain = (wizard.rewardMap || {})[id] || 0;
+        return reportBlock(t, _lbl + " +" + gain, "持有：繃帶 x" + t.bandages + "／針筒 x" + t.syringes, false);
+      }).join("");
+      html =
+        '<div class="reveal-box" id="revealBox">' +
+          _blocks +
           resultBtns() +
         '</div>';
     } else {
@@ -6386,6 +6500,7 @@ function renderModalBody(){
 
 function selectFaction(f){
   wizard.faction = f;
+  if(f === "NPC"){ goStep("npcAction"); return; }
   if(f === "實驗體" || f === "醫療清潔部隊" || f === "資助者"){
     goStep("whoSelect");
   } else {
@@ -6410,6 +6525,23 @@ function confirmSelf(){
 function startMode(mode){
   wizard.mode = mode;
   goStep("targetSelect");
+}
+
+// NPC 獎勵：選物資 → 輸入數量
+function chooseRewardItem(field){
+  wizard.rewardField = field;
+  wizard.natureLabel = field === "bandages" ? "繃帶" : "針筒";
+  goStep("npcRewardQty");
+}
+function confirmRewardQty(){
+  const el = document.getElementById("rewardQty");
+  const n = parseInt(el && el.value, 10);
+  if(!(n >= 1 && n <= 99)){
+    if(el){ el.style.borderColor = "var(--c-crit)"; el.focus(); }
+    return;
+  }
+  wizard.rewardQty = n;
+  goStep("actionPreview");
 }
 
 function confirmTarget(){
@@ -6465,12 +6597,27 @@ function toggleSelectAllTargets(){
   boxes.forEach(b => { b.checked = !allChecked; });
 }
 
+// 實驗體攻擊醫療隊：一次最多 3 名
+function targetLimit(){
+  return (wizard.targetFaction === MEDIC_F && wizard.mode === "attack" && wizard.faction === "實驗體") ? 3 : 0;
+}
+function limitTargetCheck(cb){
+  const max = targetLimit();
+  if(!max || !cb.checked) return;
+  if(document.querySelectorAll(".target-check:checked").length > max){
+    cb.checked = false;
+    alert("不行！一次最多只能攻擊 " + max + " 名醫療隊員。");
+  }
+}
+
 function confirmMultiTarget(){
   const boxes = document.querySelectorAll(".target-check:checked");
   const ids = Array.from(boxes).map(b => b.value);
   if(ids.length === 0) return;
+  const max = targetLimit();
+  if(max && ids.length > max){ alert("不行！一次最多只能攻擊 " + max + " 名醫療隊員。"); return; }
   wizard.targetIds = ids;
-  goStep("damageType");
+  goStep(wizard.mode === "npcReward" ? "npcRewardItem" : "damageType");
 }
 
 function chooseSupportType(key){
@@ -6590,12 +6737,27 @@ function showWriteFail(eyebrow, r, retryLabel){
 
 async function applyAction(){
   if(writeBusy) return;
+  if(wizard.mode === "medical"){
+    // 治療要消耗道具：沒有道具就退回「選擇醫療方式」
+    const _me0 = medActor(), _f0 = medItemField();
+    if(!_me0 || !(Number(_me0[_f0]) > 0)){
+      const k = wizard.history.lastIndexOf("medicalType");
+      if(k > -1) wizard.history = wizard.history.slice(0, k);
+      wizard.step = "medicalType"; renderModalBody();
+      return;
+    }
+  }
   const _evts = [];
   const _log = (m, o, tid) => _evts.push([m, o, tid]);   // 先收著，確認寫入成功才真的記進行動紀錄
   const _list = ((wizard.mode === "medical" || wizard.mode === "support")
     ? [subjects.find(s => s.id === wizard.targetId)]
     : wizard.targetIds.map(id => findT(id))).filter(Boolean);
   const _before = snapFields(_list);
+  const _itF = medItemField();
+  const _itNm = _itF === "bandages" ? "繃帶" : "針筒";
+  const _meNow = wizard.mode === "medical" ? medActor() : null;
+  const _remain = _meNow ? Math.max(0, (Number(_meNow[_itF]) || 0) - 1) : 0;
+  wizard.itemUsedTxt = _meNow ? ("消耗" + _itNm + " x1（剩餘 " + _remain + "）") : "";
   const _vb = ({medical:"醫療", support:"資助"})[wizard.mode] || (modeLabels[wizard.mode] && modeLabels[wizard.mode].verb) || wizard.mode;
   SharedStore.setCtx(_vb + "・" + (wizard.natureLabel || "") + auditWho(), true);
   if(wizard.mode === "medical" || wizard.mode === "support"){
@@ -6612,11 +6774,25 @@ async function applyAction(){
     }
     if(wizard.mode === "medical"){
       _log("「" + actorLabel() + "」治療「" + subjLabel(target) + "」\n" + _statTxt + "+1，解除狀態：" +
-        (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "heal"}, target.id);
+        (wizard.removedNow || "無") + "。\n消耗" + _itNm + " x1（剩餘 " + _remain + "）。", {g: wizard.faction, to: target.owner, kind: "heal"}, target.id);
     } else {
       _log("「" + actorLabel() + "」資助「" + subjLabel(target) + "」\n" + _statTxt + "+1（" + wizard.natureLabel + "），解除狀態：" +
         (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "support"}, target.id);
     }
+  } else if(wizard.mode === "npcReward"){
+    const _fld = wizard.rewardField, _qty = wizard.rewardQty, _lbl = _fld === "bandages" ? "繃帶" : "針筒";
+    const rewardMap = {};
+    wizard.targetIds.forEach(id => {
+      const t = findT(id);
+      const b0 = Number(t[_fld]) || 0;
+      t[_fld] = Math.min(99, b0 + _qty);   // NPC 發放不受一般上限（2 個）限制
+      const gain = t[_fld] - b0;
+      rewardMap[id] = gain;
+      _log("「" + actorLabel() + "」獎勵「" + subjLabel(t) + "」\n" + _lbl + " +" + gain + (gain < _qty ? "（已達 99 個上限）" : "") + "。",
+        {g: wizard.faction, to: t.owner, kind: "support"}, tKey(t));
+    });
+    wizard.rewardMap = rewardMap;
+    wizard.anyDead = false;
   } else {
     const lastAddedMap = {};
     const killedMap = {};
@@ -6644,6 +6820,7 @@ async function applyAction(){
         else if(madNow){ msg = A + "使" + S + "陷入瘋狂（SAN歸零）。"; }
         else if(wizard.mode === "torture"){ msg = A + "折磨" + S + "\n" + statTxt + "，附加狀態：" + addedTxt + "。"; }
         else if(wizard.mode === "accident"){ msg = A + "造成醫療事故，" + S + "\n" + statTxt + "，附加狀態：" + addedTxt + "。"; }
+        else if(wizard.mode === "npcHarm"){ msg = A + "傷害" + S + "（" + statTxt + "），附加狀態：" + addedTxt + "。"; }
         else { msg = A + "攻擊" + S + "（" + statTxt + "），附加狀態：" + addedTxt + "。"; }
         _log(msg, {g: wizard.faction, dead: dead, to: t.owner,
           kind: diedNow ? "kill" : madNow ? "mad" : wizard.mode === "torture" ? "torture" : wizard.mode === "accident" ? "accident" : "hit"}, tKey(t));
@@ -6677,12 +6854,14 @@ async function applyAction(){
   if(_r.ok){
     let _cntBase = null;
     if(_cntField && _actApp && _actApp.getCount && _actApp.adjustCount) _cntBase = _actApp.getCount(_actId, _cntField);
+    const _itemBase = (wizard.mode === "medical" && _cntBase !== null) ? _actApp.getCount(_actId, _itF) : null;
     _evts.forEach((e, i) => {
       let ud = buildUndo(_before, _after, e[2]);
       if(_cntBase !== null){
         let o = {};
         try{ o = ud ? JSON.parse(ud) : {}; }catch(err){ o = {}; }
         const c = {}; c[_cntField] = [_cntBase + i, _cntBase + i + 1];
+        if(_itemBase !== null) c[_itF] = [_itemBase, Math.max(0, _itemBase - 1)];   // 消耗的道具：撤銷時一併補回
         o.__a = {f: _actFaction, id: String(_actId), c: c};   // 行動者的計數變化：撤銷時一併還原
         ud = JSON.stringify(o);
       }
@@ -6691,6 +6870,10 @@ async function applyAction(){
     if(_cntBase !== null){
       SharedStore.setCtx(_vb + "・次數", true);
       _actApp.adjustCount(_actId, _cntField, _evts.length);
+      if(_itemBase !== null){
+        SharedStore.setCtx(_vb + "・消耗道具", true);
+        _actApp.adjustCount(_actId, _itF, -1);
+      }
     }
     if(modalOverlay.classList.contains("open")) goStep("actionResult");
     return;
@@ -6797,7 +6980,7 @@ async function undoLogAction(udStr){
         removed.forEach(x => { if(cur.length < 5) cur.push(x); });
         s.statuses = cur;
       } else if(typeof b === "number" && typeof a === "number"){
-        const max = (f === "hp" || f === "san") ? 3 : (f === "bandages" || f === "syringes") ? 9 : 99;
+        const max = (f === "hp" || f === "san") ? 3 : 99;
         s[f] = Math.max(0, Math.min(max, (Number(s[f]) || 0) - (a - b)));
       }
     });
@@ -6861,8 +7044,8 @@ function renderEditForm(){
       '<div><span class="field-label">SAN（0-3）</span><input type="number" class="text-input" id="editSan" value="' + d.san + '" min="0" max="3"></div>' +
     '</div>' +
     '<div class="field-row">' +
-      '<div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="editBandages" value="' + d.bandages + '" min="0" max="9"></div>' +
-      '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="editSyringes" value="' + d.syringes + '" min="0" max="9"></div>' +
+      '<div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="editBandages" value="' + d.bandages + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(d.bandages) || 0)) + '"></div>' +
+      '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="editSyringes" value="' + d.syringes + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(d.syringes) || 0)) + '"></div>' +
     '</div>' +
     '<span class="field-label">死亡次數</span>' +
     '<input type="number" class="text-input" id="editDeathCount" value="' + d.deathCount + '" min="0" max="99">' +
@@ -6956,8 +7139,8 @@ function saveEdit(){
   if(name) s.name = name;
   s.hp = clampInt(document.getElementById("editHp").value, 0, 3);
   s.san = clampInt(document.getElementById("editSan").value, 0, 3);
-  s.bandages = clampInt(document.getElementById("editBandages").value, 0, 9);
-  s.syringes = clampInt(document.getElementById("editSyringes").value, 0, 9);
+  s.bandages = clampInt(document.getElementById("editBandages").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0));
+  s.syringes = clampInt(document.getElementById("editSyringes").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0));
   s.deathCount = clampInt(document.getElementById("editDeathCount").value, 0, 99);
   s.madCount = clampInt(document.getElementById("editMadCount").value, 0, 99);
   if(editDraft) s.statuses = editDraft.statuses.slice(0, 5);   // 狀態的增修刪，按儲存才生效
@@ -7955,8 +8138,8 @@ function renderEditForm(){
     '<span class="field-label">名稱</span><input type="text" class="text-input" id="medicEditName" value="' + escapeHTML(s.name) + '" maxlength="20">' +
     '<div class="field-row"><div><span class="field-label">HP（0-3）</span><input type="number" class="text-input" id="medicEditHp" value="' + (typeof s.hp === "number" ? s.hp : 3) + '" min="0" max="3"></div>' +
     '<div><span class="field-label">SAN（0-3）</span><input type="number" class="text-input" id="medicEditSan" value="' + (typeof s.san === "number" ? s.san : 3) + '" min="0" max="3"></div></div>' +
-    '<div class="field-row"><div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="medicEditBandages" value="' + s.bandages + '" min="0" max="9"></div>' +
-    '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="medicEditSyringes" value="' + s.syringes + '" min="0" max="9"></div></div>' +
+    '<div class="field-row"><div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="medicEditBandages" value="' + s.bandages + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0)) + '"></div>' +
+    '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="medicEditSyringes" value="' + s.syringes + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0)) + '"></div></div>' +
     '<div class="field-row"><div><span class="field-label">醫療次數</span><input type="number" class="text-input" id="medicEditMedicCount" value="' + (s.medicCount || 0) + '" min="0" max="99"></div>' +
     '<div><span class="field-label">事故次數</span><input type="number" class="text-input" id="medicEditAccidentCount" value="' + (s.accidentCount || 0) + '" min="0" max="99"></div></div>' +
     '<span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span>' +
@@ -7993,8 +8176,8 @@ function saveEdit(){
   if(name) s.name = name;
   s.hp = clampInt(document.getElementById("medicEditHp").value, 0, 3);
   s.san = clampInt(document.getElementById("medicEditSan").value, 0, 3);
-  s.bandages = clampInt(document.getElementById("medicEditBandages").value, 0, 9);
-  s.syringes = clampInt(document.getElementById("medicEditSyringes").value, 0, 9);
+  s.bandages = clampInt(document.getElementById("medicEditBandages").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0));
+  s.syringes = clampInt(document.getElementById("medicEditSyringes").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0));
   s.medicCount = clampInt(document.getElementById("medicEditMedicCount").value, 0, 99);
   s.accidentCount = clampInt(document.getElementById("medicEditAccidentCount").value, 0, 99);
   s.egg = document.getElementById("medicEditEgg").value.slice(0, 300);
@@ -8426,7 +8609,7 @@ document.addEventListener("click", function(e){
 
 // 行動計數：行動成功時由主程式呼叫（+1）；撤銷行動時呼叫（-1）。回傳 false 代表找不到這位隊員
 function adjustCount(id, field, delta){
-  if(field !== "medicCount" && field !== "accidentCount") return false;
+  if(field !== "medicCount" && field !== "accidentCount" && field !== "bandages" && field !== "syringes") return false;
   const s = subjects.find(x => x.id === id);
   if(!s) return false;
   s[field] = Math.max(0, Math.min(99, (Number(s[field]) || 0) + delta));
