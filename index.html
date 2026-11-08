@@ -4166,11 +4166,13 @@ const Auth=(function(){
   let killOv=null,killItems=[];
   function drawKill(){
     if(!killOv) return;
-    const n=killItems.length;
+        const grp=k=>killItems.filter(x=>(x.k||"kill")===k);
+    const block=(k,title)=>{ const a=grp(k); if(!a.length) return "";
+      return '<div class="target-report killed"><div class="modal-title">'+title+(a.length>1?'（共 '+a.length+' 則）':'')+'</div>'
+        +a.map(x=>'<div class="result-line" style="margin-bottom:8px">'+esc(x.msg).replace(/\n/g,"<br>")+'</div>').join("")+'</div>'; };
     killOv.innerHTML='<div class="modal-box"><div class="reveal-box kill" id="killBox">'
       +'<div class="modal-eyebrow">通知</div>'
-      +'<div class="target-report killed"><div class="modal-title">☠ 你的角色被擊殺'+(n>1?'（共 '+n+' 則）':'')+'</div>'
-      +killItems.map(x=>'<div class="result-line" style="margin-bottom:8px">'+esc(x.msg).replace(/\n/g,"<br>")+'</div>').join("")+'</div>'
+      +block("kill","☠ 你的角色被擊殺")+block("mad","你的角色陷入瘋狂")
       +'<button class="confirm-btn" id="killOk">確認</button></div></div>';
     const ok=killOv.querySelector("#killOk");
     const done=()=>{
@@ -4214,11 +4216,11 @@ const Auth=(function(){
         inbox=list; inboxInit=true; updateBadge();
         const viewing=isOpen()&&view==="inbox";
         if(first){
-          const un=inbox.filter(x=>!x.r), ks=un.filter(x=>x.k==="kill").slice(0,5);
-          if(ks.length) showKill(ks);   // 你不在的時候被擊殺的，一進來就先告訴你
+          const un=inbox.filter(x=>!x.r), ks=un.filter(x=>x.k==="kill"||x.k==="mad").slice(0,5);
+          if(ks.length) showKill(ks);   // 你不在的時候被擊殺／瘋狂的，一進來就先告訴你
           const n=un.length-ks.length; if(n>0) toast("信箱","你有 "+n+" 則未讀通知",true);
         }else{
-          const ks=fresh.filter(x=>x.k==="kill"), rest=fresh.filter(x=>x.k!=="kill");
+          const isBig=x=>x.k==="kill"||x.k==="mad", ks=fresh.filter(isBig), rest=fresh.filter(x=>!isBig(x));
           if(ks.length) showKill(ks);
           if(rest.length&&!viewing){
             const x=rest[0], m=NOTI[x.k]||NOTI.evt;
@@ -8707,6 +8709,7 @@ const subjects=[
   {id:"040",name:"OZ",avatarUrl:null,supportCount:0,tortureCount:0,owner:null}
 ];
 const find=id=>subjects.find(s=>s.id===id);
+const SPONSOR_NOTE_DEFAULT="感謝資助者的支持。";
 const KEY="bloodpool_sponsor_subjects_v1";
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
@@ -8736,6 +8739,7 @@ function mergeRemote(list){
       const av=r.avatarUrl!==undefined?r.avatarUrl:null;
       if(s.avatarUrl!==av){s.avatarUrl=av;changed=true}
       const ne=r.egg||"";if((s.egg||"")!==ne){if(ne)s.egg=ne;else delete s.egg;changed=true}
+      const nt=r.note||"";if((s.note||"")!==nt){if(nt)s.note=nt;else delete s.note;changed=true}
       ["supportCount","tortureCount"].forEach(f=>{const nv=r[f]!==undefined?r[f]:0;if((s[f]||0)!==nv){s[f]=nv;changed=true}});
       const nn=(r.name&&r.codeName===CODE_NAMES[s.id])?r.name:CODE_NAMES[s.id];
       if(s.name!==nn){s.name=nn;changed=true}
@@ -8744,6 +8748,7 @@ function mergeRemote(list){
       const nv={avatarUrl:null,...r};
       Object.keys(nv).forEach(f=>{if(s[f]!==nv[f]){s[f]=nv[f];changed=true}});
       if(!r.egg&&s.egg){delete s.egg;changed=true}
+      if(!r.note&&s.note){delete s.note;changed=true}
     }
     delete byId[s.id];
   }
@@ -8756,7 +8761,7 @@ function mergeRemote(list){
   });
   return changed;
 }
-function toRecord(s){if(s.deleted)return s;if(!CODE_IDS.has(s.id))return s;const o={id:s.id,name:s.name,codeName:CODE_NAMES[s.id],avatarUrl:s.avatarUrl,owner:s.owner,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0};if(s.egg)o.egg=s.egg;return o}
+function toRecord(s){if(s.deleted)return s;if(!CODE_IDS.has(s.id))return s;const o={id:s.id,name:s.name,codeName:CODE_NAMES[s.id],avatarUrl:s.avatarUrl,owner:s.owner,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0};if(s.egg)o.egg=s.egg;if(s.note)o.note=s.note;return o}
 function saveState(){
   if(SharedStore.save(KEY,subjects.concat(tombstones),{toRecord,canDelete:id=>!CODE_IDS.has(id)}))return;
   try{localStorage.setItem(KEY,JSON.stringify(subjects.concat(tombstones)))}catch(e){console.warn("local save failed",e)}
@@ -8788,7 +8793,7 @@ function renderGrid(){
         :`<div class="avatar-shape avatar-empty" ${avatar} title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>`)+
       `<div class="codename">${s.name}</div></div>`+
       '<div class="item-count">繃帶 <b>∞</b>　／　針筒 <b>∞</b>　　　資助 x<b>'+(s.supportCount||0)+'</b>／折磨 x<b>'+(s.tortureCount||0)+'</b></div>'+
-      '<div class="note">感謝資助者的支持。</div>'+
+      '<div class="note">'+esc(s.note||SPONSOR_NOTE_DEFAULT)+'</div>'+
       `<button class="edit-btn" onclick="sponsorApp.openEdit('${s.id}')" title="編輯">${EDIT_ICON}</button>`;
     card.addEventListener("click", e => {
       if(e.target.closest(".avatar-shape,.edit-btn")) return;
@@ -8812,7 +8817,7 @@ function openEdit(id){
   if(!Auth.canEdit(subjects.find(s=>s.id===id))) return;
   editId=id;
   const s=find(id);
-  modalBody.innerHTML=`<div class="modal-eyebrow">編輯資助者資料</div><div class="modal-title">編輯資料</div><span class="field-label">名稱</span><input type="text" class="text-input" id="spEditName" value="${esc(s.name)}" maxlength="20"><div class="field-row"><div><span class="field-label">資助次數</span><input type="number" class="text-input" id="spEditSupport" value="${s.supportCount||0}" min="0" max="99"></div><div><span class="field-label">折磨次數</span><input type="number" class="text-input" id="spEditTorture" value="${s.tortureCount||0}" min="0" max="99"></div></div><span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span><textarea class="text-input" id="spEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">${esc(s.egg||"")}</textarea><button class="confirm-btn" onclick="sponsorApp.saveEdit()">儲存</button><button class="modify-btn" onclick="sponsorApp.closeModal()">取消</button><button class="danger-btn" onclick="sponsorApp.openDeleteConfirm()">刪除此資助者</button>`;
+  modalBody.innerHTML=`<div class="modal-eyebrow">編輯資助者資料</div><div class="modal-title">編輯資料</div><span class="field-label">名稱</span><input type="text" class="text-input" id="spEditName" value="${esc(s.name)}" maxlength="20"><div class="field-row"><div><span class="field-label">資助次數</span><input type="number" class="text-input" id="spEditSupport" value="${s.supportCount||0}" min="0" max="99"></div><div><span class="field-label">折磨次數</span><input type="number" class="text-input" id="spEditTorture" value="${s.tortureCount||0}" min="0" max="99"></div></div><span class="field-label">台詞（顯示在卡片上，留空會恢復預設）</span><input type="text" class="text-input" id="spEditNote" value="${esc(s.note||SPONSOR_NOTE_DEFAULT)}" maxlength="80" placeholder="${SPONSOR_NOTE_DEFAULT}"><span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span><textarea class="text-input" id="spEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">${esc(s.egg||"")}</textarea><button class="confirm-btn" onclick="sponsorApp.saveEdit()">儲存</button><button class="modify-btn" onclick="sponsorApp.closeModal()">取消</button><button class="danger-btn" onclick="sponsorApp.openDeleteConfirm()">刪除此資助者</button>`;
   modal.classList.add("open");
 }
 function openDeleteConfirm(){
@@ -8829,6 +8834,8 @@ function saveEdit(){
   s.supportCount=_ci($("spEditSupport").value);
   s.tortureCount=_ci($("spEditTorture").value);
   s.egg=$("spEditEgg").value.slice(0,300);
+  const _note=$("spEditNote").value.trim().slice(0,80);
+  if(_note&&_note!==SPONSOR_NOTE_DEFAULT)s.note=_note;else delete s.note;   // 空白或跟預設一樣就不存，維持預設
   if(window.SharedStore)SharedStore.logEdit("資助者","資助者——"+_before.name,_before,{name:s.name,supportCount:s.supportCount,tortureCount:s.tortureCount,egg:s.egg||""});
   renderGrid();
   closeModal();
