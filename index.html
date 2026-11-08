@@ -3913,7 +3913,9 @@ const SharedStore = (function(){
     const adminSubs = [];
     const fmt = e => {
       const t = e.ts ? new Date(e.ts).toLocaleString("zh-TW", {hour12:false, year:"numeric", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit"}) : "—";
-      return {k: e._k, t: t, g: e.g || "", msg: e.msg || "", dead: !!e.dead, u: !!e.ud};
+      // 擊殺（dead）與致瘋用同一個紅底樣式；舊的致瘋紀錄沒有 dead 標記，所以也用訊息內容判斷
+      const isMad = /陷入瘋狂（SAN歸零）。$/.test(e.msg || "");
+      return {k: e._k, t: t, g: e.g || "", msg: e.msg || "", dead: !!e.dead || isMad, u: !!e.ud};
     };
     let editKey = null, editText = "", delArmed = false, undoBusy = false;
     const draw = () => {
@@ -9189,6 +9191,44 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   cancelBtn.addEventListener("click",closeForm);
   ov.addEventListener("click",e=>{ if(e.target===ov) closeForm(); });
   ta.addEventListener("input",()=>{ cnt.textContent=ta.value.length+" / 200"; });
+  // 彩蛋：投稿內容出現「陳粟」（匿名／實名／角色都一樣）就跳出視窗，樣式跟擊殺通知相同
+  function chenSuEgg(){
+    if(document.getElementById("chenSuEgg")) return;
+    const ov2=document.createElement("div");
+    ov2.id="chenSuEgg"; ov2.className="modal-overlay open"; ov2.style.zIndex="100001";
+    ov2.innerHTML='<div class="modal-box"><div class="reveal-box kill" id="chenSuBox"></div></div>';
+    document.body.appendChild(ov2);
+    const box=()=>ov2.querySelector("#chenSuBox");
+    const close=()=>{ ov2.remove(); };
+    const alive=()=>ov2.isConnected;
+    const set=h=>{ box().innerHTML=h; };
+    const LETTER_A="不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以", LETTER_B="不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以不可以";
+    const RED=txt=>'<div class="target-report killed"><div class="result-line" style="line-height:1.9;word-break:break-all;max-height:55vh;overflow:auto">'+txt+'</div></div>';
+    // 4. 信的內容（選「是」，或選「否」之後手不受控地打開，都會來到這裡）
+    function letter(){
+      set(RED(LETTER_A+" 我做鬼也不會放過妳，我們會……永遠在一起直到世界的消散 "+LETTER_B)+'<button class="confirm-btn" id="chenClose">闔上信</button>');
+      box().querySelector("#chenClose").onclick=close;
+    }
+    // 3. 選「否」：沒得選，自動打開
+    function noChoice(){
+      set(RED("你別無選擇，手不受控的打開了信"));
+      setTimeout(()=>{ if(alive()) letter(); },2400);
+    }
+    // 2. 信封表面＋「是否打開」
+    function surface(){
+      set(RED("我已經許久沒見到你了，你說死亡能把我們分開嗎……")
+        +'<div id="chenAsk" style="opacity:0;transition:opacity .9s ease"><div class="modal-title" style="margin:6px 0 12px">是否打開</div>'
+        +'<div style="display:flex;gap:10px"><button class="confirm-btn" id="chenYes" style="flex:1">是</button><button class="confirm-btn" id="chenNo" style="flex:1">否</button></div></div>');
+      box().querySelector("#chenYes").onclick=letter;
+      box().querySelector("#chenNo").onclick=noChoice;
+      setTimeout(()=>{ const q=alive()&&ov2.querySelector("#chenAsk"); if(q) q.style.opacity="1"; },1200);
+    }
+    // 1. 一封未被寄出的信
+    set('<div class="target-report killed"><div class="modal-title">【一封未被寄出的信】</div></div><button class="confirm-btn" id="chenSuOk">拿起信封</button>');
+    box().querySelector("#chenSuOk").onclick=surface;
+    ov2.onclick=e=>{ if(e.target===ov2) close(); };
+    requestAnimationFrame(()=>setTimeout(()=>{ const b=box(); if(b) b.classList.add("show"); try{ if(typeof flashScreen==="function") flashScreen(); }catch(_){} },60));
+  }
   send.addEventListener("click",()=>{
     if(!window.Auth||!Auth.requireLogin()) return;
     const t=ta.value.trim();
@@ -9211,7 +9251,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       const up={}; up[PATH+"/"+key]=rec; up[OWN+"/"+key]=uid; up[MINE+"/"+uid+"/"+key]=true;
       job=d.ref().update(up).then(()=>{ lastSend=Date.now(); });
     }
-    job.then(()=>{ ta.value=""; cnt.textContent="0 / 200"; closeForm(); })
+    job.then(()=>{ ta.value=""; cnt.textContent="0 / 200"; closeForm(); if(t.indexOf("陳粟")>-1) chenSuEgg(); })
       .catch(e=>alert((editKey?"儲存失敗：":"投遞失敗：")+(e.code||e.message)))
       .then(()=>{ send.disabled=false; });
   });
