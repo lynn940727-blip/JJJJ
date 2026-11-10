@@ -1339,13 +1339,14 @@
 
   .item-count b{color:#aa9f90;}
 
-  .link-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-  .link-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
-    color:var(--bone-dim);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px 2px 7px;
-    background:rgba(255,255,255,.03);transition:color .15s,border-color .15s,background .15s;}
-  .link-tag:hover,.link-tag:focus-visible{color:#fff;border-color:currentColor;background:rgba(255,255,255,.08);}
-  .link-tag.fb:hover{color:#6fa3f7;}
-  .link-tag.cloud:hover{color:#7fd0e6;}
+  .link-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;}
+  .link-tag,.link-tag:visited{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.05em;
+    color:var(--bone);text-decoration:none;border:1px solid #7a6f66;border-radius:999px;padding:3px 11px 3px 8px;
+    background:#2a201e;-webkit-tap-highlight-color:transparent;transition:color .12s,border-color .12s,background .12s;}
+  /* 滑過／按下／鍵盤聚焦：鮮紅色（不會變藍） */
+  .link-tag:hover,.link-tag:active,.link-tag:focus,.link-tag:focus-visible{color:#ff2b3d;border-color:#ff2b3d;background:#3a1216;outline:none;}
+  /* 「跑劇情，互動前先詢問」：不是連結，只是提示標籤 */
+  .link-tag.story,.link-tag.story:hover,.link-tag.story:active{color:#ff6b78;border-color:#9a2f39;background:#2e1215;cursor:default;}
 
 
   /* ---------- MODAL ---------- */
@@ -3150,15 +3151,16 @@
     const f = window.__safeUrl(fb), c = window.__safeUrl(cd);
     return {fb: f, card: c, bad: !!((fb.trim() && !f) || (cd.trim() && !c))};
   };
-  window.__linkTags = function(s){
-    const fb = window.__safeUrl(s && s.fbUrl), cd = window.__safeUrl(s && s.cardUrl);
-    if(!fb && !cd) return "";
+  window.__linkTags = function(s, withStory){
+    const fb = window.__safeUrl(s && s.fbUrl), cd = window.__safeUrl(s && s.cardUrl), story = !!(withStory && s && s.storyAsk);
+    if(!fb && !cd && !story) return "";
     const esc = x => String(x).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     const tag = (u, cls, path, txt) => '<a class="link-tag ' + cls + '" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" title="' + txt + '">' +
       '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="' + path + '"/></svg>' + txt + '</a>';
     return '<div class="link-tags">' +
       (fb ? tag(fb, "fb", "M13.5 21v-7.5h2.5l.5-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z", "FB") : "") +
       (cd ? tag(cd, "cloud", "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z", "角卡") : "") +
+      (story ? '<span class="link-tag story" title="跑劇情，互動前先詢問"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>跑劇情，互動前先詢問</span>' : "") +
     '</div>';
   };
 
@@ -5383,6 +5385,7 @@ function mergeRemote(list){
       if((s.egg || "") !== ne){ if(ne) s.egg = ne; else delete s.egg; changed = true; }
       // FB／角卡連結：以資料庫為準，別的裝置清空也要跟著清空
       ["fbUrl", "cardUrl"].forEach(k => { const nl = r[k] || ""; if((s[k] || "") !== nl){ if(nl) s[k] = nl; else delete s[k]; changed = true; } });
+      { const ns = !!r.storyAsk; if(!!s.storyAsk !== ns){ if(ns) s.storyAsk = true; else delete s.storyAsk; changed = true; } }   // 跑劇情標籤
       // 名字：網頁上改過的會保留；但程式裡這個人的名字被改過，就以程式為準
       const nn = (r.name && r.codeName === CODE_NAMES[s.id]) ? r.name : CODE_NAMES[s.id];
       if(s.name !== nn){ s.name = nn; changed = true; }
@@ -5395,6 +5398,7 @@ function mergeRemote(list){
       });
       if(!r.egg && s.egg){ delete s.egg; changed = true; }   // 別的裝置清空了隱藏台詞
       ["fbUrl", "cardUrl"].forEach(k => { if(!r[k] && s[k]){ delete s[k]; changed = true; } });
+      if(!r.storyAsk && s.storyAsk){ delete s.storyAsk; changed = true; }
     }
     delete byId[s.id];
   }
@@ -5416,6 +5420,7 @@ function toRecord(s){
   if(s.egg) o.egg = s.egg;   // 隱藏台詞也要同步（空的就不存）
   if(s.fbUrl) o.fbUrl = s.fbUrl;
   if(s.cardUrl) o.cardUrl = s.cardUrl;
+  if(s.storyAsk) o.storyAsk = true;
   return o;
 }
 
@@ -5515,7 +5520,7 @@ function renderGrid(){
         (s.avatarUrl ? '<div class="avatar-shape avatar-square has-avatar" onclick="openAvatarModal(\'' + s.id + '\')" title="點擊編輯頭像"><img src="' + s.avatarUrl + '" alt=""></div>' : '<div class="avatar-shape avatar-square avatar-empty" onclick="openAvatarModal(\'' + s.id + '\')" title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>') +
         '<div class="codename">' + s.name + '</div>' +
       '</div>' +
-      window.__linkTags(s) +
+      window.__linkTags(s, true) +
       '<div class="stat-row">' +
         '<div class="stat-label"><span>HP</span><span>' + s.hp + '/3</span></div>' +
         '<div class="segs">' + segBar(s.hp, "hp") + '</div>' +
@@ -7099,7 +7104,7 @@ let editDraft = null;   // 編輯中的暫存值：按「儲存」才會寫進�
 
 function snapOfSubject(s){
   return {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes,
-          deathCount: s.deathCount, madCount: s.madCount, statuses: (s.statuses || []).slice(), egg: s.egg || "", fbUrl: s.fbUrl || "", cardUrl: s.cardUrl || ""};
+          deathCount: s.deathCount, madCount: s.madCount, statuses: (s.statuses || []).slice(), egg: s.egg || "", fbUrl: s.fbUrl || "", cardUrl: s.cardUrl || "", storyAsk: !!s.storyAsk};
 }
 
 function captureDraft(){
@@ -7116,6 +7121,7 @@ function captureDraft(){
   editDraft.egg = g("editEgg").value;
   editDraft.fbUrl = g("editFb").value;
   editDraft.cardUrl = g("editCard").value;
+  editDraft.storyAsk = g("editStory").checked;
 }
 
 function openEditModal(id){ if(!Auth.canEdit(subjects.find(s=>s.id===id))) return;
@@ -7166,6 +7172,7 @@ function renderEditForm(){
     '<input type="text" class="text-input" id="editFb" value="' + escapeHTML(d.fbUrl || "") + '" maxlength="300" placeholder="https://www.facebook.com/…">' +
     '<span class="field-label">角卡連結（雲端，可留空）</span>' +
     '<input type="text" class="text-input" id="editCard" value="' + escapeHTML(d.cardUrl || "") + '" maxlength="300" placeholder="https://drive.google.com/…">' +
+    '<label style="display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:13px;color:var(--bone);cursor:pointer"><input type="checkbox" id="editStory"' + (d.storyAsk ? ' checked' : '') + '> 顯示標籤「跑劇情，互動前先詢問」</label>' +
     '<span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span>' +
     '<textarea class="text-input" id="editEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">' + escapeHTML(d.egg || "") + '</textarea>' +
     '<button class="confirm-btn" onclick="saveEdit()">儲存</button>' +
@@ -7253,6 +7260,7 @@ function saveEdit(){
   s.egg = document.getElementById("editEgg").value.slice(0, 300);
   if(_lk.fb) s.fbUrl = _lk.fb; else delete s.fbUrl;
   if(_lk.card) s.cardUrl = _lk.card; else delete s.cardUrl;
+  if(document.getElementById("editStory").checked) s.storyAsk = true; else delete s.storyAsk;
   if(before) SharedStore.logEdit("實驗體", "實驗體" + before.id + "——" + before.name, before, snapOfSubject(s));
   editSnap = null; editDraft = null;
   renderGrid();
