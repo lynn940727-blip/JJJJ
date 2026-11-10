@@ -1339,6 +1339,14 @@
 
   .item-count b{color:#aa9f90;}
 
+  .link-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .link-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+    color:var(--bone-dim);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px 2px 7px;
+    background:rgba(255,255,255,.03);transition:color .15s,border-color .15s,background .15s;}
+  .link-tag:hover,.link-tag:focus-visible{color:#fff;border-color:currentColor;background:rgba(255,255,255,.08);}
+  .link-tag.fb:hover{color:#6fa3f7;}
+  .link-tag.cloud:hover{color:#7fd0e6;}
+
 
   /* ---------- MODAL ---------- */
 
@@ -3126,6 +3134,33 @@
     }, 1150);               // 跟淡出的 transition 時間對齊，動畫播完才清空文字
   }
   overlay.addEventListener("click", closeEgg);
+
+  // 角色卡的 FB／角卡連結：只接受 http(s)，沒寫開頭的會自動補 https://
+  window.__safeUrl = function(u){
+    u = String(u == null ? "" : u).trim().slice(0, 300);
+    if(!u || /\s/.test(u)) return "";
+    if(/^https?:\/\/[^\/]+/i.test(u)) return u;
+    if(/^[a-z][a-z0-9+.-]*:/i.test(u)) return "";   // javascript: 之類的一律不收
+    if(/^[^\/]+\.[^\/]+/.test(u)) return "https://" + u;
+    return "";
+  };
+  // 讀編輯視窗的兩個連結欄位。bad = 有填但格式不對
+  window.__readLinks = function(fbId, cardId){
+    const fb = (document.getElementById(fbId) || {}).value || "", cd = (document.getElementById(cardId) || {}).value || "";
+    const f = window.__safeUrl(fb), c = window.__safeUrl(cd);
+    return {fb: f, card: c, bad: !!((fb.trim() && !f) || (cd.trim() && !c))};
+  };
+  window.__linkTags = function(s){
+    const fb = window.__safeUrl(s && s.fbUrl), cd = window.__safeUrl(s && s.cardUrl);
+    if(!fb && !cd) return "";
+    const esc = x => String(x).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const tag = (u, cls, path, txt) => '<a class="link-tag ' + cls + '" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" title="' + txt + '">' +
+      '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="' + path + '"/></svg>' + txt + '</a>';
+    return '<div class="link-tags">' +
+      (fb ? tag(fb, "fb", "M13.5 21v-7.5h2.5l.5-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z", "FB") : "") +
+      (cd ? tag(cd, "cloud", "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z", "角卡") : "") +
+    '</div>';
+  };
 
   window.__showEgg = function(raw){
     const text = String(raw || "").trim();
@@ -5346,6 +5381,8 @@ function mergeRemote(list){
       // 隱藏台詞（egg）：以資料庫為準，別的裝置清空也要跟著清空
       const ne = r.egg || "";
       if((s.egg || "") !== ne){ if(ne) s.egg = ne; else delete s.egg; changed = true; }
+      // FB／角卡連結：以資料庫為準，別的裝置清空也要跟著清空
+      ["fbUrl", "cardUrl"].forEach(k => { const nl = r[k] || ""; if((s[k] || "") !== nl){ if(nl) s[k] = nl; else delete s[k]; changed = true; } });
       // 名字：網頁上改過的會保留；但程式裡這個人的名字被改過，就以程式為準
       const nn = (r.name && r.codeName === CODE_NAMES[s.id]) ? r.name : CODE_NAMES[s.id];
       if(s.name !== nn){ s.name = nn; changed = true; }
@@ -5357,6 +5394,7 @@ function mergeRemote(list){
         if(JSON.stringify(s[f]) !== JSON.stringify(nv[f])){ s[f] = nv[f]; changed = true; }
       });
       if(!r.egg && s.egg){ delete s.egg; changed = true; }   // 別的裝置清空了隱藏台詞
+      ["fbUrl", "cardUrl"].forEach(k => { if(!r[k] && s[k]){ delete s[k]; changed = true; } });
     }
     delete byId[s.id];
   }
@@ -5376,6 +5414,8 @@ function toRecord(s){
   const o = {id: s.id, name: s.name, codeName: CODE_NAMES[s.id]};
   RUNTIME_FIELDS.forEach(f => { o[f] = s[f]; });
   if(s.egg) o.egg = s.egg;   // 隱藏台詞也要同步（空的就不存）
+  if(s.fbUrl) o.fbUrl = s.fbUrl;
+  if(s.cardUrl) o.cardUrl = s.cardUrl;
   return o;
 }
 
@@ -5475,6 +5515,7 @@ function renderGrid(){
         (s.avatarUrl ? '<div class="avatar-shape avatar-square has-avatar" onclick="openAvatarModal(\'' + s.id + '\')" title="點擊編輯頭像"><img src="' + s.avatarUrl + '" alt=""></div>' : '<div class="avatar-shape avatar-square avatar-empty" onclick="openAvatarModal(\'' + s.id + '\')" title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>') +
         '<div class="codename">' + s.name + '</div>' +
       '</div>' +
+      window.__linkTags(s) +
       '<div class="stat-row">' +
         '<div class="stat-label"><span>HP</span><span>' + s.hp + '/3</span></div>' +
         '<div class="segs">' + segBar(s.hp, "hp") + '</div>' +
@@ -5489,7 +5530,7 @@ function renderGrid(){
         '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg>' +
       '</button>';
     card.addEventListener("click", e => {
-      if(e.target.closest(".avatar-shape,.edit-btn")) return;
+      if(e.target.closest(".avatar-shape,.edit-btn,.link-tag")) return;
       window.__eggTap("exp-" + s.id, s.egg);
     });
     grid.appendChild(card);
@@ -7058,7 +7099,7 @@ let editDraft = null;   // 編輯中的暫存值：按「儲存」才會寫進�
 
 function snapOfSubject(s){
   return {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes,
-          deathCount: s.deathCount, madCount: s.madCount, statuses: (s.statuses || []).slice(), egg: s.egg || ""};
+          deathCount: s.deathCount, madCount: s.madCount, statuses: (s.statuses || []).slice(), egg: s.egg || "", fbUrl: s.fbUrl || "", cardUrl: s.cardUrl || ""};
 }
 
 function captureDraft(){
@@ -7073,6 +7114,8 @@ function captureDraft(){
   editDraft.deathCount = g("editDeathCount").value;
   editDraft.madCount = g("editMadCount").value;
   editDraft.egg = g("editEgg").value;
+  editDraft.fbUrl = g("editFb").value;
+  editDraft.cardUrl = g("editCard").value;
 }
 
 function openEditModal(id){ if(!Auth.canEdit(subjects.find(s=>s.id===id))) return;
@@ -7119,6 +7162,10 @@ function renderEditForm(){
       '<input type="text" class="text-input" id="editStatusInput" placeholder="輸入新狀態名稱" maxlength="50">' +
       '<button class="modify-btn small" onclick="addEditStatus()">新增狀態</button>' +
     '</div>' +
+    '<span class="field-label">FB 連結（可留空）</span>' +
+    '<input type="text" class="text-input" id="editFb" value="' + escapeHTML(d.fbUrl || "") + '" maxlength="300" placeholder="https://www.facebook.com/…">' +
+    '<span class="field-label">角卡連結（雲端，可留空）</span>' +
+    '<input type="text" class="text-input" id="editCard" value="' + escapeHTML(d.cardUrl || "") + '" maxlength="300" placeholder="https://drive.google.com/…">' +
     '<span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span>' +
     '<textarea class="text-input" id="editEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">' + escapeHTML(d.egg || "") + '</textarea>' +
     '<button class="confirm-btn" onclick="saveEdit()">儲存</button>' +
@@ -7184,6 +7231,8 @@ function clampInt(val, min, max){
 }
 
 function saveEdit(){
+  const _lk = window.__readLinks("editFb", "editCard");
+  if(_lk.bad){ alert("連結格式不正確，請貼上完整網址（例如 https://…）。"); return; }
   SharedStore.setCtx("手動編輯（編輯視窗）");
   const s = subjects.find(x => x.id === editId);
   const before = editSnap;
@@ -7202,6 +7251,8 @@ function saveEdit(){
   if(oldHp > 0 && s.hp === 0 && s.deathCount === oldDeath) s.deathCount = Math.min(99, oldDeath + 1);
   if(oldSan > 0 && s.san === 0 && s.madCount === oldMad) s.madCount = Math.min(99, oldMad + 1);
   s.egg = document.getElementById("editEgg").value.slice(0, 300);
+  if(_lk.fb) s.fbUrl = _lk.fb; else delete s.fbUrl;
+  if(_lk.card) s.cardUrl = _lk.card; else delete s.cardUrl;
   if(before) SharedStore.logEdit("實驗體", "實驗體" + before.id + "——" + before.name, before, snapOfSubject(s));
   editSnap = null; editDraft = null;
   renderGrid();
@@ -8007,6 +8058,8 @@ function mergeRemote(list){
       // 隱藏台詞（egg）：以資料庫為準，別的裝置清空也要跟著清空
       const ne = r.egg || "";
       if((s.egg || "") !== ne){ if(ne) s.egg = ne; else delete s.egg; changed = true; }
+      // FB／角卡連結：以資料庫為準，別的裝置清空也要跟著清空
+      ["fbUrl", "cardUrl"].forEach(k => { const nl = r[k] || ""; if((s[k] || "") !== nl){ if(nl) s[k] = nl; else delete s[k]; changed = true; } });
       const nn = (r.name && r.codeName === CODE_NAMES[s.id]) ? r.name : CODE_NAMES[s.id];
       if(s.name !== nn){ s.name = nn; changed = true; }
     } else {
@@ -8016,6 +8069,7 @@ function mergeRemote(list){
         if(JSON.stringify(s[f]) !== JSON.stringify(nv[f])){ s[f] = nv[f]; changed = true; }
       });
       if(!r.egg && s.egg){ delete s.egg; changed = true; }   // 別的裝置清空了隱藏台詞
+      ["fbUrl", "cardUrl"].forEach(k => { if(!r[k] && s[k]){ delete s[k]; changed = true; } });
     }
     delete byId[s.id];
   }
@@ -8035,6 +8089,8 @@ function toRecord(s){
   const o = {id: s.id, name: s.name, codeName: CODE_NAMES[s.id]};
   RUNTIME_FIELDS.forEach(f => { o[f] = s[f]; });
   if(s.egg) o.egg = s.egg;   // 隱藏台詞也要同步（空的就不存）
+  if(s.fbUrl) o.fbUrl = s.fbUrl;
+  if(s.cardUrl) o.cardUrl = s.cardUrl;
   return o;
 }
 
@@ -8134,6 +8190,7 @@ function renderGrid(){
         (s.avatarUrl ? '<div class="avatar-shape avatar-square has-avatar" onclick="medicApp.openAvatarModal(\'' + s.id + '\')" title="點擊編輯頭像"><img src="' + s.avatarUrl + '" alt=""></div>' : '<div class="avatar-shape avatar-square avatar-empty" onclick="medicApp.openAvatarModal(\'' + s.id + '\')" title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>') +
         '<div class="codename">' + s.name + '</div>' +
       '</div>' +
+      window.__linkTags(s) +
       '<div class="stat-row">' +
         '<div class="stat-label"><span>HP</span><span>' + hp + '/3</span></div>' +
         '<div class="segs">' + segBar(hp, "hp") + '</div>' +
@@ -8146,7 +8203,7 @@ function renderGrid(){
       '<div class="note">' + noteHTML + '</div>' +
       '<button class="edit-btn" onclick="medicApp.openEditModal(\'' + s.id + '\')" title="編輯"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg></button>';
     card.addEventListener("click", e => {
-      if(e.target.closest(".avatar-shape,.edit-btn")) return;
+      if(e.target.closest(".avatar-shape,.edit-btn,.link-tag")) return;
       window.__eggTap("med-" + s.id, s.egg);
     });
     grid.appendChild(card);
@@ -8195,6 +8252,10 @@ function renderEditForm(){
     '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="medicEditSyringes" value="' + s.syringes + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0)) + '"></div></div>' +
     '<div class="field-row"><div><span class="field-label">醫療次數</span><input type="number" class="text-input" id="medicEditMedicCount" value="' + (s.medicCount || 0) + '" min="0" max="99"></div>' +
     '<div><span class="field-label">事故次數</span><input type="number" class="text-input" id="medicEditAccidentCount" value="' + (s.accidentCount || 0) + '" min="0" max="99"></div></div>' +
+    '<span class="field-label">FB 連結（可留空）</span>' +
+    '<input type="text" class="text-input" id="medicEditFb" value="' + escapeHTML(s.fbUrl || "") + '" maxlength="300" placeholder="https://www.facebook.com/…">' +
+    '<span class="field-label">角卡連結（雲端，可留空）</span>' +
+    '<input type="text" class="text-input" id="medicEditCard" value="' + escapeHTML(s.cardUrl || "") + '" maxlength="300" placeholder="https://drive.google.com/…">' +
     '<span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span>' +
     '<textarea class="text-input" id="medicEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">' + escapeHTML(s.egg || "") + '</textarea>' +
     '<button class="confirm-btn" onclick="medicApp.saveEdit()">儲存</button><button class="modify-btn" onclick="medicApp.closeModal()">取消</button>' +
@@ -8223,6 +8284,8 @@ function clampInt(val, min, max){
 }
 
 function saveEdit(){
+  const _lk = window.__readLinks("medicEditFb", "medicEditCard");
+  if(_lk.bad){ alert("連結格式不正確，請貼上完整網址（例如 https://…）。"); return; }
   const s = subjects.find(x => x.id === editId);
   const _before = {name: s.name, hp: typeof s.hp === "number" ? s.hp : 3, san: typeof s.san === "number" ? s.san : 3, bandages: s.bandages, syringes: s.syringes, medicCount: s.medicCount || 0, accidentCount: s.accidentCount || 0, egg: s.egg || ""};
   const name = document.getElementById("medicEditName").value.trim();
@@ -8234,6 +8297,8 @@ function saveEdit(){
   s.medicCount = clampInt(document.getElementById("medicEditMedicCount").value, 0, 99);
   s.accidentCount = clampInt(document.getElementById("medicEditAccidentCount").value, 0, 99);
   s.egg = document.getElementById("medicEditEgg").value.slice(0, 300);
+  if(_lk.fb) s.fbUrl = _lk.fb; else delete s.fbUrl;
+  if(_lk.card) s.cardUrl = _lk.card; else delete s.cardUrl;
   if(window.SharedStore) SharedStore.logEdit("醫療清潔部隊", "醫療清潔部隊——" + _before.name, _before, {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes, medicCount: s.medicCount, accidentCount: s.accidentCount, egg: s.egg || ""});
   renderGrid();
   closeModal();
@@ -8767,6 +8832,7 @@ function mergeRemote(list){
       if(s.avatarUrl!==av){s.avatarUrl=av;changed=true}
       const ne=r.egg||"";if((s.egg||"")!==ne){if(ne)s.egg=ne;else delete s.egg;changed=true}
       const nt=r.note||"";if((s.note||"")!==nt){if(nt)s.note=nt;else delete s.note;changed=true}
+      ["fbUrl","cardUrl"].forEach(k=>{const nl=r[k]||"";if((s[k]||"")!==nl){if(nl)s[k]=nl;else delete s[k];changed=true}});
       ["supportCount","tortureCount"].forEach(f=>{const nv=r[f]!==undefined?r[f]:0;if((s[f]||0)!==nv){s[f]=nv;changed=true}});
       const nn=(r.name&&r.codeName===CODE_NAMES[s.id])?r.name:CODE_NAMES[s.id];
       if(s.name!==nn){s.name=nn;changed=true}
@@ -8776,6 +8842,7 @@ function mergeRemote(list){
       Object.keys(nv).forEach(f=>{if(s[f]!==nv[f]){s[f]=nv[f];changed=true}});
       if(!r.egg&&s.egg){delete s.egg;changed=true}
       if(!r.note&&s.note){delete s.note;changed=true}
+      ["fbUrl","cardUrl"].forEach(k=>{if(!r[k]&&s[k]){delete s[k];changed=true}});
     }
     delete byId[s.id];
   }
@@ -8788,7 +8855,7 @@ function mergeRemote(list){
   });
   return changed;
 }
-function toRecord(s){if(s.deleted)return s;if(!CODE_IDS.has(s.id))return s;const o={id:s.id,name:s.name,codeName:CODE_NAMES[s.id],avatarUrl:s.avatarUrl,owner:s.owner,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0};if(s.egg)o.egg=s.egg;if(s.note)o.note=s.note;return o}
+function toRecord(s){if(s.deleted)return s;if(!CODE_IDS.has(s.id))return s;const o={id:s.id,name:s.name,codeName:CODE_NAMES[s.id],avatarUrl:s.avatarUrl,owner:s.owner,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0};if(s.egg)o.egg=s.egg;if(s.note)o.note=s.note;if(s.fbUrl)o.fbUrl=s.fbUrl;if(s.cardUrl)o.cardUrl=s.cardUrl;return o}
 function saveState(){
   if(SharedStore.save(KEY,subjects.concat(tombstones),{toRecord,canDelete:id=>!CODE_IDS.has(id)}))return;
   try{localStorage.setItem(KEY,JSON.stringify(subjects.concat(tombstones)))}catch(e){console.warn("local save failed",e)}
@@ -8819,11 +8886,12 @@ function renderGrid(){
         ?`<div class="avatar-shape has-avatar" ${avatar} title="點擊編輯頭像"><img src="${s.avatarUrl}" alt=""></div>`
         :`<div class="avatar-shape avatar-empty" ${avatar} title="點擊上傳頭像"><span class="avatar-plus">＋</span></div>`)+
       `<div class="codename">${s.name}</div></div>`+
+      window.__linkTags(s)+
       '<div class="item-count">繃帶 <b>∞</b>　／　針筒 <b>∞</b>　　　資助 x<b>'+(s.supportCount||0)+'</b>／折磨 x<b>'+(s.tortureCount||0)+'</b></div>'+
       '<div class="note">'+esc(s.note||SPONSOR_NOTE_DEFAULT)+'</div>'+
       `<button class="edit-btn" onclick="sponsorApp.openEdit('${s.id}')" title="編輯">${EDIT_ICON}</button>`;
     card.addEventListener("click", e => {
-      if(e.target.closest(".avatar-shape,.edit-btn")) return;
+      if(e.target.closest(".avatar-shape,.edit-btn,.link-tag")) return;
       window.__eggTap("spo-" + s.id, s.egg);
     });
     grid.appendChild(card);
@@ -8844,7 +8912,7 @@ function openEdit(id){
   if(!Auth.canEdit(subjects.find(s=>s.id===id))) return;
   editId=id;
   const s=find(id);
-  modalBody.innerHTML=`<div class="modal-eyebrow">編輯資助者資料</div><div class="modal-title">編輯資料</div><span class="field-label">名稱</span><input type="text" class="text-input" id="spEditName" value="${esc(s.name)}" maxlength="20"><div class="field-row"><div><span class="field-label">資助次數</span><input type="number" class="text-input" id="spEditSupport" value="${s.supportCount||0}" min="0" max="99"></div><div><span class="field-label">折磨次數</span><input type="number" class="text-input" id="spEditTorture" value="${s.tortureCount||0}" min="0" max="99"></div></div><span class="field-label">台詞（顯示在卡片上，留空會恢復預設）</span><input type="text" class="text-input" id="spEditNote" value="${esc(s.note||SPONSOR_NOTE_DEFAULT)}" maxlength="80" placeholder="${SPONSOR_NOTE_DEFAULT}"><span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span><textarea class="text-input" id="spEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">${esc(s.egg||"")}</textarea><button class="confirm-btn" onclick="sponsorApp.saveEdit()">儲存</button><button class="modify-btn" onclick="sponsorApp.closeModal()">取消</button><button class="danger-btn" onclick="sponsorApp.openDeleteConfirm()">刪除此資助者</button>`;
+  modalBody.innerHTML=`<div class="modal-eyebrow">編輯資助者資料</div><div class="modal-title">編輯資料</div><span class="field-label">名稱</span><input type="text" class="text-input" id="spEditName" value="${esc(s.name)}" maxlength="20"><div class="field-row"><div><span class="field-label">資助次數</span><input type="number" class="text-input" id="spEditSupport" value="${s.supportCount||0}" min="0" max="99"></div><div><span class="field-label">折磨次數</span><input type="number" class="text-input" id="spEditTorture" value="${s.tortureCount||0}" min="0" max="99"></div></div><span class="field-label">台詞（顯示在卡片上，留空會恢復預設）</span><input type="text" class="text-input" id="spEditNote" value="${esc(s.note||SPONSOR_NOTE_DEFAULT)}" maxlength="80" placeholder="${SPONSOR_NOTE_DEFAULT}"><span class="field-label">FB 連結（可留空）</span><input type="text" class="text-input" id="spEditFb" value="${esc(s.fbUrl||"")}" maxlength="300" placeholder="https://www.facebook.com/…"><span class="field-label">角卡連結（雲端，可留空）</span><input type="text" class="text-input" id="spEditCard" value="${esc(s.cardUrl||"")}" maxlength="300" placeholder="https://drive.google.com/…"><span class="field-label">隱藏台詞（連續點擊卡片三下觸發，可留空）</span><textarea class="text-input" id="spEditEgg" rows="4" maxlength="300" placeholder="每行一句，例如：\n你為什麼對我感到好奇\n-# 你不該點開的……\n## 你不該知道這些的">${esc(s.egg||"")}</textarea><button class="confirm-btn" onclick="sponsorApp.saveEdit()">儲存</button><button class="modify-btn" onclick="sponsorApp.closeModal()">取消</button><button class="danger-btn" onclick="sponsorApp.openDeleteConfirm()">刪除此資助者</button>`;
   modal.classList.add("open");
 }
 function openDeleteConfirm(){
@@ -8853,6 +8921,8 @@ function openDeleteConfirm(){
 }
 function confirmDeleteSubject(){deleteSubject(editId);closeModal()}
 function saveEdit(){
+  const _lk=window.__readLinks("spEditFb","spEditCard");
+  if(_lk.bad){alert("連結格式不正確，請貼上完整網址（例如 https://…）。");return}
   const name=$("spEditName").value.trim();
   const s=find(editId);
   const _before={name:s.name,supportCount:s.supportCount||0,tortureCount:s.tortureCount||0,egg:s.egg||""};
@@ -8861,6 +8931,8 @@ function saveEdit(){
   s.supportCount=_ci($("spEditSupport").value);
   s.tortureCount=_ci($("spEditTorture").value);
   s.egg=$("spEditEgg").value.slice(0,300);
+  if(_lk.fb)s.fbUrl=_lk.fb;else delete s.fbUrl;
+  if(_lk.card)s.cardUrl=_lk.card;else delete s.cardUrl;
   const _note=$("spEditNote").value.trim().slice(0,80);
   if(_note&&_note!==SPONSOR_NOTE_DEFAULT)s.note=_note;else delete s.note;   // 空白或跟預設一樣就不存，維持預設
   if(window.SharedStore)SharedStore.logEdit("資助者","資助者——"+_before.name,_before,{name:s.name,supportCount:s.supportCount,tortureCount:s.tortureCount,egg:s.egg||""});
