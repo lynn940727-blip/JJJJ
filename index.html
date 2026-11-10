@@ -6269,10 +6269,18 @@ function renderModalBody(){
       '<button class="choice-btn" onclick="startMode(\'npcHarm\')">傷害</button>' +
       '<button class="choice-btn" onclick="startMode(\'npcReward\')">獎勵</button>';
 
+  } else if(step === "npcTargetFaction"){
+    html =
+      backBtn() +
+      '<div class="modal-eyebrow">NPC ／ ' + (wizard.mode === "npcReward" ? "獎勵" : "傷害") + '</div>' +
+      '<div class="modal-title">請選擇目標陣營</div>' +
+      '<button class="choice-btn" onclick="chooseNpcTarget(\'實驗體\')">實驗體</button>' +
+      '<button class="choice-btn" onclick="chooseNpcTarget(MEDIC_F)">醫療清潔部隊</button>';
+
   } else if(step === "npcRewardItem"){
     html =
       backBtn() +
-      '<div class="modal-eyebrow">已選擇 ' + wizard.targetIds.length + ' 位實驗體</div>' +
+      '<div class="modal-eyebrow">已選擇 ' + wizard.targetIds.length + ' 位' + tWord() + '</div>' +
       '<div class="modal-title">請選擇獎勵物資</div>' +
       '<button class="choice-btn" onclick="chooseRewardItem(\'bandages\')">繃帶 ── HP +1 道具</button>' +
       '<button class="choice-btn" onclick="chooseRewardItem(\'syringes\')">針筒 ── SAN +1 道具</button>';
@@ -6280,7 +6288,7 @@ function renderModalBody(){
   } else if(step === "npcRewardQty"){
     html =
       backBtn() +
-      '<div class="modal-eyebrow">獎勵：' + wizard.natureLabel + ' ／ ' + wizard.targetIds.length + ' 位實驗體</div>' +
+      '<div class="modal-eyebrow">獎勵：' + wizard.natureLabel + ' ／ ' + wizard.targetIds.length + ' 位' + tWord() + '</div>' +
       '<div class="modal-title">請輸入每人獲得的數量</div>' +
       '<input type="number" class="text-input" id="rewardQty" inputmode="numeric" min="1" max="99" value="' + (wizard.rewardQty || 1) + '" onkeydown="if(event.key===\'Enter\'){confirmRewardQty()}">' +
       '<div class="modal-note">每人一次 1～99 個。NPC 發放的道具不受一般持有上限（2 個）限制。</div>' +
@@ -6403,7 +6411,7 @@ function renderModalBody(){
         '<button class="modify-btn" onclick="goBack()">修改</button>';
     } else if(wizard.mode === "npcReward"){
       const rTargets = wizard.targetIds.length === 1
-        ? (function(){ const t = findT(wizard.targetIds[0]); return "實驗體 " + t.id + " " + t.name; })()
+        ? (function(){ const t = findT(wizard.targetIds[0]); return tWord() + " " + t.id + " " + t.name; })()
         : wizard.targetIds.map(id => { const t = findT(id); return t.id + " " + t.name; }).join("、");
       html =
         '<div class="modal-eyebrow">' + modeLabels.npcReward.previewEyebrow + '</div>' +
@@ -6420,7 +6428,7 @@ function renderModalBody(){
       const targetsText = wizard.targetIds.length === 1
         ? (function(){ const t = findT(wizard.targetIds[0]); return tWord() + " " + t.id + " " + t.name; })()
         : wizard.targetIds.map(id => { const t = findT(id); return t.id + " " + t.name; }).join("、");
-      const fullNote = wizard.slotsAvailable <= 0 ? '<div class="modal-note">此實驗體狀態欄已滿（上限 5 個），不會新增狀態。</div>' : "";
+      const fullNote = wizard.slotsAvailable <= 0 ? '<div class="modal-note">此' + tWord() + '狀態欄已滿（上限 5 個），不會新增狀態。</div>' : "";
       html =
         '<div class="modal-eyebrow">' + L.previewEyebrow + '</div>' +
         '<div class="modal-title">請確認以下內容</div>' +
@@ -6555,6 +6563,11 @@ function confirmSelf(){
 
 function startMode(mode){
   wizard.mode = mode;
+  if(mode === "npcHarm" || mode === "npcReward"){ goStep("npcTargetFaction"); return; }   // NPC：先選對象是實驗體還是醫療隊
+  goStep("targetSelect");
+}
+function chooseNpcTarget(f){
+  wizard.targetFaction = f;
   goStep("targetSelect");
 }
 
