@@ -6326,7 +6326,8 @@ function renderModalBody(){
       '<div class="modal-eyebrow">目標：實驗體 ' + target.id + ' ' + target.name + '</div>' +
       '<div class="modal-title">請選擇資助物資</div>' +
       '<button class="choice-btn" onclick="chooseSupportType(\'hp\')">繃帶 ── HP +1</button>' +
-      '<button class="choice-btn" onclick="chooseSupportType(\'san\')">針筒 ── SAN +1</button>';
+      '<button class="choice-btn" onclick="chooseSupportType(\'san\')">針筒 ── SAN +1</button>' +
+      '<button class="choice-btn" onclick="chooseSupportType(\'other\')">其他物品或設施 ── 不影響 HP／SAN</button>';
 
   } else if(step === "medicalRemoveStatus"){
     const target = subjects.find(s => s.id === wizard.targetId);
@@ -6393,8 +6394,10 @@ function renderModalBody(){
         '<div class="modal-title">請確認以下內容</div>' +
         '<div class="result-block">' +
           '<div class="result-line">目標：實驗體 ' + target.id + ' ' + target.name + '</div>' +
-          '<div class="result-line">資助物資：' + wizard.natureLabel + '（' + (wizard.statKey === "hp" ? "HP" : "SAN") + ' +1）</div>' +
-          '<div class="result-line">解除狀態：' + (wizard.removeStatus ? escapeHTML(wizard.removeStatus) : "無") + '</div>' +
+          (wizard.statKey === "other"
+            ? '<div class="result-line">資助物資：' + wizard.natureLabel + '（不影響 HP／SAN）</div>'
+            : '<div class="result-line">資助物資：' + wizard.natureLabel + '（' + (wizard.statKey === "hp" ? "HP" : "SAN") + ' +1）</div>' +
+              '<div class="result-line">解除狀態：' + (wizard.removeStatus ? escapeHTML(wizard.removeStatus) : "無") + '</div>') +
         '</div>' +
         '<button class="confirm-btn" onclick="applyAction()">確認資助</button>' +
         '<button class="modify-btn" onclick="goBack()">修改</button>';
@@ -6437,7 +6440,7 @@ function renderModalBody(){
     if(wizard.mode === "medical" || wizard.mode === "support"){
       html =
         '<div class="reveal-box" id="revealBox">' +
-          reportBlock(target, (wizard.statKey === "hp" ? "HP" : "SAN") + "+1", wizard.mode === "medical" ? (wizard.itemUsedTxt || "") : "") +
+          reportBlock(target, wizard.statKey === "other" ? "獲得資助" : (wizard.statKey === "hp" ? "HP" : "SAN") + "+1", wizard.mode === "medical" ? (wizard.itemUsedTxt || "") : "") +
           resultBtns() +
         '</div>';
     } else if(wizard.mode === "npcReward"){
@@ -6650,6 +6653,12 @@ function confirmMultiTarget(){
 
 function chooseSupportType(key){
   wizard.statKey = key;
+  if(key === "other"){   // 其他物品或設施：不加 HP／SAN、不解除狀態，只算一次資助
+    wizard.natureLabel = "其他物品或設施";
+    wizard.removeStatus = null;
+    goStep("actionPreview");
+    return;
+  }
   wizard.natureLabel = key === "hp" ? "繃帶" : "針筒";
   goStep("medicalRemoveStatus");
 }
@@ -6792,8 +6801,9 @@ async function applyAction(){
     const target = subjects.find(s => s.id === wizard.targetId);
 
     const _statTxt = wizard.statKey === "hp" ? "HP" : "SAN";
-    target[wizard.statKey] = Math.min(3, target[wizard.statKey] + 1);
-    if(wizard.removeStatus){
+    const _isOther = wizard.mode === "support" && wizard.statKey === "other";   // 其他物品或設施：數值、狀態都不動
+    if(!_isOther) target[wizard.statKey] = Math.min(3, target[wizard.statKey] + 1);
+    if(wizard.removeStatus && !_isOther){
       const idx = target.statuses.indexOf(wizard.removeStatus);
       if(idx > -1) target.statuses.splice(idx, 1);
       wizard.removedNow = wizard.removeStatus;
@@ -6803,6 +6813,8 @@ async function applyAction(){
     if(wizard.mode === "medical"){
       _log("「" + actorLabel() + "」治療「" + subjLabel(target) + "」\n" + _statTxt + "+1，解除狀態：" +
         (wizard.removedNow || "無") + "。\n消耗" + _itNm + " x1（剩餘 " + _remain + "）。", {g: wizard.faction, to: target.owner, kind: "heal"}, target.id);
+    } else if(_isOther){
+      _log("「" + actorLabel() + "」資助「" + subjLabel(target) + "」\n" + wizard.natureLabel + "。", {g: wizard.faction, to: target.owner, kind: "support"}, target.id);
     } else {
       _log("「" + actorLabel() + "」資助「" + subjLabel(target) + "」\n" + _statTxt + "+1（" + wizard.natureLabel + "），解除狀態：" +
         (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "support"}, target.id);
