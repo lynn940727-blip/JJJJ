@@ -2562,7 +2562,7 @@
 .log-tools select,.log-tools button{background:#0a0706;border:1px solid var(--line);color:var(--bone);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:6px}
 .log-tools button{cursor:pointer;background:rgba(181,2,15,.16);border-color:rgba(181,2,15,.5)}
 .log-tools .roster-search{flex:1;min-width:180px;width:auto;max-width:none}
-#logRoster #logList{position:relative;max-width:900px;margin:0 auto;font-size:13.5px;line-height:1.6}
+#logRoster #logList,#lbRoster #lbList{position:relative;max-width:900px;margin:0 auto;font-size:13.5px;line-height:1.6}
 .log-row{padding:11px 4px;border-bottom:1px solid var(--line)}
 .log-time{font-family:var(--mono);font-size:11px;color:var(--bone-dim)}
 .log-what{margin-top:2px;word-break:break-word}
@@ -2588,6 +2588,48 @@
 .log-confirm .log-del{background:transparent;border-color:rgba(194,68,82,.45);color:rgba(194,68,82,.85)}
 .log-confirm .log-del:hover{background:rgba(194,68,82,.18);color:#e8b3ba;border-color:#c24452}
 .log-empty{padding:40px 0;text-align:center;color:var(--bone-dim)}
+/* ---------- 排行榜：深色格子、直式表格（兩張表上下排列）---------- */
+#lbRoster .lb-block{margin:0 auto 44px;max-width:900px}
+#lbRoster .lb-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px;
+  font-size:15px;letter-spacing:.14em;color:var(--bone);padding-left:10px;border-left:3px solid var(--c-crit)}
+#lbRoster .lb-title small{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--bone-dim)}
+#lbRoster .lb-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;
+  background:var(--bg-panel);border:1px solid var(--line);font-size:15px}
+#lbRoster .lb-table th,#lbRoster .lb-table td{padding:15px 12px;text-align:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--bone)}
+#lbRoster .lb-table th:last-child,#lbRoster .lb-table td:last-child{border-right:0}
+#lbRoster .lb-table tbody tr:last-child td{border-bottom:0}
+#lbRoster .lb-table thead th{background:#0d0908;color:var(--bone-dim);font-weight:500;font-size:11.5px;letter-spacing:.16em}
+#lbRoster .lb-table tbody td{background:var(--bg-panel)}
+#lbRoster .lb-table tbody tr:nth-child(even) td{background:var(--bg-panel-2)}
+#lbRoster .lb-table td.rk{font-family:var(--mono);letter-spacing:.06em;color:var(--bone-dim)}
+#lbRoster .lb-table tbody tr:nth-child(-n+3) td.rk{color:#ff2b3d;font-weight:700}
+#lbRoster .lb-table td.num{font-family:var(--mono);font-weight:400}
+#lbRoster .lb-table tbody td:nth-child(2){font-weight:400}
+/* 只有前三名的名字、分數／次數加粗，4–10 名一律不粗體 */
+#lbRoster .lb-table tbody tr:nth-child(-n+3) td.num,
+#lbRoster .lb-table tbody tr:nth-child(-n+3) td:nth-child(2){font-weight:700}
+/* 積分榜前三名的名字再大一點點、不要太擠 */
+#lbRoster .lb-score tbody tr:nth-child(-n+3) td:nth-child(2){font-size:1.12em;padding-top:15px;padding-bottom:15px}
+#lbRoster .lb-table td.empty{color:#4a403a}
+/* 積分表前三名：底色暗紅 */
+#lbRoster .lb-score tbody tr:nth-child(-n+3) td{background:#4d0d12;background-clip:border-box;border-right-color:#4d0d12;
+  border-bottom-color:var(--bg-panel);padding-top:12px;padding-bottom:12px}
+/* 前三名各自是一條暗紅帶，之間隔約 6px（參考截圖的紅框） */
+#lbRoster .lb-score tbody tr:nth-child(-n+2) td{border-bottom-width:6px}
+/* NO.3 和 NO.4 貼住：NO.3 底邊不留縫，紅底一路接到 NO.4 */
+#lbRoster .lb-score tbody tr:nth-child(3) td{border-bottom-color:#4d0d12}
+/* 成就表前三名：名字跟名次一樣紅色加粗 */
+#lbRoster .lb-ach tbody tr:nth-child(-n+3) td:nth-child(2){color:#ff2b3d;font-weight:700}
+
+/* 欄寬（照使用者畫的分隔線）：名次約 17.6%、名字約 51%、分數／次數約 31.4%；兩張表一致 */
+#lbRoster .lb-table col.c-rank{width:17.6%}
+#lbRoster .lb-table col.c-num{width:31.4%}
+@media (max-width:520px){
+  #lbRoster .lb-table{font-size:13.5px}
+  #lbRoster .lb-table th,#lbRoster .lb-table td{padding:13px 6px}
+}
+
 /* 行動紀錄：管理員面板 */
 .modal-box.log-admin-box{width:min(560px,94vw)}
 .log-admin-tools{display:flex;gap:8px;margin-bottom:10px}
@@ -3254,6 +3296,10 @@
     </li>
     <li class="menu-item available" data-target="6">
       <span class="num">06</span>
+      <span class="label">排行榜</span>
+    </li>
+    <li class="menu-item available" data-target="7">
+      <span class="num">07</span>
       <span class="label">匿名情感收容室</span>
     </li>
   </ul>
@@ -3446,6 +3492,28 @@
 </div>
 <div id="logList"><div class="log-loading"><div class="log-spinner"></div><div class="log-loading-text">讀取紀錄中…</div></div></div>
 <div style="text-align:center; margin-top:56px;">
+<button class="observe-btn" id="lbBtn">
+<span class="dot"></span>
+排行榜
+</button>
+</div>
+</section>
+
+<footer>
+  <p>血池肉林 收容設施 ｜ 本報告僅供內部觀測使用</p>
+  <p>一切數據如有異常，請勿嘗試介入</p>
+  <button class="admin-entry-btn" id="logAdminBtn">⚙ 一鍵編輯（管理員）</button>
+</footer>
+
+<section class="roster snap-section" id="lbRoster">
+<div class="roster-eyebrow">檔案 ⁄ 排行榜</div>
+<div class="roster-head">
+<h2>排行榜</h2>
+<div class="roster-head-right"><div class="meta" id="lbMetaLine">榜單數量 000</div></div>
+</div>
+<div class="roster-divider"></div>
+<div id="lbList"></div>
+<div style="text-align:center; margin-top:56px;">
 <button class="observe-btn" id="emoBtn">
 <span class="dot"></span>
 匿名情感收容室
@@ -3456,7 +3524,6 @@
 <footer>
   <p>血池肉林 收容設施 ｜ 本報告僅供內部觀測使用</p>
   <p>一切數據如有異常，請勿嘗試介入</p>
-  <button class="admin-entry-btn" id="logAdminBtn">⚙ 一鍵編輯（管理員）</button>
 </footer>
 
 <section class="roster snap-section" id="emoRoom">
@@ -5697,8 +5764,12 @@ document.getElementById("logBtn").addEventListener("click", () => {
   withTransitionLock(() => jumpToIndex(5));
 });
 
-document.getElementById("emoBtn").addEventListener("click", () => {
+document.getElementById("lbBtn").addEventListener("click", () => {
   withTransitionLock(() => jumpToIndex(6));
+});
+
+document.getElementById("emoBtn").addEventListener("click", () => {
+  withTransitionLock(() => jumpToIndex(7));
 });
 
 /* ---------- section nav (progress dots + jump to top/bottom) ----------
@@ -9812,6 +9883,44 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   setInterval(()=>{ const u=uidNow(); if(u!==cMineUid) watchCMine(u); updateCards(); },1500);
   setInterval(syncAdmin,1500);
   window.addEventListener("load",()=>setTimeout(subscribe,300));
+})();
+</script>
+<script>
+/* ---------- 排行榜 ----------
+   資料放在這兩個陣列裡，之後要改榜單直接改這裡就好：
+   積分：{name:"名字", score:分數}　（最多顯示 10 筆，已經排好順序，第一筆是 NO.1）
+   成就：{name:"名字", n:次數}　（最多顯示 5 筆，已經排好順序）          */
+(function(){
+  // 目前是測試用資料（全部「小明」），正式使用時換掉或清空就好
+  const SCORE_ROWS = [1327.8, 1308.6, 1222.9, 931, 918, 907, 866, 597.5, 551.5, 537.5].map(s => ({name: "小明", score: s}));
+  const ACH_ROWS = [12, 9, 7, 5, 3].map(n => ({name: "小明", n: n}));
+  const SCORE_MAX = 10, ACH_MAX = 5;
+  const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  const cell = (v, cls) => v === "" || v == null ? '<td class="empty' + (cls ? ' ' + cls : '') + '">—</td>' : '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(v) + '</td>';
+  function render(){
+    const box = document.getElementById("lbList");
+    if(!box) return;
+    let sRows = "", aRows = "";
+    for(let i = 0; i < SCORE_MAX; i++){
+      const r = SCORE_ROWS[i] || {};
+      sRows += '<tr><td class="rk">NO.' + (i + 1) + '</td>' + cell(r.name) + cell(r.score, "num") + '</tr>';
+    }
+    for(let i = 0; i < ACH_MAX; i++){
+      const r = ACH_ROWS[i] || {};
+      aRows += '<tr><td class="rk">NO.' + (i + 1) + '</td>' + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
+    }
+    box.innerHTML =
+      '<div class="lb-block"><div class="lb-title"><span>積分排行榜</span><small>TOP ' + SCORE_MAX + '</small></div>' +
+        '<table class="lb-table lb-score"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
+        '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' +
+      '<div class="lb-block"><div class="lb-title"><span>成就排行榜</span><small>TOP ' + ACH_MAX + '</small></div>' +
+        '<table class="lb-table lb-ach"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
+        '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>';
+    const meta = document.getElementById("lbMetaLine");
+    if(meta) meta.textContent = "榜單數量 " + String(Math.min(SCORE_ROWS.length, SCORE_MAX) + Math.min(ACH_ROWS.length, ACH_MAX)).padStart(3, "0");
+  }
+  render();
+  window.renderLeaderboard = render;
 })();
 </script>
 </body>
