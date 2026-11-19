@@ -2593,7 +2593,7 @@
 #lbRoster .lb-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px;
   font-size:15px;letter-spacing:.14em;color:var(--bone);padding-left:10px;border-left:3px solid var(--c-crit)}
 #lbRoster .lb-title small{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--bone-dim)}
-#lbRoster .lb-adminbar{display:flex;justify-content:flex-end;margin-bottom:14px}
+#lbList.lb-adminmode .lb-score{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .lb-sel{width:100%;padding:11px 12px;background:var(--bg-panel);border:1px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:13px;letter-spacing:.06em;margin-bottom:10px;border-radius:0}
 .lb-sep{border:0;border-top:1px solid var(--line);margin:18px 0}
 #lbRoster .lb-title{position:relative}
@@ -4716,7 +4716,7 @@ const Auth=(function(){
         +(an?'<div class="au-pend click au_row" data-v="claim"><div class="au-pend-h">已批准</div><div class="au-pend-s">你有 '+an+' 筆申請已批准，點此查看 ›</div></div>':"")
         +(pn?'<div class="au-pend click au_row" data-v="claim"><div class="au-pend-h">等待批准</div><div class="au-pend-s">你有 '+pn+' 筆申請正在等管理員審核，點此查看／取消 ›</div></div>':"")
         +row("inbox",MAIL_ICON,un?'<span class="au-badge amber">未讀 '+un+'</span>':"無新通知")
-        +(admin?row("admin","待批准的申請",'<span id="au_admcnt"></span>')+'<div class="au-row" id="au_addchar"><span>新增角色</span><span class="v">›</span></div>'+row("addadmin","新增管理員","")+row("bind","綁定一覽",(()=>{ const ub=Object.keys(ST).reduce((n,f)=>n+roster(f).filter(s=>!s.owner).length,0); return ub?'<span class="au-badge amber">未綁定 '+ub+'</span>':"全部已綁定"; })()):"")
+        +(admin?row("admin","待批准的申請",'<span id="au_admcnt"></span>')+'<div class="au-row" id="au_addchar"><span>新增角色</span><span class="v">›</span></div>'+row("addadmin","新增管理員","")+'<div class="au-row" id="au_lbup"><span>上傳排行</span><span class="v">›</span></div>'+row("bind","綁定一覽",(()=>{ const ub=Object.keys(ST).reduce((n,f)=>n+roster(f).filter(s=>!s.owner).length,0); return ub?'<span class="au-badge amber">未綁定 '+ub+'</span>':"全部已綁定"; })()):"")
         +'<div class="au-sec"><span>我的角色</span><button class="au-mini au_row" data-v="claim">＋ 申請角色</button></div><div id="au_cards"></div>'
         +'<div class="au-sec"><span>收藏的實驗體</span><button class="au-mini au_row" data-v="fav">＋ 選擇收藏</button></div><div id="au_favcards"></div>'
         +(admin?"":'<div class="modal-note" style="word-break:break-all;font-size:11px;opacity:.5;margin-top:16px">UID：'+user.uid+"</div>");
@@ -4728,6 +4728,8 @@ const Auth=(function(){
     b.querySelectorAll(".au_close").forEach(x=>x.onclick=hide);
     b.querySelectorAll(".au_back").forEach(x=>x.onclick=()=>{ view="home"; render(); });
     b.querySelectorAll(".au_row").forEach(r=>r.onclick=()=>{ if(r.dataset.v==="bind") nickCache={}; view=r.dataset.v; render(); });
+    const lbu=b.querySelector("#au_lbup");
+    if(lbu) lbu.onclick=()=>{ if(!admin){ alert("只有管理員可以上傳排行"); return; } hide(); if(window.LB&&LB.openAdmin) LB.openAdmin(); else alert("排行榜還沒載入完成，請稍後再試。"); };
     const addc=b.querySelector("#au_addchar");
     if(addc) addc.onclick=()=>{ if(!admin){ alert("只有管理員可以新增角色"); return; } hide(); openAddCharacter(); };
     if(view==="fav"){
@@ -9902,7 +9904,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   const SCORE_WEEKS = Array.from({length: WEEK_N}, () => []);
   let curWeek = 0, menuOpen = false, userPicked = false, lbCurrent = 1;
   const adminNow = () => !!(window.Auth && Auth.isAdmin);
-  let adminShown = adminNow();
+
   const ACH_TEST = () => [12, 9, 7, 5, 3].map(n => ({name: "小明", n: n}));
   // 三個成就榜：之後各自換成正式資料就好
   // 每個榜有兩個項目（按鈕可切換），各自放自己的 rows
@@ -9945,8 +9947,8 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
         '<table class="lb-table lb-ach"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
         '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>';
     });
-    const adminBar = adminShown ? '<div class="lb-adminbar"><button type="button" class="lb-week-btn" data-lbadmin="1">上傳排行（管理員）</button></div>' : '';
-    box.innerHTML = adminBar +
+    box.classList.toggle("lb-adminmode", adminNow());
+    box.innerHTML =
       '<div class="lb-block"><div class="lb-title"><span>積分排行</span><div class="lb-week' + (menuOpen ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-weekbtn="1">WEEK' + (curWeek + 1) + ' <i>▼</i></button><div class="lb-week-menu">' + menu + '</div></div></div>' +
         '<table class="lb-table lb-score"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
         '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' +
@@ -10103,7 +10105,77 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     refreshAdmin();
   }
   function closeAdmin(){ if(ov) ov.classList.remove("open"); }
-  setInterval(function(){ const a = adminNow(); if(a !== adminShown){ adminShown = a; render(); } }, 1500);
+  window.LB = {openAdmin: openAdmin};
+  setInterval(function(){ const b = document.getElementById("lbList"); if(b) b.classList.toggle("lb-adminmode", adminNow()); }, 1500);
+
+  /* ---------- 管理員：長按積分表格 → 複製成社團貼文格式 ---------- */
+  const bd = n => String(n).replace(/\d/g, d => String.fromCodePoint(0x1D7EC + (+d)));   // 數字轉粗體 𝟭𝟬
+  function buildExport(){
+    const rows = SCORE_WEEKS[curWeek] || [];
+    if(!rows.length) return null;
+    let t = "#  ▎𝙍𝘼𝙉𝙆𝙄𝙉𝙂 𝘿𝘼𝙏𝘼\n" +
+      "\u2800".repeat(17) + "\n" +
+      "# 血池肉林 𝙒𝙀𝙀𝙆 " + bd(curWeek + 1) + "\n" +
+      " \n" +
+      "-# \"[ 𝙸𝙽𝚂𝚃𝙸𝚃𝚄𝚃𝙸𝙾𝙽𝙰𝙻 𝚁𝙴𝙲𝙾𝚁𝙳 𝚂𝚈𝚂𝚃𝙴𝙼 ]\"\n" +
+      "-# \"𝚁𝙰𝙽𝙺𝙸𝙽𝙶 𝙳𝙰𝚃𝙰 : 𝚄𝙿𝙳𝙰𝚃𝙴𝙳\"\"𝚂𝚃𝙰𝚃𝚄𝚂 : 𝙽𝙾𝚁𝙼𝙰𝙻\"\n\n" +
+      "本期擂台賽積分統計已完成。\n\n";
+    rows.forEach(function(r){
+      t += "### 𝗡𝗼." + bd(r.r) + "｜" + r.n + "\n\n";
+      t += (r.r <= 3 ? "" : "-# ") + "\"𝗦𝗖𝗢𝗥𝗘 :\" " + r.s + "\n\n";
+    });
+    t += "-# \"𝚁𝙰𝙽𝙺𝙸𝙽𝙶 𝚂𝚈𝚂𝚃𝙴𝙼 : 𝙰𝙲𝚃𝙸𝚅𝙴\"\n\n-# <@&1564714522009141372>";
+    return t;
+  }
+  let toastEl = null, toastT = null;
+  function toast(msg){
+    if(!toastEl){
+      toastEl = document.createElement("div");
+      toastEl.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:10100;background:#0d0908;border:1px solid var(--c-crit);color:var(--bone);font-family:var(--mono);font-size:13px;letter-spacing:.06em;padding:10px 16px;max-width:86vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.6);transition:opacity .25s ease;opacity:0;pointer-events:none";
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg; toastEl.style.opacity = "1";
+    clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.style.opacity = "0"; }, 2200);
+  }
+  function legacyCopy(t){
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, t.length);
+    let ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta); return ok;
+  }
+  function showCopyBox(t){   // 瀏覽器不讓自動複製時的備案：跳出文字框讓管理員手動全選複製
+    let o = document.getElementById("lbCopyOv");
+    if(!o){
+      o = document.createElement("div"); o.id = "lbCopyOv"; o.className = "modal-overlay"; o.style.zIndex = "10095";
+      o.innerHTML = '<div class="modal-box"><div class="modal-eyebrow">管理員模式</div><div class="modal-title">匯出格式</div><div class="modal-note">瀏覽器擋住了自動複製，請在下面的框裡全選後手動複製。</div><textarea id="lbCopyTa" class="text-input" style="width:100%;height:240px;margin-bottom:10px;font-size:12px"></textarea><button class="modify-btn" id="lbCopyClose">關閉</button></div>';
+      document.body.appendChild(o);
+      o.addEventListener("click", function(e){ if(e.target === o || e.target.id === "lbCopyClose") o.classList.remove("open"); });
+    }
+    o.querySelector("#lbCopyTa").value = t; o.classList.add("open");
+    const ta = o.querySelector("#lbCopyTa"); ta.focus(); ta.select();
+  }
+  function doExport(){
+    const t = buildExport();
+    if(!t){ toast("這一週還沒有積分資料"); return; }
+    const wk = curWeek + 1;
+    const done = function(){ toast("已複製 WEEK" + wk + " 匯出格式"); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done, function(){ if(legacyCopy(t)) done(); else showCopyBox(t); });
+    }else{
+      if(legacyCopy(t)) done(); else showCopyBox(t);
+    }
+  }
+  let lpT = null, lpX = 0, lpY = 0;
+  const lpCancel = () => { clearTimeout(lpT); lpT = null; };
+  document.addEventListener("pointerdown", function(e){
+    if(!adminNow() || !e.target.closest || !e.target.closest("#lbList .lb-score")) return;
+    lpX = e.clientX; lpY = e.clientY; lpCancel();
+    lpT = setTimeout(function(){ lpT = null; doExport(); }, 650);
+  });
+  document.addEventListener("pointermove", function(e){ if(lpT && (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10)) lpCancel(); });
+  ["pointerup", "pointercancel", "scroll"].forEach(function(ev){ document.addEventListener(ev, lpCancel, true); });
+  document.addEventListener("contextmenu", function(e){ if(adminNow() && e.target.closest && e.target.closest("#lbList .lb-score")) e.preventDefault(); });
   if(document.readyState === "complete") setTimeout(subscribe, 300); else window.addEventListener("load", function(){ setTimeout(subscribe, 300); });
 
   const host = document.getElementById("lbList");
@@ -10111,7 +10183,6 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     host.addEventListener("click", function(e){
       const pick = e.target.closest("[data-week]");
       if(pick){ curWeek = +pick.getAttribute("data-week"); userPicked = true; menuOpen = false; achOpen = -1; render(); return; }
-      if(e.target.closest("[data-lbadmin]")){ openAdmin(); return; }
       if(e.target.closest("[data-weekbtn]")){ menuOpen = !menuOpen; achOpen = -1; render(); return; }
       const ap = e.target.closest("[data-ach]");
       if(ap){ achSel[+ap.getAttribute("data-ach")] = +ap.getAttribute("data-opt"); achOpen = -1; menuOpen = false; render(); return; }
