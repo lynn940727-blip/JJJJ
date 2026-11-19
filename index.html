@@ -2589,7 +2589,8 @@
 .log-confirm .log-del:hover{background:rgba(194,68,82,.18);color:#e8b3ba;border-color:#c24452}
 .log-empty{padding:40px 0;text-align:center;color:var(--bone-dim)}
 /* ---------- 排行榜：深色格子、直式表格（兩張表上下排列）---------- */
-#lbRoster .lb-block{margin:0 auto 44px;max-width:900px}
+#lbRoster .lb-block{margin:0 auto 30px;max-width:900px}
+#lbRoster .lb-dash{width:36px;height:2px;margin:0 auto 34px;background:var(--c-crit);opacity:.75}
 #lbRoster .lb-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px;
   font-size:15px;letter-spacing:.14em;color:var(--bone);padding-left:10px;border-left:3px solid var(--c-crit)}
 #lbRoster .lb-title small{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--bone-dim)}
@@ -9964,7 +9965,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       const rank = r.r != null ? r.r : i + 1;
       sRows += '<tr' + (rank <= 3 ? ' class="top"' : '') + '><td class="rk">NO.' + rank + '</td>' + cell(r.n) + cell(r.s, "num") + '</tr>';
     }
-    let aBlocks = "";
+    const aList = [];
     ACH_SETS.forEach(function(set, k){
       const opt = set.opts[achSel[k]] || set.opts[0];
       let aRows = "", aMenu = "";
@@ -9975,19 +9976,21 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       for(let i = 0; i < Math.max(ACH_MAX, arows.length); i++){
         const r = arows[i] || {};
         const rank = r.r != null ? r.r : i + 1;
-        aRows += '<tr' + (rank <= 3 ? ' class="top"' : '') + '>' + (rank === 1 ? '<td class="rk honor">' + esc(opt.honor) + '</td>' : '<td class="rk">NO.' + rank + '</td>') + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
+        aRows += '<tr' + (rank === 1 ? ' class="top"' : '') + '>' + (rank === 1 ? '<td class="rk honor">' + esc(opt.honor) + '</td>' : '<td class="rk">NO.' + rank + '</td>') + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
       }
-      aBlocks += '<div class="lb-block"><div class="lb-title"><span>' + esc(set.group + '成就「' + opt.honor + '」') + '</span>' +
+      aList.push('<div class="lb-block"><div class="lb-title"><span>' + esc(set.group + '成就「' + opt.honor + '」') + '</span>' +
         '<div class="lb-week' + (achOpen === k ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-achbtn="' + k + '">' + esc(opt.label) + ' <i>▼</i></button><div class="lb-week-menu">' + aMenu + '</div></div></div>' +
         (set.warn ? '<div class="lb-warn">僅供參考，結企時主辦方會人工審核，過度潦草、未達基本完成度的作品，不列入成就計算。</div>' : '') +
         '<table class="lb-table lb-ach"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
-        '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>';
+        '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>');
     });
+    const dash = '<div class="lb-dash"></div>';
+    const aBlocks = aList.join(dash);
     box.classList.toggle("lb-adminmode", adminNow());
     box.innerHTML =
       '<div class="lb-block"><div class="lb-title"><span>積分排行</span><div class="lb-week' + (menuOpen ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-weekbtn="1">WEEK' + (curWeek + 1) + ' <i>▼</i></button><div class="lb-week-menu">' + menu + '</div></div></div>' +
         '<table class="lb-table lb-score"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
-        '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' +
+        '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' + dash +
       aBlocks;
     const meta = document.getElementById("lbMetaLine");
     if(meta) meta.textContent = "榜單數量 " + String(SCORE_ROWS.length + ACH_SETS.reduce((n, a, k) => n + achRows(a, a.opts[achSel[k]] || a.opts[0]).length, 0)).padStart(3, "0");
