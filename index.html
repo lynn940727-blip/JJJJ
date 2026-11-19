@@ -2630,6 +2630,11 @@
 /* 欄寬（照使用者畫的分隔線）：名次約 17.6%、名字約 51%、分數／次數約 31.4%；兩張表一致 */
 #lbRoster .lb-table col.c-rank{width:17.6%}
 #lbRoster .lb-table col.c-num{width:31.4%}
+/* 成就表：第一名那格改寫稱號（死者、慈善家…），名次欄要寬一點放得下 */
+#lbRoster .lb-ach col.c-rank{width:28%}
+#lbRoster .lb-ach col.c-num{width:22%}
+#lbRoster .lb-ach td.rk.honor{color:#ff2b3d;font-weight:700;font-family:var(--sans);font-size:13px;letter-spacing:.02em;white-space:nowrap}
+#lbRoster .lb-warn{color:#ff3b4a;font-size:12px;line-height:1.7;letter-spacing:.02em;margin:0 0 10px}
 @media (max-width:520px){
   #lbRoster .lb-table{font-size:13.5px}
   #lbRoster .lb-table th,#lbRoster .lb-table td{padding:13px 6px}
@@ -9923,8 +9928,8 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   // 三個成就榜（各自兩個項目，按鈕可切換）。path＝角色資料庫節點，field＝角卡上的計數欄位
   const ACH_SETS = [
     {group: "實驗體", path: "bloodpool_subjects_v1", opts: [{label: "死亡次數", honor: "死者", field: "deathCount"}, {label: "致瘋次數", honor: "患者", field: "madCount"}]},
-    {group: "醫療隊", path: "bloodpool_medic_subjects_v2", opts: [{label: "治療次數", honor: "績優工作者", field: "medicCount"}, {label: "事故次數", honor: "無良工作者", field: "accidentCount"}]},
-    {group: "資助者", path: "bloodpool_sponsor_subjects_v1", opts: [{label: "資助次數", honor: "慈善家", field: "supportCount"}, {label: "折磨次數", honor: "暴君", field: "tortureCount"}]}
+    {group: "醫療隊", warn: true, path: "bloodpool_medic_subjects_v2", opts: [{label: "治療次數", honor: "績優工作者", field: "medicCount"}, {label: "事故次數", honor: "無良工作者", field: "accidentCount"}]},
+    {group: "資助者", warn: true, path: "bloodpool_sponsor_subjects_v1", opts: [{label: "資助次數", honor: "慈善家", field: "supportCount"}, {label: "折磨次數", honor: "暴君", field: "tortureCount"}]}
   ];
   const achData = {};   // path -> 角色紀錄陣列（即時同步）
   function achRows(set, opt){
@@ -9970,10 +9975,11 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       for(let i = 0; i < Math.max(ACH_MAX, arows.length); i++){
         const r = arows[i] || {};
         const rank = r.r != null ? r.r : i + 1;
-        aRows += '<tr' + (rank <= 3 ? ' class="top"' : '') + '><td class="rk">NO.' + rank + '</td>' + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
+        aRows += '<tr' + (rank <= 3 ? ' class="top"' : '') + '>' + (rank === 1 ? '<td class="rk honor">' + esc(opt.honor) + '</td>' : '<td class="rk">NO.' + rank + '</td>') + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
       }
       aBlocks += '<div class="lb-block"><div class="lb-title"><span>' + esc(set.group + '成就「' + opt.honor + '」') + '</span>' +
         '<div class="lb-week' + (achOpen === k ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-achbtn="' + k + '">' + esc(opt.label) + ' <i>▼</i></button><div class="lb-week-menu">' + aMenu + '</div></div></div>' +
+        (set.warn ? '<div class="lb-warn">僅供參考，結企時主辦方會人工審核，過度潦草、未達基本完成度的作品，不列入成就計算。</div>' : '') +
         '<table class="lb-table lb-ach"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
         '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>';
     });
