@@ -2593,6 +2593,20 @@
 #lbRoster .lb-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px;
   font-size:15px;letter-spacing:.14em;color:var(--bone);padding-left:10px;border-left:3px solid var(--c-crit)}
 #lbRoster .lb-title small{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--bone-dim)}
+#lbRoster .lb-adminbar{display:flex;justify-content:flex-end;margin-bottom:14px}
+.lb-sel{width:100%;padding:11px 12px;background:var(--bg-panel);border:1px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:13px;letter-spacing:.06em;margin-bottom:10px;border-radius:0}
+.lb-sep{border:0;border-top:1px solid var(--line);margin:18px 0}
+#lbRoster .lb-title{position:relative}
+#lbRoster .lb-week{position:relative;flex:none}
+#lbRoster .lb-week-btn{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--bone);background:transparent;border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.3}
+#lbRoster .lb-week-btn:hover,#lbRoster .lb-week.open .lb-week-btn{border-color:var(--c-crit);color:#ff2b3d}
+#lbRoster .lb-week-btn i{font-style:normal;font-size:8px;opacity:.7;transition:transform .2s ease}
+#lbRoster .lb-week.open .lb-week-btn i{transform:rotate(180deg)}
+#lbRoster .lb-week-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:96px;background:#0d0908;border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.6)}
+#lbRoster .lb-week.open .lb-week-menu{display:block}
+#lbRoster .lb-week-menu button{display:block;width:100%;text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--bone-dim);background:transparent;border:0;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer}
+#lbRoster .lb-week-menu button:last-child{border-bottom:0}
+#lbRoster .lb-week-menu button.on{color:#ff2b3d;background:rgba(77,13,18,.5)}
 #lbRoster .lb-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;
   background:var(--bg-panel);border:1px solid var(--line);font-size:15px}
 #lbRoster .lb-table th,#lbRoster .lb-table td{padding:15px 12px;text-align:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
@@ -2603,24 +2617,15 @@
 #lbRoster .lb-table tbody td{background:var(--bg-panel)}
 #lbRoster .lb-table tbody tr:nth-child(even) td{background:var(--bg-panel-2)}
 #lbRoster .lb-table td.rk{font-family:var(--mono);letter-spacing:.06em;color:var(--bone-dim)}
-#lbRoster .lb-table tbody tr:nth-child(-n+3) td.rk{color:#ff2b3d;font-weight:700}
+#lbRoster .lb-table tbody tr.top td.rk{color:#ff2b3d;font-weight:700}
 #lbRoster .lb-table td.num{font-family:var(--mono);font-weight:400}
 #lbRoster .lb-table tbody td:nth-child(2){font-weight:400}
 /* 只有前三名的名字、分數／次數加粗，4–10 名一律不粗體 */
-#lbRoster .lb-table tbody tr:nth-child(-n+3) td.num,
-#lbRoster .lb-table tbody tr:nth-child(-n+3) td:nth-child(2){font-weight:700}
-/* 積分榜前三名的名字再大一點點、不要太擠 */
-#lbRoster .lb-score tbody tr:nth-child(-n+3) td:nth-child(2){font-size:1.12em;padding-top:15px;padding-bottom:15px}
+#lbRoster .lb-table tbody tr.top td.num,
+#lbRoster .lb-table tbody tr.top td:nth-child(2){font-weight:700}
 #lbRoster .lb-table td.empty{color:#4a403a}
-/* 積分表前三名：底色暗紅 */
-#lbRoster .lb-score tbody tr:nth-child(-n+3) td{background:#4d0d12;background-clip:border-box;border-right-color:#4d0d12;
-  border-bottom-color:var(--bg-panel);padding-top:12px;padding-bottom:12px}
-/* 前三名各自是一條暗紅帶，之間隔約 6px（參考截圖的紅框） */
-#lbRoster .lb-score tbody tr:nth-child(-n+2) td{border-bottom-width:6px}
-/* NO.3 和 NO.4 貼住：NO.3 底邊不留縫，紅底一路接到 NO.4 */
-#lbRoster .lb-score tbody tr:nth-child(3) td{border-bottom-color:#4d0d12}
-/* 成就表前三名：名字跟名次一樣紅色加粗 */
-#lbRoster .lb-ach tbody tr:nth-child(-n+3) td:nth-child(2){color:#ff2b3d;font-weight:700}
+/* 兩張表前三名：名字跟名次一樣紅色加粗（積分榜沿用成就表格式） */
+#lbRoster .lb-table tbody tr.top td:nth-child(2){color:#ff2b3d;font-weight:700}
 
 /* 欄寬（照使用者畫的分隔線）：名次約 17.6%、名字約 51%、分數／次數約 31.4%；兩張表一致 */
 #lbRoster .lb-table col.c-rank{width:17.6%}
@@ -9888,36 +9893,234 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 <script>
 /* ---------- 排行榜 ----------
    資料放在這兩個陣列裡，之後要改榜單直接改這裡就好：
-   積分：{name:"名字", score:分數}　（最多顯示 10 筆，已經排好順序，第一筆是 NO.1）
+   積分：SCORE_WEEKS[0]~[7] 對應 WEEK1~WEEK8，每週 {name:"名字", score:分數}　（最多顯示 10 筆，已經排好順序，第一筆是 NO.1）
    成就：{name:"名字", n:次數}　（最多顯示 5 筆，已經排好順序）          */
 (function(){
-  // 目前是測試用資料（全部「小明」），正式使用時換掉或清空就好
-  const SCORE_ROWS = [1327.8, 1308.6, 1222.9, 931, 918, 907, 866, 597.5, 551.5, 537.5].map(s => ({name: "小明", score: s}));
-  const ACH_ROWS = [12, 9, 7, 5, 3].map(n => ({name: "小明", n: n}));
+  // 成就榜目前是測試用資料（全部「小明」），正式使用時換掉或清空就好
+  const WEEK_N = 8;
+  // 積分資料由管理員上傳表格後存在資料庫（leaderboard/score），這裡只是本機快取：每週是 [{r:名次, n:名字, s:分數}]
+  const SCORE_WEEKS = Array.from({length: WEEK_N}, () => []);
+  let curWeek = 0, menuOpen = false, userPicked = false, lbCurrent = 1;
+  const adminNow = () => !!(window.Auth && Auth.isAdmin);
+  let adminShown = adminNow();
+  const ACH_TEST = () => [12, 9, 7, 5, 3].map(n => ({name: "小明", n: n}));
+  // 三個成就榜：之後各自換成正式資料就好
+  // 每個榜有兩個項目（按鈕可切換），各自放自己的 rows
+  const ACH_SETS = [
+    {group: "實驗體", opts: [{label: "死亡次數", honor: "死者", rows: ACH_TEST()}, {label: "致瘋次數", honor: "患者", rows: ACH_TEST()}]},
+    {group: "醫療隊", opts: [{label: "支援次數", honor: "績優工作者", rows: ACH_TEST()}, {label: "事故次數", honor: "無良工作者", rows: ACH_TEST()}]},
+    {group: "資助者", opts: [{label: "資助次數", honor: "慈善家", rows: ACH_TEST()}, {label: "折磨次數", honor: "暴君", rows: ACH_TEST()}]}
+  ];
+  const achSel = ACH_SETS.map(() => 0);
+  let achOpen = -1;
   const SCORE_MAX = 10, ACH_MAX = 5;
   const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   const cell = (v, cls) => v === "" || v == null ? '<td class="empty' + (cls ? ' ' + cls : '') + '">—</td>' : '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(v) + '</td>';
   function render(){
     const box = document.getElementById("lbList");
     if(!box) return;
-    let sRows = "", aRows = "";
-    for(let i = 0; i < SCORE_MAX; i++){
+    let sRows = "";
+    const SCORE_ROWS = SCORE_WEEKS[curWeek] || [];
+    const nScore = Math.max(SCORE_MAX, SCORE_ROWS.length);
+    let menu = "";
+    for(let w = 0; w < WEEK_N; w++) menu += '<button type="button" data-week="' + w + '"' + (w === curWeek ? ' class="on"' : '') + '>WEEK' + (w + 1) + '</button>';
+    for(let i = 0; i < nScore; i++){
       const r = SCORE_ROWS[i] || {};
-      sRows += '<tr><td class="rk">NO.' + (i + 1) + '</td>' + cell(r.name) + cell(r.score, "num") + '</tr>';
+      const rank = r.r != null ? r.r : i + 1;
+      sRows += '<tr' + (rank <= 3 ? ' class="top"' : '') + '><td class="rk">NO.' + rank + '</td>' + cell(r.n) + cell(r.s, "num") + '</tr>';
     }
-    for(let i = 0; i < ACH_MAX; i++){
-      const r = ACH_ROWS[i] || {};
-      aRows += '<tr><td class="rk">NO.' + (i + 1) + '</td>' + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
-    }
-    box.innerHTML =
-      '<div class="lb-block"><div class="lb-title"><span>積分排行榜</span><small>TOP ' + SCORE_MAX + '</small></div>' +
-        '<table class="lb-table lb-score"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
-        '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' +
-      '<div class="lb-block"><div class="lb-title"><span>成就排行榜</span><small>TOP ' + ACH_MAX + '</small></div>' +
+    let aBlocks = "";
+    ACH_SETS.forEach(function(set, k){
+      const opt = set.opts[achSel[k]] || set.opts[0];
+      let aRows = "", aMenu = "";
+      set.opts.forEach(function(o, oi){
+        aMenu += '<button type="button" data-ach="' + k + '" data-opt="' + oi + '"' + (oi === achSel[k] ? ' class="on"' : '') + '>' + esc(o.label) + '</button>';
+      });
+      for(let i = 0; i < ACH_MAX; i++){
+        const r = opt.rows[i] || {};
+        aRows += '<tr' + (i < 3 ? ' class="top"' : '') + '><td class="rk">NO.' + (i + 1) + '</td>' + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
+      }
+      aBlocks += '<div class="lb-block"><div class="lb-title"><span>' + esc(set.group + '成就「' + opt.honor + '」') + '</span>' +
+        '<div class="lb-week' + (achOpen === k ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-achbtn="' + k + '">' + esc(opt.label) + ' <i>▼</i></button><div class="lb-week-menu">' + aMenu + '</div></div></div>' +
         '<table class="lb-table lb-ach"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
         '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>';
+    });
+    const adminBar = adminShown ? '<div class="lb-adminbar"><button type="button" class="lb-week-btn" data-lbadmin="1">上傳排行（管理員）</button></div>' : '';
+    box.innerHTML = adminBar +
+      '<div class="lb-block"><div class="lb-title"><span>積分排行</span><div class="lb-week' + (menuOpen ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-weekbtn="1">WEEK' + (curWeek + 1) + ' <i>▼</i></button><div class="lb-week-menu">' + menu + '</div></div></div>' +
+        '<table class="lb-table lb-score"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
+        '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' +
+      aBlocks;
     const meta = document.getElementById("lbMetaLine");
-    if(meta) meta.textContent = "榜單數量 " + String(Math.min(SCORE_ROWS.length, SCORE_MAX) + Math.min(ACH_ROWS.length, ACH_MAX)).padStart(3, "0");
+    if(meta) meta.textContent = "榜單數量 " + String(SCORE_ROWS.length + ACH_SETS.reduce((n, a, k) => n + Math.min((a.opts[achSel[k]] || a.opts[0]).rows.length, ACH_MAX), 0)).padStart(3, "0");
+  }
+  /* ---------- 資料庫：leaderboard/score ---------- */
+  function scoreRef(){
+    try{
+      if(typeof firebase === "undefined" || !firebase.database) return null;
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      return firebase.database().ref("leaderboard/score");
+    }catch(e){ return null; }
+  }
+  let uploaded = [];
+  function subscribe(){
+    const ref = scoreRef(); if(!ref) return;
+    ref.on("value", function(snap){
+      const v = snap.val() || {}, wk = v.weeks || {};
+      uploaded = [];
+      for(let w = 0; w < WEEK_N; w++){
+        const x = wk["w" + (w + 1)];
+        let rows = x && x.rows ? (Array.isArray(x.rows) ? x.rows : Object.values(x.rows)) : [];
+        rows = rows.filter(Boolean);
+        SCORE_WEEKS[w] = rows;
+        if(x && x.rows) uploaded.push(w + 1);
+      }
+      const c = parseInt(v.current, 10);
+      lbCurrent = (c >= 1 && c <= WEEK_N) ? c : 1;
+      if(!userPicked) curWeek = lbCurrent - 1;   // 沒有手動切過週，就跟著管理員設定的「目前顯示週」
+      render(); refreshAdmin();
+    }, function(err){ console.warn("leaderboard read failed", err); });
+  }
+
+  /* ---------- 管理員：上傳排行 ---------- */
+  let ov = null, parsed = null;
+  const weekOpts = sel => Array.from({length: WEEK_N}, (_, w) => '<option value="' + (w + 1) + '"' + (sel === w + 1 ? ' selected' : '') + '>WEEK' + (w + 1) + '</option>').join("");
+  function adminHTML(){
+    return '<div class="modal-eyebrow">管理員模式</div>' +
+      '<div class="modal-title">上傳排行</div>' +
+      '<div class="modal-note">選擇要上傳到哪一週，再選擇表格檔案。系統會讀取表格裡對應的工作表（例如 week2），用「實驗體名稱」和「總分」排名：同分並列、下一名空缺（三人並列第 1，下一個就是第 4 名）。</div>' +
+      '<select class="lb-sel" id="lbUpWeek">' + weekOpts(parsed ? parsed.week : lbCurrent) + '</select>' +
+      '<input type="file" class="text-input" id="lbUpFile" accept=".xlsx,.xls,.csv" style="width:100%;margin-bottom:10px">' +
+      '<div class="modal-note" id="lbUpMsg"></div>' +
+      '<button class="confirm-btn" id="lbUpGo" disabled style="opacity:.4">確認上傳</button>' +
+      '<hr class="lb-sep">' +
+      '<div class="modal-eyebrow">目前顯示週</div>' +
+      '<div class="modal-note" id="lbUpInfo"></div>' +
+      '<select class="lb-sel" id="lbCurWeek">' + weekOpts(lbCurrent) + '</select>' +
+      '<button class="confirm-btn" id="lbCurGo">設為目前顯示週</button>' +
+      '<button class="modify-btn" id="lbUpClose">關閉</button>';
+  }
+  function refreshAdmin(){
+    if(!ov || !ov.classList.contains("open")) return;
+    const info = ov.querySelector("#lbUpInfo");
+    if(info) info.textContent = "所有人打開排行榜時預設看這一週，要點 WEEK 按鈕才會切到其他週。目前設定：WEEK" + lbCurrent + "；已上傳：" + (uploaded.length ? uploaded.map(w => "WEEK" + w).join("、") : "（尚無）");
+    const sel = ov.querySelector("#lbCurWeek");
+    if(sel && document.activeElement !== sel) sel.value = String(lbCurrent);
+  }
+  function parseWeekSheet(wb, wn){
+    const norm = x => String(x).toLowerCase().replace(/\s+/g, "");
+    let sn = wb.SheetNames.find(n => norm(n) === "week" + wn);
+    if(!sn){
+      if(wb.SheetNames.length === 1) sn = wb.SheetNames[0];
+      else throw new Error("找不到「week" + wn + "」工作表（表格裡的工作表名稱要叫 week" + wn + "）");
+    }
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header: 1, defval: null});
+    let hr = -1, nc = -1, sc = -1;
+    for(let i = 0; i < Math.min(rows.length, 10); i++){
+      const r = rows[i] || [];
+      const ni = r.findIndex(c => c != null && String(c).indexOf("名稱") >= 0);
+      if(ni < 0) continue;
+      const cand = [];
+      r.forEach((c, ci) => { if(c != null && String(c).indexOf("總分") >= 0) cand.push(ci); });
+      if(!cand.length) continue;
+      hr = i; nc = ni;
+      sc = cand.find(ci => norm(r[ci]).indexOf("week" + wn) === 0);
+      if(sc == null) sc = cand[0];
+      break;
+    }
+    if(hr < 0) throw new Error("工作表「" + sn + "」裡找不到「名稱」和「總分」欄位");
+    const list = [];
+    for(let i = hr + 1; i < rows.length; i++){
+      const r = rows[i] || [];
+      const name = r[nc] == null ? "" : String(r[nc]).trim();
+      let sv = r[sc];
+      if(typeof sv === "string") sv = parseFloat(sv.replace(/,/g, ""));
+      if(!name || typeof sv !== "number" || !isFinite(sv)) continue;
+      list.push({n: name, s: Math.round(sv * 100) / 100});
+    }
+    if(!list.length) throw new Error("工作表「" + sn + "」裡沒有可用的資料列");
+    list.sort((a, b) => b.s - a.s);
+    let prev = null, prevRank = 0;
+    list.forEach((x, i) => { if(prev !== null && x.s === prev) x.r = prevRank; else { x.r = i + 1; prevRank = i + 1; prev = x.s; } });
+    return {sheet: sn, total: list.length, rows: list.filter(x => x.r <= SCORE_MAX).slice(0, 30)};
+  }
+  function openAdmin(){
+    if(window.Auth && Auth.requireAdmin && !Auth.requireAdmin()) return;
+    if(!ov){
+      ov = document.createElement("div");
+      ov.className = "modal-overlay";
+      ov.style.zIndex = "10090";
+      ov.innerHTML = '<div class="modal-box"></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener("click", function(e){ if(e.target === ov) closeAdmin(); });
+    }
+    parsed = null;
+    const box = ov.firstChild;
+    box.innerHTML = adminHTML();
+    ov.classList.add("open");
+    const msg = box.querySelector("#lbUpMsg"), go = box.querySelector("#lbUpGo");
+    const setMsg = (t, bad) => { msg.textContent = t; msg.style.color = bad ? "var(--c-crit)" : ""; };
+    const setGo = on => { go.disabled = !on; go.style.opacity = on ? "" : ".4"; };
+    function loadFile(){
+      parsed = null; setGo(false);
+      const f = box.querySelector("#lbUpFile").files[0];
+      if(!f){ setMsg(""); return; }
+      if(typeof XLSX === "undefined"){ setMsg("表格讀取元件尚未載入，請檢查網路後再試。", true); return; }
+      const wn = +box.querySelector("#lbUpWeek").value;
+      const fr = new FileReader();
+      fr.onload = function(){
+        try{
+          const wb = XLSX.read(new Uint8Array(fr.result), {type: "array"});
+          const res = parseWeekSheet(wb, wn);
+          parsed = {week: wn, rows: res.rows};
+          const head = res.rows.slice(0, 3).map(x => "NO." + x.r + " " + x.n + " " + x.s).join("、");
+          setMsg("讀取工作表「" + res.sheet + "」：共 " + res.total + " 筆，將上傳前 " + res.rows.length + " 筆到 WEEK" + wn + "。前三：" + head + (res.rows.length ? "" : ""));
+          setGo(true);
+        }catch(err){ setMsg("讀取失敗：" + (err.message || err), true); }
+      };
+      fr.onerror = function(){ setMsg("檔案讀取失敗，請再試一次。", true); };
+      fr.readAsArrayBuffer(f);
+    }
+    box.querySelector("#lbUpFile").addEventListener("change", loadFile);
+    box.querySelector("#lbUpWeek").addEventListener("change", loadFile);   // 換週要重新讀對應的工作表
+    go.addEventListener("click", function(){
+      if(!parsed) return;
+      const ref = scoreRef();
+      if(!ref){ setMsg("連不上資料庫，無法上傳。", true); return; }
+      const w = parsed.week, rows = parsed.rows;
+      setGo(false); setMsg("上傳中…");
+      ref.child("weeks/w" + w).set({rows: rows, ts: firebase.database.ServerValue.TIMESTAMP}).then(function(){
+        setMsg("已上傳到 WEEK" + w + "（" + rows.length + " 筆）。");
+        parsed = null; box.querySelector("#lbUpFile").value = "";
+      }).catch(function(err){ setMsg("上傳失敗：" + (err.code || err.message || err), true); setGo(true); });
+    });
+    box.querySelector("#lbCurGo").addEventListener("click", function(){
+      const ref = scoreRef(); if(!ref){ alert("連不上資料庫。"); return; }
+      const w = +box.querySelector("#lbCurWeek").value;
+      ref.child("current").set(w).then(function(){ userPicked = false; curWeek = w - 1; render(); refreshAdmin(); }).catch(function(err){ alert("設定失敗：" + (err.code || err.message || err)); });
+    });
+    box.querySelector("#lbUpClose").addEventListener("click", closeAdmin);
+    refreshAdmin();
+  }
+  function closeAdmin(){ if(ov) ov.classList.remove("open"); }
+  setInterval(function(){ const a = adminNow(); if(a !== adminShown){ adminShown = a; render(); } }, 1500);
+  if(document.readyState === "complete") setTimeout(subscribe, 300); else window.addEventListener("load", function(){ setTimeout(subscribe, 300); });
+
+  const host = document.getElementById("lbList");
+  if(host){
+    host.addEventListener("click", function(e){
+      const pick = e.target.closest("[data-week]");
+      if(pick){ curWeek = +pick.getAttribute("data-week"); userPicked = true; menuOpen = false; achOpen = -1; render(); return; }
+      if(e.target.closest("[data-lbadmin]")){ openAdmin(); return; }
+      if(e.target.closest("[data-weekbtn]")){ menuOpen = !menuOpen; achOpen = -1; render(); return; }
+      const ap = e.target.closest("[data-ach]");
+      if(ap){ achSel[+ap.getAttribute("data-ach")] = +ap.getAttribute("data-opt"); achOpen = -1; menuOpen = false; render(); return; }
+      const ab = e.target.closest("[data-achbtn]");
+      if(ab){ const k = +ab.getAttribute("data-achbtn"); achOpen = achOpen === k ? -1 : k; menuOpen = false; render(); return; }
+    });
+    document.addEventListener("click", function(e){
+      if((menuOpen || achOpen >= 0) && !e.target.closest(".lb-week")){ menuOpen = false; achOpen = -1; render(); }
+    });
   }
   render();
   window.renderLeaderboard = render;
