@@ -3954,7 +3954,7 @@ const SharedStore = (function(){
       return d;
     }catch(e){ return "----"; }
   })();
-  const FIELD_LABEL = {name:"名稱", hp:"HP", san:"SAN", bandages:"繃帶", syringes:"針筒", deathCount:"死亡次數", madCount:"瘋狂次數", medicCount:"醫療次數", accidentCount:"事故次數", supportCount:"資助次數", tortureCount:"折磨次數", statuses:"狀態", avatarUrl:"頭像"};
+  const FIELD_LABEL = {name:"名稱", hp:"HP", san:"SAN", bandages:"繃帶", syringes:"針筒", deathCount:"死亡次數", madCount:"瘋狂次數", medicCount:"治療次數", accidentCount:"事故次數", supportCount:"資助次數", tortureCount:"折磨次數", statuses:"狀態", avatarUrl:"頭像"};
   function groupOf(path){ return /medic/.test(path) ? "隊員" : /sponsor/.test(path) ? "資助者" : "實驗體"; }
   function norm(f, v){
     if(v === undefined || v === null) return "";
@@ -4593,7 +4593,7 @@ const Auth=(function(){
       if(typeof s.syringes==="number") bits.push("針筒 x"+s.syringes);
       if(s.deathCount) bits.push("死亡 x"+s.deathCount);
       if(s.madCount) bits.push("瘋狂 x"+s.madCount);
-      if(f==="醫療清潔部隊"){ if(s.medicCount) bits.push("醫療 x"+s.medicCount); if(s.accidentCount) bits.push("事故 x"+s.accidentCount); }
+      if(f==="醫療清潔部隊"){ if(s.medicCount) bits.push("治療 x"+s.medicCount); if(s.accidentCount) bits.push("事故 x"+s.accidentCount); }
     }
     if(bits.length) h+='<div style="margin-top:12px;font-size:12px;color:'+th.dim+'">'+bits.join("　／　")+'</div>';
     h+='<div style="text-align:right;margin-top:10px">'+(mode==="fav"
@@ -7029,7 +7029,7 @@ async function applyAction(){
   }
 
   const _after = snapFields(_list);
-  // 行動者自己的計數：醫療→醫療次數、醫療事故→事故次數、資助→資助次數、折磨→折磨次數（每一筆行動紀錄 +1）
+  // 行動者自己的計數：醫療→治療次數、醫療事故→事故次數、資助→資助次數、折磨→折磨次數（每一筆行動紀錄 +1）
   const _cntField = ({medical: "medicCount", accident: "accidentCount", support: "supportCount", torture: "tortureCount"})[wizard.mode];
   const _actFaction = wizard.faction, _actId = wizard.selfId;
   const _actApp = _actFaction === "醫療清潔部隊" ? window.medicApp : _actFaction === "資助者" ? window.sponsorApp : null;
@@ -8295,7 +8295,7 @@ function renderGrid(){
         '<div class="stat-label"><span>SAN</span><span>' + san + '/3</span></div>' +
         '<div class="segs">' + segBar(san, "san") + '</div>' +
       '</div>' +
-      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>　　　醫療 x<b>' + (s.medicCount || 0) + '</b>／事故 x<b>' + (s.accidentCount || 0) + '</b></div>' +
+      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>　　　治療 x<b>' + (s.medicCount || 0) + '</b>／事故 x<b>' + (s.accidentCount || 0) + '</b></div>' +
       '<div class="note">' + noteHTML + '</div>' +
       '<button class="edit-btn" onclick="medicApp.openEditModal(\'' + s.id + '\')" title="編輯"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg></button>';
     card.addEventListener("click", e => {
@@ -8346,7 +8346,7 @@ function renderEditForm(){
     '<div><span class="field-label">SAN（0-3）</span><input type="number" class="text-input" id="medicEditSan" value="' + (typeof s.san === "number" ? s.san : 3) + '" min="0" max="3"></div></div>' +
     '<div class="field-row"><div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="medicEditBandages" value="' + s.bandages + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0)) + '"></div>' +
     '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="medicEditSyringes" value="' + s.syringes + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0)) + '"></div></div>' +
-    '<div class="field-row"><div><span class="field-label">醫療次數</span><input type="number" class="text-input" id="medicEditMedicCount" value="' + (s.medicCount || 0) + '" min="0" max="99"></div>' +
+    '<div class="field-row"><div><span class="field-label">治療次數</span><input type="number" class="text-input" id="medicEditMedicCount" value="' + (s.medicCount || 0) + '" min="0" max="99"></div>' +
     '<div><span class="field-label">事故次數</span><input type="number" class="text-input" id="medicEditAccidentCount" value="' + (s.accidentCount || 0) + '" min="0" max="99"></div></div>' +
     '<span class="field-label">FB 連結（可留空）</span>' +
     '<input type="text" class="text-input" id="medicEditFb" value="' + escapeHTML(s.fbUrl || "") + '" maxlength="300" placeholder="https://www.facebook.com/…">' +
@@ -9896,7 +9896,8 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 /* ---------- 排行榜 ----------
    資料放在這兩個陣列裡，之後要改榜單直接改這裡就好：
    積分：SCORE_WEEKS[0]~[7] 對應 WEEK1~WEEK8，每週 {name:"名字", score:分數}　（最多顯示 10 筆，已經排好順序，第一筆是 NO.1）
-   成就：{name:"名字", n:次數}　（最多顯示 5 筆，已經排好順序）          */
+   成就：不用手動填，直接讀三個角色資料庫的計數（deathCount／madCount、medicCount／accidentCount、supportCount／tortureCount），
+        次數 0 的不列入；同次數並列、下一名空缺；角卡編輯或撤銷後會自動跟著變。          */
 (function(){
   // 成就榜目前是測試用資料（全部「小明」），正式使用時換掉或清空就好
   const WEEK_N = 8;
@@ -9905,14 +9906,27 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   let curWeek = 0, menuOpen = false, userPicked = false, lbCurrent = 1;
   const adminNow = () => !!(window.Auth && Auth.isAdmin);
 
-  const ACH_TEST = () => [12, 9, 7, 5, 3].map(n => ({name: "小明", n: n}));
-  // 三個成就榜：之後各自換成正式資料就好
-  // 每個榜有兩個項目（按鈕可切換），各自放自己的 rows
+  // 三個成就榜（各自兩個項目，按鈕可切換）。path＝角色資料庫節點，field＝角卡上的計數欄位
   const ACH_SETS = [
-    {group: "實驗體", opts: [{label: "死亡次數", honor: "死者", rows: ACH_TEST()}, {label: "致瘋次數", honor: "患者", rows: ACH_TEST()}]},
-    {group: "醫療隊", opts: [{label: "支援次數", honor: "績優工作者", rows: ACH_TEST()}, {label: "事故次數", honor: "無良工作者", rows: ACH_TEST()}]},
-    {group: "資助者", opts: [{label: "資助次數", honor: "慈善家", rows: ACH_TEST()}, {label: "折磨次數", honor: "暴君", rows: ACH_TEST()}]}
+    {group: "實驗體", path: "bloodpool_subjects_v1", opts: [{label: "死亡次數", honor: "死者", field: "deathCount"}, {label: "致瘋次數", honor: "患者", field: "madCount"}]},
+    {group: "醫療隊", path: "bloodpool_medic_subjects_v2", opts: [{label: "治療次數", honor: "績優工作者", field: "medicCount"}, {label: "事故次數", honor: "無良工作者", field: "accidentCount"}]},
+    {group: "資助者", path: "bloodpool_sponsor_subjects_v1", opts: [{label: "資助次數", honor: "慈善家", field: "supportCount"}, {label: "折磨次數", honor: "暴君", field: "tortureCount"}]}
   ];
+  const achData = {};   // path -> 角色紀錄陣列（即時同步）
+  function achRows(set, opt){
+    const list = achData[set.path] || [];
+    const arr = [];
+    list.forEach(function(r){
+      if(!r || r.deleted) return;
+      const v = Number(r[opt.field]);
+      if(!isFinite(v) || v <= 0) return;
+      arr.push({name: String(r.name || r.codeName || r.id || "").trim() || "—", n: v});
+    });
+    arr.sort((a, b) => b.n - a.n);
+    let prev = null, prevRank = 0;
+    arr.forEach((x, i) => { if(prev !== null && x.n === prev) x.r = prevRank; else { x.r = i + 1; prevRank = i + 1; prev = x.n; } });
+    return arr.filter(x => x.r <= ACH_MAX).slice(0, 10);
+  }
   const achSel = ACH_SETS.map(() => 0);
   let achOpen = -1;
   const SCORE_MAX = 10, ACH_MAX = 5;
@@ -9938,9 +9952,11 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       set.opts.forEach(function(o, oi){
         aMenu += '<button type="button" data-ach="' + k + '" data-opt="' + oi + '"' + (oi === achSel[k] ? ' class="on"' : '') + '>' + esc(o.label) + '</button>';
       });
-      for(let i = 0; i < ACH_MAX; i++){
-        const r = opt.rows[i] || {};
-        aRows += '<tr' + (i < 3 ? ' class="top"' : '') + '><td class="rk">NO.' + (i + 1) + '</td>' + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
+      const arows = achRows(set, opt);
+      for(let i = 0; i < Math.max(ACH_MAX, arows.length); i++){
+        const r = arows[i] || {};
+        const rank = r.r != null ? r.r : i + 1;
+        aRows += '<tr' + (rank <= 3 ? ' class="top"' : '') + '><td class="rk">NO.' + rank + '</td>' + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
       }
       aBlocks += '<div class="lb-block"><div class="lb-title"><span>' + esc(set.group + '成就「' + opt.honor + '」') + '</span>' +
         '<div class="lb-week' + (achOpen === k ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-achbtn="' + k + '">' + esc(opt.label) + ' <i>▼</i></button><div class="lb-week-menu">' + aMenu + '</div></div></div>' +
@@ -9954,7 +9970,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
         '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' +
       aBlocks;
     const meta = document.getElementById("lbMetaLine");
-    if(meta) meta.textContent = "榜單數量 " + String(SCORE_ROWS.length + ACH_SETS.reduce((n, a, k) => n + Math.min((a.opts[achSel[k]] || a.opts[0]).rows.length, ACH_MAX), 0)).padStart(3, "0");
+    if(meta) meta.textContent = "榜單數量 " + String(SCORE_ROWS.length + ACH_SETS.reduce((n, a, k) => n + achRows(a, a.opts[achSel[k]] || a.opts[0]).length, 0)).padStart(3, "0");
   }
   /* ---------- 資料庫：leaderboard/score ---------- */
   function scoreRef(){
@@ -10176,7 +10192,23 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   document.addEventListener("pointermove", function(e){ if(lpT && (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10)) lpCancel(); });
   ["pointerup", "pointercancel", "scroll"].forEach(function(ev){ document.addEventListener(ev, lpCancel, true); });
   document.addEventListener("contextmenu", function(e){ if(adminNow() && e.target.closest && e.target.closest("#lbList .lb-score")) e.preventDefault(); });
-  if(document.readyState === "complete") setTimeout(subscribe, 300); else window.addEventListener("load", function(){ setTimeout(subscribe, 300); });
+  function subscribeAch(){
+    try{
+      if(typeof firebase === "undefined" || !firebase.database) return;
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      const d = firebase.database(), seen = {};
+      ACH_SETS.forEach(function(set){
+        if(seen[set.path]) return; seen[set.path] = 1;
+        d.ref(set.path).on("value", function(snap){
+          const v = snap.val() || {};
+          achData[set.path] = Object.keys(v).map(k => v[k]).filter(r => r && typeof r === "object" && r.id !== undefined);
+          render();
+        }, function(err){ console.warn("achievement read failed", set.path, err); });
+      });
+    }catch(e){ console.warn("achievement subscribe failed", e); }
+  }
+  const startAll = function(){ subscribe(); subscribeAch(); };
+  if(document.readyState === "complete") setTimeout(startAll, 300); else window.addEventListener("load", function(){ setTimeout(startAll, 300); });
 
   const host = document.getElementById("lbList");
   if(host){
