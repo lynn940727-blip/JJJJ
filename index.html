@@ -2589,15 +2589,18 @@
 .log-confirm .log-del:hover{background:rgba(194,68,82,.18);color:#e8b3ba;border-color:#c24452}
 .log-empty{padding:40px 0;text-align:center;color:var(--bone-dim)}
 /* ---------- 排行榜：深色格子、直式表格（兩張表上下排列）---------- */
-#lbRoster .lb-block{margin:0 auto 30px;max-width:900px}
-#lbRoster .lb-dash{width:36px;height:2px;margin:0 auto 34px;background:var(--c-crit);opacity:.75}
-#lbRoster .lb-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px;
-  font-size:15px;letter-spacing:.14em;color:var(--bone);padding-left:10px;border-left:3px solid var(--c-crit)}
-#lbRoster .lb-title small{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--bone-dim)}
+#lbRoster .lb-block{margin:0 auto 56px;max-width:900px}
+#lbRoster .lb-dash{width:72px;height:2px;margin:0 auto 56px;background:linear-gradient(90deg,transparent,var(--c-crit) 50%,transparent);box-shadow:0 0 8px rgba(214,16,30,.5)}
+/* 區塊標題：跟名冊頁同一套語言——小字 mono 眉標、襯線粗體標題帶暗紅陰影、下方細線＋一小段紅色亮線 */
+#lbRoster .lb-title{position:relative;display:block;margin:0 0 16px;padding:0 0 14px;border-bottom:1px solid var(--line);text-align:left}
+#lbRoster .lb-title::after{content:"";position:absolute;left:0;bottom:-1px;width:56px;height:1px;background:var(--c-crit);box-shadow:0 0 6px rgba(214,16,30,.6)}
+#lbRoster .lb-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.32em;color:var(--c-crit);opacity:.85;margin:0 0 8px}
+#lbRoster .lb-eyebrow::before{content:"◆";color:var(--blood-dim);margin-right:10px;font-size:7px;letter-spacing:0;vertical-align:middle}
+#lbRoster .lb-title h3{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(21px,5.6vw,27px);line-height:1.3;letter-spacing:.04em;color:var(--bone);text-shadow:0 2px 0 var(--blood-dim),0 6px 18px rgba(122,14,14,.4)}
 #lbList.lb-adminmode .lb-score{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .lb-sel{width:100%;padding:11px 12px;background:var(--bg-panel);border:1px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:13px;letter-spacing:.06em;margin-bottom:10px;border-radius:0}
 .lb-sep{border:0;border-top:1px solid var(--line);margin:18px 0}
-#lbRoster .lb-title{position:relative}
+#lbRoster .lb-ctrl{display:flex;justify-content:flex-end;margin:0 0 10px}
 #lbRoster .lb-week{position:relative;flex:none}
 #lbRoster .lb-week-btn{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--bone);background:transparent;border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.3}
 #lbRoster .lb-week-btn:hover,#lbRoster .lb-week.open .lb-week-btn{border-color:var(--c-crit);color:#ff2b3d}
@@ -2635,7 +2638,7 @@
 #lbRoster .lb-ach col.c-rank{width:28%}
 #lbRoster .lb-ach col.c-num{width:22%}
 #lbRoster .lb-ach td.rk.honor{color:#ff2b3d;font-weight:700;font-family:var(--sans);font-size:13px;letter-spacing:.02em;white-space:nowrap}
-#lbRoster .lb-warn{color:#ff3b4a;font-size:12px;line-height:1.7;letter-spacing:.02em;margin:0 0 10px}
+#lbRoster .lb-warn{color:#f0606c;font-size:10.5px;line-height:1.75;letter-spacing:.03em;margin:0 0 12px;padding:10px 14px;background:rgba(122,14,14,.14)}
 @media (max-width:520px){
   #lbRoster .lb-table{font-size:13.5px}
   #lbRoster .lb-table th,#lbRoster .lb-table td{padding:13px 6px}
@@ -3517,13 +3520,7 @@
 </footer>
 
 <section class="roster snap-section" id="lbRoster">
-<div class="roster-eyebrow">檔案 ⁄ 排行榜</div>
-<div class="roster-head">
-<h2>排行榜</h2>
-<div class="roster-head-right"><div class="meta" id="lbMetaLine">榜單數量 000</div></div>
-</div>
-<div class="roster-divider"></div>
-<div id="lbList"></div>
+<div id="lbList" style="padding-top:28px"></div>
 <div style="text-align:center; margin-top:56px;">
 <button class="observe-btn" id="emoBtn">
 <span class="dot"></span>
@@ -9928,9 +9925,9 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 
   // 三個成就榜（各自兩個項目，按鈕可切換）。path＝角色資料庫節點，field＝角卡上的計數欄位
   const ACH_SETS = [
-    {group: "實驗體", path: "bloodpool_subjects_v1", opts: [{label: "死亡次數", honor: "死者", field: "deathCount"}, {label: "致瘋次數", honor: "患者", field: "madCount"}]},
-    {group: "醫療隊", warn: true, path: "bloodpool_medic_subjects_v2", opts: [{label: "治療次數", honor: "績優工作者", field: "medicCount"}, {label: "事故次數", honor: "無良工作者", field: "accidentCount"}]},
-    {group: "資助者", warn: true, path: "bloodpool_sponsor_subjects_v1", opts: [{label: "資助次數", honor: "慈善家", field: "supportCount"}, {label: "折磨次數", honor: "暴君", field: "tortureCount"}]}
+    {group: "實驗體", tag: "02 ⁄ SUBJECT", path: "bloodpool_subjects_v1", opts: [{label: "死亡次數", honor: "死者", field: "deathCount"}, {label: "致瘋次數", honor: "患者", field: "madCount"}]},
+    {group: "醫療隊", tag: "03 ⁄ MEDIC", warn: true, path: "bloodpool_medic_subjects_v2", opts: [{label: "治療次數", honor: "績優工作者", field: "medicCount"}, {label: "事故次數", honor: "無良工作者", field: "accidentCount"}]},
+    {group: "資助者", tag: "04 ⁄ SPONSOR", warn: true, path: "bloodpool_sponsor_subjects_v1", opts: [{label: "資助次數", honor: "慈善家", field: "supportCount"}, {label: "折磨次數", honor: "暴君", field: "tortureCount"}]}
   ];
   const achData = {};   // path -> 角色紀錄陣列（即時同步）
   function achRows(set, opt){
@@ -9978,9 +9975,9 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
         const rank = r.r != null ? r.r : i + 1;
         aRows += '<tr' + (rank === 1 ? ' class="top"' : '') + '>' + (rank === 1 ? '<td class="rk honor">' + esc(opt.honor) + '</td>' : '<td class="rk">NO.' + rank + '</td>') + cell(r.name) + cell(r.n == null ? "" : r.n, "num") + '</tr>';
       }
-      aList.push('<div class="lb-block"><div class="lb-title"><span>' + esc(set.group + '成就「' + opt.honor + '」') + '</span>' +
-        '<div class="lb-week' + (achOpen === k ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-achbtn="' + k + '">' + esc(opt.label) + ' <i>▼</i></button><div class="lb-week-menu">' + aMenu + '</div></div></div>' +
+      aList.push('<div class="lb-block"><div class="lb-title"><div class="lb-eyebrow">' + set.tag + '</div><h3>' + esc(set.group + '成就「' + opt.honor + '」') + '</h3></div>' +
         (set.warn ? '<div class="lb-warn">僅供參考，結企時主辦方會人工審核，過度潦草、未達基本完成度的作品，不列入成就計算。</div>' : '') +
+        '<div class="lb-ctrl"><div class="lb-week' + (achOpen === k ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-achbtn="' + k + '">' + esc(opt.label) + ' <i>▼</i></button><div class="lb-week-menu">' + aMenu + '</div></div></div>' +
         '<table class="lb-table lb-ach"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
         '<thead><tr><th>名次</th><th>名字</th><th>次數</th></tr></thead><tbody>' + aRows + '</tbody></table></div>');
     });
@@ -9988,7 +9985,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     const aBlocks = aList.join(dash);
     box.classList.toggle("lb-adminmode", adminNow());
     box.innerHTML =
-      '<div class="lb-block"><div class="lb-title"><span>積分排行</span><div class="lb-week' + (menuOpen ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-weekbtn="1">WEEK' + (curWeek + 1) + ' <i>▼</i></button><div class="lb-week-menu">' + menu + '</div></div></div>' +
+      '<div class="lb-block"><div class="lb-title"><div class="lb-eyebrow">01 ⁄ SCORE</div><h3>積分排行</h3></div><div class="lb-ctrl"><div class="lb-week' + (menuOpen ? ' open' : '') + '"><button type="button" class="lb-week-btn" data-weekbtn="1">WEEK' + (curWeek + 1) + ' <i>▼</i></button><div class="lb-week-menu">' + menu + '</div></div></div>' +
         '<table class="lb-table lb-score"><colgroup><col class="c-rank"><col><col class="c-num"></colgroup>' +
         '<thead><tr><th>名次</th><th>名字</th><th>分數</th></tr></thead><tbody>' + sRows + '</tbody></table></div>' + dash +
       aBlocks;
