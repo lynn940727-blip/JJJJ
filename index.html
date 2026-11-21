@@ -15,6 +15,8 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#7a0e0e">
+<meta name="msapplication-navbutton-color" content="#7a0e0e">
 <title>血池肉林 ｜ 人員實時監控報告</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
@@ -3957,7 +3959,7 @@ const SharedStore = (function(){
       return d;
     }catch(e){ return "----"; }
   })();
-  const FIELD_LABEL = {name:"名稱", hp:"HP", san:"SAN", bandages:"繃帶", syringes:"針筒", deathCount:"死亡次數", madCount:"瘋狂次數", medicCount:"治療次數", accidentCount:"事故次數", supportCount:"資助次數", tortureCount:"折磨次數", statuses:"狀態", avatarUrl:"頭像"};
+  const FIELD_LABEL = {name:"名稱", hp:"HP", san:"SAN", bandages:"繃帶", syringes:"針筒", saliva:"信標的唾液", deathCount:"死亡次數", madCount:"瘋狂次數", medicCount:"治療次數", accidentCount:"事故次數", supportCount:"資助次數", tortureCount:"折磨次數", statuses:"狀態", avatarUrl:"頭像"};
   function groupOf(path){ return /medic/.test(path) ? "隊員" : /sponsor/.test(path) ? "資助者" : "實驗體"; }
   function norm(f, v){
     if(v === undefined || v === null) return "";
@@ -4002,7 +4004,7 @@ const SharedStore = (function(){
   // 手動編輯（編輯視窗按儲存）也留紀錄：只記真的有變的欄位
   function logEdit(group, label, before, after){
     try{
-      const fields = ["hp", "san", "bandages", "syringes", "deathCount", "madCount", "medicCount", "accidentCount", "supportCount", "tortureCount", "statuses"];  // 名字修改不記錄
+      const fields = ["hp", "san", "bandages", "syringes", "saliva", "deathCount", "madCount", "medicCount", "accidentCount", "supportCount", "tortureCount", "statuses"];  // 名字修改不記錄
       const parts = [];
       fields.forEach(f => {
         if(before[f] === undefined && after[f] === undefined) return;
@@ -5432,17 +5434,17 @@ const subjects = [
   {id: "062", name: "哈米", hp: 3, san: 3},
   {id: "063", name: "葵苑", hp: 3, san: 3}
 ];
-subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.deathCount = 0; s.madCount = 0; s.avatarUrl = null; });
+subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.saliva = 0; s.deathCount = 0; s.madCount = 0; s.avatarUrl = null; });
 
 const STORAGE_KEY = "bloodpool_subjects_v1";   // 同時是 Firebase 節點名稱、也是離線備援用的 localStorage key
 const CODE_IDS = new Set(subjects.map(s => s.id));   // 寫在程式裡的名冊：編號 / aliases 以程式為準
 const CODE_NAMES = {};                                 // 程式裡目前寫的名字；資料庫裡記著「改名當下程式的名字」，程式一改就以程式為準
 subjects.forEach(s => { CODE_NAMES[s.id] = s.name; });
 const tombstones = [];   // 在網頁上被刪掉的「程式名冊」角色：資料庫留一筆刪除紀錄，重新整理後才不會又跑出來
-const RUNTIME_FIELDS = ["hp","san","statuses","bandages","syringes","deathCount","madCount","avatarUrl","owner"];
+const RUNTIME_FIELDS = ["hp","san","statuses","bandages","syringes","saliva","deathCount","madCount","avatarUrl","owner"];
 
 function subjectDefaults(){
-  return {statuses: [], bandages: 2, syringes: 2, deathCount: 0, madCount: 0, avatarUrl: null, owner: null};
+  return {statuses: [], bandages: 2, syringes: 2, saliva: 0, deathCount: 0, madCount: 0, avatarUrl: null, owner: null};
 }
 
 // 把資料庫傳來的資料合併進 subjects（就地修改）。有任何變動回傳 true。
@@ -5620,7 +5622,7 @@ function renderGrid(){
         '<div class="stat-label"><span>SAN</span><span>' + s.san + '/3</span></div>' +
         '<div class="segs">' + segBar(s.san, "san") + '</div>' +
       '</div>' +
-      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>　　　死亡 x<b>' + s.deathCount + '</b>／瘋狂 x<b>' + s.madCount + '</b></div>' +
+      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>' + (s.saliva > 0 ? '　／　唾液 x<b>' + s.saliva + '</b>' : '') + '　　　死亡 x<b>' + s.deathCount + '</b>／瘋狂 x<b>' + s.madCount + '</b></div>' +
       '<div class="note">' + noteHTML + '</div>' +
       '<button class="edit-btn" onclick="openEditModal(\'' + s.id + '\')" title="編輯">' +
         '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg>' +
@@ -6084,6 +6086,7 @@ function resetWizard(startStep){
     removedNow:null,
     itemType:null,
     rewardField:null,
+    useSaliva:false, salivaAsked:false,
     rewardQty:1,
     rewardMap:{}
   };
@@ -6126,7 +6129,7 @@ function viewResultChar(){
   let f = "實驗體", id = null;
   if(wizard.step === "actionResult"){
     id = (wizard.targetIds && wizard.targetIds.length) ? wizard.targetIds[0] : wizard.targetId;
-    if(wizard.targetFaction === MEDIC_F && (DAMAGE_MODES.includes(wizard.mode) || wizard.mode === "medical")) f = MEDIC_F;
+    if(wizard.targetFaction === MEDIC_F && (DAMAGE_MODES.includes(wizard.mode) || wizard.mode === "medical" || wizard.mode === "flesh")) f = MEDIC_F;
   } else {
     id = wizard.selfId; f = wizard.faction || "實驗體";
   }
@@ -6221,7 +6224,24 @@ modalOverlay.addEventListener("click", (e) => {
   if(e.target === modalOverlay) closeModal();
 });
 
+// 信標的唾液：持有者在「攻擊／醫療事故」要送出前，會先被問要不要使用
+function salivaActor(){
+  if(wizard.mode === "attack") return wizard.faction === "實驗體" ? subjects.find(x => x.id === wizard.selfId) : null;
+  if(wizard.mode === "accident") return medActor();
+  return null;
+}
+function salivaAskNeeded(){
+  if(wizard.mode !== "attack" && wizard.mode !== "accident") return false;
+  if(wizard.salivaAsked) return false;
+  const a = salivaActor();
+  return !!(a && Number(a.saliva) > 0);
+}
+function answerSaliva(yes){
+  wizard.useSaliva = !!yes; wizard.salivaAsked = true;
+  goStep("actionPreview");
+}
 function goStep(next){
+  if(next === "actionPreview" && salivaAskNeeded()) next = "salivaAsk";
   wizard.history.push(wizard.step);
   wizard.step = next;
   renderModalBody();
@@ -6365,7 +6385,26 @@ function renderModalBody(){
       '<div class="modal-eyebrow">醫療清潔部隊</div>' +
       '<div class="modal-title">請選擇行動</div>' +
       '<button class="choice-btn" onclick="startMode(\'medical\')">醫療</button>' +
-      '<button class="choice-btn" onclick="startMode(\'accident\')">醫療事故</button>';
+      '<button class="choice-btn" onclick="startMode(\'accident\')">醫療事故</button>' +
+      '<button class="choice-btn" onclick="startFlesh()">060的血肉</button>';
+
+  } else if(step === "salivaAsk"){
+    const a = salivaActor(), n = Number(a && a.saliva) || 0;
+    const stat = wizard.statKey === "hp" ? "HP" : "SAN";
+    html =
+      backBtn() +
+      '<div class="modal-eyebrow">信標的唾液</div>' +
+      '<div class="modal-title">要使用信標的唾液嗎？</div>' +
+      '<div class="modal-note">使用後，這次' + (wizard.mode === "accident" ? "醫療事故" : "攻擊") + '會讓每位目標的 ' + stat + ' 額外 -1（合計 -2），並消耗 1 個（剩餘 ' + n + ' → ' + Math.max(0, n - 1) + '）。</div>' +
+      '<button class="choice-btn" onclick="answerSaliva(true)">使用</button>' +
+      '<button class="choice-btn" onclick="answerSaliva(false)">不使用</button>';
+
+  } else if(step === "fleshType"){
+    html =
+      backBtn() +
+      '<div class="modal-eyebrow">060的血肉</div>' +
+      '<div class="modal-title">請選擇要使用什麼</div>' +
+      FLESH_ITEMS.map(f => '<button class="choice-btn" onclick="chooseFlesh(\'' + f.key + '\')">' + f.label + ' ── ' + (f.stat === "hp" ? "HP" : "SAN") + ' +' + f.amt + '</button>').join("");
 
   } else if(step === "targetSelect"){
     if(DAMAGE_MODES.includes(wizard.mode)){
@@ -6391,11 +6430,13 @@ function renderModalBody(){
         medicBtn;
     } else {
       const prompt = wizard.mode === "medical" ? "請選擇醫療對象" :
+                     wizard.mode === "flesh" ? "請選擇要對誰使用" :
                      wizard.mode === "support" ? "請選擇資助對象" :
                      modeLabels[wizard.mode].targetPrompt;
-      const medicT2 = wizard.mode === "medical" && wizard.targetFaction === MEDIC_F;   // 醫療隊也可以治療醫療隊
-      const medBtn2 = wizard.mode === "medical"
-        ? '<button class="modify-btn" onclick="toggleMedicalTarget()">' + (medicT2 ? "改選實驗體" : "治療醫療隊") + '</button>' : "";
+      const _healLike = wizard.mode === "medical" || wizard.mode === "flesh";
+      const medicT2 = _healLike && wizard.targetFaction === MEDIC_F;   // 醫療隊也可以治療醫療隊（060的血肉同樣可以對醫療隊使用）
+      const medBtn2 = _healLike
+        ? '<button class="modify-btn" onclick="toggleMedicalTarget()">' + (medicT2 ? "改選實驗體" : (wizard.mode === "flesh" ? "對醫療隊使用" : "治療醫療隊")) + '</button>' : "";
       html =
         backBtn() +
         '<div class="modal-eyebrow">目標選擇' + (medicT2 ? ' ／ 醫療隊' : '') + '</div>' +
@@ -6428,7 +6469,8 @@ function renderModalBody(){
       '<div class="modal-eyebrow">已選擇 ' + wizard.targetIds.length + ' 位' + tWord() + '</div>' +
       '<div class="modal-title">請選擇獎勵物資</div>' +
       '<button class="choice-btn" onclick="chooseRewardItem(\'bandages\')">繃帶 ── HP +1 道具</button>' +
-      '<button class="choice-btn" onclick="chooseRewardItem(\'syringes\')">針筒 ── SAN +1 道具</button>';
+      '<button class="choice-btn" onclick="chooseRewardItem(\'syringes\')">針筒 ── SAN +1 道具</button>' +
+      '<button class="choice-btn" onclick="chooseRewardItem(\'saliva\')">信標的唾液 ── 攻擊／事故時 HP／SAN 額外 -1</button>';
 
   } else if(step === "npcRewardQty"){
     html =
@@ -6497,6 +6539,23 @@ function renderModalBody(){
       html += '<button class="choice-btn" onclick="chooseRemoveStatusIdx(-1)">不解除狀態</button>';
     }
 
+  } else if(step === "fleshRemoveStatus"){
+    const target = findT(wizard.targetId);
+    const lim = wizard.fleshAmt === 3 ? 3 : 1;   // 肉（回三點）最多解除三個狀態；血（回一點）解除一個
+    html = backBtn() +
+      '<div class="modal-eyebrow">目標：' + tWord() + ' ' + target.id + ' ' + escapeHTML(target.name) + '</div>' +
+      '<div class="modal-title">解除狀態</div>';
+    if(target.statuses.length === 0){
+      html += '<div class="modal-note">此' + tWord() + '目前沒有可解除的狀態。</div>' +
+              '<button class="confirm-btn" onclick="confirmFleshRemove()">下一步</button>';
+    } else {
+      html += '<div class="modal-note">' + escapeHTML(wizard.natureLabel || "") + '：最多可解除 ' + lim + ' 個狀態（不勾選就是不解除）。</div>' +
+        '<div class="check-list">' +
+          target.statuses.map((st, i) => '<label class="check-item"><input type="checkbox" class="flesh-check" value="' + i + '" onchange="limitFleshCheck(this)"> ' + escapeHTML(st) + '</label>').join("") +
+        '</div>' +
+        '<button class="confirm-btn" onclick="confirmFleshRemove()">下一步</button>';
+    }
+
   } else if(step === "statusInput1"){
     const eyebrow = wizard.targetIds.length === 1 ? ("目標：" + tWord() + " " + wizard.targetIds[0]) : ("已選擇 " + wizard.targetIds.length + " 位" + tWord());
     html =
@@ -6541,6 +6600,19 @@ function renderModalBody(){
         '</div>' +
         '<button class="confirm-btn" onclick="applyAction()">確認醫療</button>' +
         '<button class="modify-btn" onclick="goBack()">修改</button>';
+    } else if(wizard.mode === "flesh"){
+      const fi = FLESH_ITEMS.find(x => x.key === wizard.fleshKey) || {};
+      html =
+        '<div class="modal-eyebrow">確認060的血肉</div>' +
+        '<div class="modal-title">請確認以下內容</div>' +
+        '<div class="result-block">' +
+          '<div class="result-line">目標：' + tWord() + ' ' + target.id + ' ' + escapeHTML(target.name) + '</div>' +
+          '<div class="result-line">使用：' + fi.label + '（' + (fi.stat === "hp" ? "HP" : "SAN") + ' +' + fi.amt + '）</div>' +
+          '<div class="result-line">解除狀態：' + ((wizard.removeStatuses || []).length ? wizard.removeStatuses.map(escapeHTML).join("、") : "無") + '</div>' +
+          '<div class="result-line">不消耗繃帶／針筒；計入治療次數 +1。</div>' +
+        '</div>' +
+        '<button class="confirm-btn" onclick="applyAction()">確認使用</button>' +
+        '<button class="modify-btn" onclick="goBack()">修改</button>';
     } else if(wizard.mode === "support"){
       html =
         '<div class="modal-eyebrow">確認資助內容</div>' +
@@ -6581,6 +6653,7 @@ function renderModalBody(){
           '<div class="result-line">目標：' + targetsText + '</div>' +
           '<div class="result-line">' + L.natureFieldLabel + '：' + wizard.natureLabel + '</div>' +
           '<div class="result-line">附加狀態：' + statText + '</div>' +
+          (wizard.useSaliva ? '<div class="result-line">信標的唾液：使用（' + (wizard.statKey === "hp" ? "HP" : "SAN") + ' 額外 -1，剩餘 ' + Math.max(0, (Number((salivaActor() || {}).saliva) || 0) - 1) + '）</div>' : '') +
         '</div>' +
         fullNote +
         '<button class="confirm-btn" onclick="applyAction()">' + L.confirmBtn + '</button>' +
@@ -6590,18 +6663,24 @@ function renderModalBody(){
   } else if(step === "actionResult"){
     const target = findT(wizard.targetId);
 
-    if(wizard.mode === "medical" || wizard.mode === "support"){
+    if(wizard.mode === "flesh"){
+      html =
+        '<div class="reveal-box" id="revealBox">' +
+          reportBlock(target, (wizard.statKey === "hp" ? "HP" : "SAN") + "+" + (wizard.fleshGain || 0), ("060的血肉：" + (wizard.natureLabel || "") + ((wizard.fleshRemoved || []).length ? "　解除：" + wizard.fleshRemoved.join("、") : ""))) +
+          resultBtns() +
+        '</div>';
+    } else if(wizard.mode === "medical" || wizard.mode === "support"){
       html =
         '<div class="reveal-box" id="revealBox">' +
           reportBlock(target, wizard.statKey === "other" ? "獲得資助" : (wizard.statKey === "hp" ? "HP" : "SAN") + "+1", wizard.mode === "medical" ? (wizard.itemUsedTxt || "") : "") +
           resultBtns() +
         '</div>';
     } else if(wizard.mode === "npcReward"){
-      const _lbl = wizard.rewardField === "bandages" ? "繃帶" : "針筒";
+      const _lbl = REWARD_LABEL[wizard.rewardField] || "針筒";
       const _blocks = wizard.targetIds.map(id => {
         const t = findT(id);
         const gain = (wizard.rewardMap || {})[id] || 0;
-        return reportBlock(t, _lbl + " +" + gain, "持有：繃帶 x" + t.bandages + "／針筒 x" + t.syringes, false);
+        return reportBlock(t, _lbl + " +" + gain, "持有：繃帶 x" + t.bandages + "／針筒 x" + t.syringes + "／唾液 x" + (t.saliva || 0), false);
       }).join("");
       html =
         '<div class="reveal-box" id="revealBox">' +
@@ -6609,7 +6688,7 @@ function renderModalBody(){
           resultBtns() +
         '</div>';
     } else {
-      const dTxt = wizard.statKey === "hp" ? "HP-1" : "SAN-1";
+      const dTxt = (wizard.statKey === "hp" ? "HP-" : "SAN-") + (wizard.useSaliva ? 2 : 1);
       const blocks = wizard.targetIds.map(id => {
         const t = findT(id);
         const kd = (wizard.killedMap || {})[id];
@@ -6706,8 +6785,39 @@ function confirmSelf(){
   goStep("respawnPreview");
 }
 
+// 060的血肉：自由使用的道具（不消耗繃帶／針筒；每使用一次計入治療次數 +1）
+const FLESH_ITEMS = [
+  {key: "bodyBlood", label: "身軀的血", stat: "hp",  amt: 1},
+  {key: "tailBlood", label: "尾部的血", stat: "san", amt: 1},
+  {key: "bodyFlesh", label: "身軀的肉", stat: "hp",  amt: 3},
+  {key: "tailFlesh", label: "尾部的肉", stat: "san", amt: 3}
+];
+function startFlesh(){
+  wizard.mode = "flesh";
+  wizard.targetFaction = "實驗體";
+  goStep("fleshType");
+}
+function chooseFlesh(key){
+  const f = FLESH_ITEMS.find(x => x.key === key);
+  if(!f) return;
+  wizard.fleshKey = key; wizard.statKey = f.stat; wizard.fleshAmt = f.amt; wizard.natureLabel = f.label;
+  wizard.removeStatuses = [];
+  wizard.targetFaction = "實驗體";
+  goStep("targetSelect");
+}
+function limitFleshCheck(el){
+  const lim = wizard.fleshAmt === 3 ? 3 : 1;
+  const n = document.querySelectorAll(".flesh-check:checked").length;
+  if(n > lim) el.checked = false;
+}
+function confirmFleshRemove(){
+  const target = findT(wizard.targetId);
+  wizard.removeStatuses = Array.from(document.querySelectorAll(".flesh-check:checked")).map(b => target.statuses[+b.value]).filter(x => x != null);
+  goStep("actionPreview");
+}
 function startMode(mode){
   wizard.mode = mode;
+  wizard.useSaliva = false; wizard.salivaAsked = false;
   wizard.targetFaction = "實驗體";   // 每次開始新行動都先回到實驗體名單
   if(mode === "npcHarm" || mode === "npcReward"){ goStep("npcTargetFaction"); return; }   // NPC：先選對象是實驗體還是醫療隊
   goStep("targetSelect");
@@ -6718,9 +6828,10 @@ function chooseNpcTarget(f){
 }
 
 // NPC 獎勵：選物資 → 輸入數量
+const REWARD_LABEL = {bandages: "繃帶", syringes: "針筒", saliva: "信標的唾液"};
 function chooseRewardItem(field){
   wizard.rewardField = field;
-  wizard.natureLabel = field === "bandages" ? "繃帶" : "針筒";
+  wizard.natureLabel = REWARD_LABEL[field] || "針筒";
   goStep("npcRewardQty");
 }
 function confirmRewardQty(){
@@ -6737,7 +6848,9 @@ function confirmRewardQty(){
 function confirmTarget(){
   const sel = document.getElementById("targetSelect");
   wizard.targetId = sel.value;
-  if(wizard.mode === "medical"){
+  if(wizard.mode === "flesh"){
+    goStep("fleshRemoveStatus");
+  } else if(wizard.mode === "medical"){
     goStep("medicalType");
   } else if(wizard.mode === "support"){
     goStep("supportType");
@@ -6894,7 +7007,7 @@ function buildUndo(before, after, id){
   return JSON.stringify(r);
 }
 /* ---------- 寫入確認：等資料庫確認收到才算成功，失敗就還原並且不記行動紀錄 ---------- */
-const WRITE_FIELDS = ["hp","san","statuses","bandages","syringes","deathCount","madCount"];
+const WRITE_FIELDS = ["hp","san","statuses","bandages","syringes","saliva","deathCount","madCount"];
 let writeBusy = false;
 function _cp(v){ return JSON.parse(JSON.stringify(v === undefined ? null : v)); }
 function snapFields(list){
@@ -6950,18 +7063,36 @@ async function applyAction(){
   }
   const _evts = [];
   const _log = (m, o, tid) => _evts.push([m, o, tid]);   // 先收著，確認寫入成功才真的記進行動紀錄
-  const _list = ((wizard.mode === "medical" || wizard.mode === "support")
+  const _list = ((wizard.mode === "medical" || wizard.mode === "support" || wizard.mode === "flesh")
     ? [findT(wizard.targetId)]
     : wizard.targetIds.map(id => findT(id))).filter(Boolean);
+  // 信標的唾液：只有攻擊／醫療事故、而且持有者還有唾液才算數；使用者本人也要一起寫入、一起進撤銷資料
+  let _salActor = null;
+  if(wizard.useSaliva && (wizard.mode === "attack" || wizard.mode === "accident")){
+    const _sa = salivaActor();
+    if(_sa && Number(_sa.saliva) > 0) _salActor = _sa;
+  }
+  if(!_salActor) wizard.useSaliva = false;
+  if(_salActor && _list.indexOf(_salActor) === -1) _list.push(_salActor);
   const _before = snapFields(_list);
   const _itF = medItemField();
   const _itNm = _itF === "bandages" ? "繃帶" : "針筒";
   const _meNow = wizard.mode === "medical" ? medActor() : null;
   const _remain = _meNow ? Math.max(0, (Number(_meNow[_itF]) || 0) - 1) : 0;
   wizard.itemUsedTxt = _meNow ? ("消耗" + _itNm + " x1（剩餘 " + _remain + "）") : "";
-  const _vb = ({medical:"醫療", support:"資助"})[wizard.mode] || (modeLabels[wizard.mode] && modeLabels[wizard.mode].verb) || wizard.mode;
+  const _vb = ({medical:"醫療", support:"資助", flesh:"060的血肉"})[wizard.mode] || (modeLabels[wizard.mode] && modeLabels[wizard.mode].verb) || wizard.mode;
   SharedStore.setCtx(_vb + "・" + (wizard.natureLabel || "") + auditWho(), true);
-  if(wizard.mode === "medical" || wizard.mode === "support"){
+  if(wizard.mode === "flesh"){
+    const target = findT(wizard.targetId);
+    const _st = wizard.statKey, _b0 = Number(target[_st]) || 0;
+    target[_st] = Math.min(3, _b0 + (wizard.fleshAmt || 0));
+    wizard.fleshGain = target[_st] - _b0;
+    const _rm = [];
+    (wizard.removeStatuses || []).forEach(st => { const i = target.statuses.indexOf(st); if(i > -1){ target.statuses.splice(i, 1); _rm.push(st); } });
+    wizard.fleshRemoved = _rm;
+    _log("「" + actorLabel() + "」對「" + subjLabel(target) + "」使用060的血肉\n" + wizard.natureLabel + "：" + (_st === "hp" ? "HP" : "SAN") + "+" + wizard.fleshGain +
+      (wizard.fleshGain < (wizard.fleshAmt || 0) ? "（已達上限）" : "") + "，解除狀態：" + (_rm.length ? _rm.join("、") : "無") + "。", {g: wizard.faction, to: target.owner, kind: "heal"}, tKey(target));
+  } else if(wizard.mode === "medical" || wizard.mode === "support"){
     const target = findT(wizard.targetId);
 
     const _statTxt = wizard.statKey === "hp" ? "HP" : "SAN";
@@ -6984,7 +7115,7 @@ async function applyAction(){
         (wizard.removedNow || "無") + "。", {g: wizard.faction, to: target.owner, kind: "support"}, tKey(target));
     }
   } else if(wizard.mode === "npcReward"){
-    const _fld = wizard.rewardField, _qty = wizard.rewardQty, _lbl = _fld === "bandages" ? "繃帶" : "針筒";
+    const _fld = wizard.rewardField, _qty = wizard.rewardQty, _lbl = REWARD_LABEL[_fld] || "針筒";
     const rewardMap = {};
     wizard.targetIds.forEach(id => {
       const t = findT(id);
@@ -7001,10 +7132,12 @@ async function applyAction(){
     const lastAddedMap = {};
     const killedMap = {};
     let anyDead = false;
+    const _dmg = _salActor ? 2 : 1;
+    if(_salActor) _salActor.saliva = Math.max(0, (Number(_salActor.saliva) || 0) - 1);
     wizard.targetIds.forEach(id => {
       const t = findT(id);
       const _hp0 = t.hp, _san0 = t.san;
-      t[wizard.statKey] = Math.max(0, t[wizard.statKey] - 1);
+      t[wizard.statKey] = Math.max(0, t[wizard.statKey] - _dmg);
       const added = [];
       wizard.pendingStatuses.forEach(st => {
         if(t.statuses.length < 5){
@@ -7018,7 +7151,7 @@ async function applyAction(){
         const addedTxt = added.length ? added.join("、") : "無";
         const _wasAlive = _hp0 > 0 && _san0 > 0;
         const diedNow = _wasAlive && _hp0 > 0 && t.hp === 0, madNow = _wasAlive && _san0 > 0 && t.san === 0;
-        const statTxt = wizard.statKey === "hp" ? "HP-1" : "SAN-1";
+        const statTxt = (wizard.statKey === "hp" ? "HP-" : "SAN-") + _dmg;
         let msg, dead = false;
         if(diedNow){ msg = A + "擊殺" + S + "。"; dead = true; }
         else if(madNow){ msg = A + "使" + S + "陷入瘋狂（SAN歸零）。"; }
@@ -7026,6 +7159,7 @@ async function applyAction(){
         else if(wizard.mode === "accident"){ msg = A + "造成醫療事故，" + S + "\n" + statTxt + "，附加狀態：" + addedTxt + "。"; }
         else if(wizard.mode === "npcHarm"){ msg = A + "傷害" + S + "（" + statTxt + "），附加狀態：" + addedTxt + "。"; }
         else { msg = A + "攻擊" + S + "（" + statTxt + "），附加狀態：" + addedTxt + "。"; }
+        if(_salActor) msg += "\n使用信標的唾液（額外 -1，剩餘 " + _salActor.saliva + "）。";
         _log(msg, {g: wizard.faction, dead: dead, to: t.owner,
           kind: diedNow ? "kill" : madNow ? "mad" : wizard.mode === "torture" ? "torture" : wizard.mode === "accident" ? "accident" : "hit"}, tKey(t));
       }
@@ -7047,7 +7181,7 @@ async function applyAction(){
 
   const _after = snapFields(_list);
   // 行動者自己的計數：醫療→治療次數、醫療事故→事故次數、資助→資助次數、折磨→折磨次數（每一筆行動紀錄 +1）
-  const _cntField = ({medical: "medicCount", accident: "accidentCount", support: "supportCount", torture: "tortureCount"})[wizard.mode];
+  const _cntField = ({medical: "medicCount", flesh: "medicCount", accident: "accidentCount", support: "supportCount", torture: "tortureCount"})[wizard.mode];
   const _actFaction = wizard.faction, _actId = wizard.selfId;
   const _actApp = _actFaction === "醫療清潔部隊" ? window.medicApp : _actFaction === "資助者" ? window.sponsorApp : null;
   writeBusy = true;
@@ -7061,6 +7195,14 @@ async function applyAction(){
     const _itemBase = (wizard.mode === "medical" && _cntBase !== null) ? _actApp.getCount(_actId, _itF) : null;
     _evts.forEach((e, i) => {
       let ud = buildUndo(_before, _after, e[2]);
+      if(i === 0 && _salActor){   // 使用者的唾液消耗也放進撤銷資料（撤銷時會補回 1 個）
+        const ua = buildUndo(_before, _after, tKey(_salActor));
+        if(ua){
+          let o0 = {}; try{ o0 = ud ? JSON.parse(ud) : {}; }catch(err){ o0 = {}; }
+          try{ Object.assign(o0, JSON.parse(ua)); }catch(err){}
+          ud = JSON.stringify(o0);
+        }
+      }
       if(_cntBase !== null){
         let o = {};
         try{ o = ud ? JSON.parse(ud) : {}; }catch(err){ o = {}; }
@@ -7208,7 +7350,7 @@ let editSnap = null;    // 開啟時的原始值（用來比對哪些欄位真�
 let editDraft = null;   // 編輯中的暫存值：按「儲存」才會寫進角色，關掉或刷新就作廢
 
 function snapOfSubject(s){
-  return {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes,
+  return {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes, saliva: s.saliva || 0,
           deathCount: s.deathCount, madCount: s.madCount, statuses: (s.statuses || []).slice(), egg: s.egg || "", fbUrl: s.fbUrl || "", cardUrl: s.cardUrl || "", storyAsk: !!s.storyAsk};
 }
 
@@ -7254,6 +7396,7 @@ function renderEditForm(){
       '<div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="editBandages" value="' + d.bandages + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(d.bandages) || 0)) + '"></div>' +
       '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="editSyringes" value="' + d.syringes + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(d.syringes) || 0)) + '"></div>' +
     '</div>' +
+    (Auth.isAdmin ? '<div class="field-row"><div><span class="field-label">信標的唾液數量</span><input type="number" class="text-input" id="editSaliva" value="' + (Number(d.saliva) || 0) + '" min="0" max="99"></div></div>' : '') +
     '<span class="field-label">死亡次數</span>' +
     '<input type="number" class="text-input" id="editDeathCount" value="' + d.deathCount + '" min="0" max="99">' +
     '<span class="field-label">瘋狂次數</span>' +
@@ -7355,6 +7498,7 @@ function saveEdit(){
   s.san = clampInt(document.getElementById("editSan").value, 0, 3);
   s.bandages = clampInt(document.getElementById("editBandages").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0));
   s.syringes = clampInt(document.getElementById("editSyringes").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0));
+  if(Auth.isAdmin && document.getElementById("editSaliva")) s.saliva = clampInt(document.getElementById("editSaliva").value, 0, 99);
   s.deathCount = clampInt(document.getElementById("editDeathCount").value, 0, 99);
   s.madCount = clampInt(document.getElementById("editMadCount").value, 0, 99);
   if(editDraft) s.statuses = editDraft.statuses.slice(0, 5);   // 狀態的增修刪，按儲存才生效
@@ -7705,7 +7849,7 @@ function createSubject(name){
   subjects.push({
     owner: Auth.newOwner(), id: newId, name: name || ("新實驗體" + newNum),
     hp: 3, san: 3, statuses: [],
-    bandages: 2, syringes: 2,
+    bandages: 2, syringes: 2, saliva: 0,
     deathCount: 0, madCount: 0,
     avatarUrl: null
   });
@@ -7749,7 +7893,7 @@ function adminResetAll(){
     s.hp = 3;
     s.san = 3;
     s.bandages = 2;
-    s.syringes = 2;
+    s.syringes = 2; s.saliva = 0;
     s.deathCount = 0;
     s.madCount = 0;
     s.statuses = [];
@@ -8126,17 +8270,17 @@ const subjects = [
   {id: "062", name: "艾莉希亞·維爾", hp: 3, san: 3},
   {id: "063", name: "曼德里", hp: 3, san: 3}
 ];
-subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.deathCount = 0; s.madCount = 0; s.medicCount = 0; s.accidentCount = 0; s.avatarUrl = null; });
+subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.saliva = 0; s.deathCount = 0; s.madCount = 0; s.medicCount = 0; s.accidentCount = 0; s.avatarUrl = null; });
 
 const STORAGE_KEY = "bloodpool_medic_subjects_v2";   // 同時是 Firebase 節點名稱、也是離線備援用的 localStorage key
 const CODE_IDS = new Set(subjects.map(s => s.id));   // 寫在程式裡的隊員名冊：編號以程式為準
 const CODE_NAMES = {};                                 // 程式裡目前寫的名字；資料庫裡記著「改名當下程式的名字」，程式一改就以程式為準
 subjects.forEach(s => { CODE_NAMES[s.id] = s.name; });
 const tombstones = [];   // 在網頁上被刪掉的「程式名冊」角色：資料庫留一筆刪除紀錄，重新整理後才不會又跑出來
-const RUNTIME_FIELDS = ["hp","san","statuses","bandages","syringes","deathCount","madCount","medicCount","accidentCount","avatarUrl","owner"];
+const RUNTIME_FIELDS = ["hp","san","statuses","bandages","syringes","saliva","deathCount","madCount","medicCount","accidentCount","avatarUrl","owner"];
 
 function subjectDefaults(){
-  return {hp: 3, san: 3, statuses: [], bandages: 2, syringes: 2, deathCount: 0, madCount: 0, medicCount: 0, accidentCount: 0, avatarUrl: null, owner: null};
+  return {hp: 3, san: 3, statuses: [], bandages: 2, syringes: 2, saliva: 0, deathCount: 0, madCount: 0, medicCount: 0, accidentCount: 0, avatarUrl: null, owner: null};
 }
 
 // 把資料庫傳來的資料合併進 subjects（就地修改）。有任何變動回傳 true。
@@ -8312,7 +8456,7 @@ function renderGrid(){
         '<div class="stat-label"><span>SAN</span><span>' + san + '/3</span></div>' +
         '<div class="segs">' + segBar(san, "san") + '</div>' +
       '</div>' +
-      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>　　　治療 x<b>' + (s.medicCount || 0) + '</b>／事故 x<b>' + (s.accidentCount || 0) + '</b></div>' +
+      '<div class="item-count">繃帶 x<b>' + s.bandages + '</b>　／　針筒 x<b>' + s.syringes + '</b>' + (s.saliva > 0 ? '　／　唾液 x<b>' + s.saliva + '</b>' : '') + '　　　治療 x<b>' + (s.medicCount || 0) + '</b>／事故 x<b>' + (s.accidentCount || 0) + '</b></div>' +
       '<div class="note">' + noteHTML + '</div>' +
       '<button class="edit-btn" onclick="medicApp.openEditModal(\'' + s.id + '\')" title="編輯"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,19V12.31L21,10.31V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H13.69L11.69,5H5V19H19M21.7,7.35L18.65,4.3L20.07,2.88C20.46,2.5 21.09,2.5 21.48,2.88L23.12,4.5C23.5,4.91 23.5,5.54 23.12,5.93L21.7,7.35M19.94,8.06L10,18H7V15L16.94,5.06L19.94,8.06Z"/></svg></button>';
     card.addEventListener("click", e => {
@@ -8363,6 +8507,7 @@ function renderEditForm(){
     '<div><span class="field-label">SAN（0-3）</span><input type="number" class="text-input" id="medicEditSan" value="' + (typeof s.san === "number" ? s.san : 3) + '" min="0" max="3"></div></div>' +
     '<div class="field-row"><div><span class="field-label">繃帶數量</span><input type="number" class="text-input" id="medicEditBandages" value="' + s.bandages + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0)) + '"></div>' +
     '<div><span class="field-label">針筒數量</span><input type="number" class="text-input" id="medicEditSyringes" value="' + s.syringes + '" min="0" max="' + (Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0)) + '"></div></div>' +
+    (Auth.isAdmin ? '<div class="field-row"><div><span class="field-label">信標的唾液數量</span><input type="number" class="text-input" id="medicEditSaliva" value="' + (s.saliva || 0) + '" min="0" max="99"></div></div>' : '') +
     '<div class="field-row"><div><span class="field-label">治療次數</span><input type="number" class="text-input" id="medicEditMedicCount" value="' + (s.medicCount || 0) + '" min="0" max="99"></div>' +
     '<div><span class="field-label">事故次數</span><input type="number" class="text-input" id="medicEditAccidentCount" value="' + (s.accidentCount || 0) + '" min="0" max="99"></div></div>' +
     '<span class="field-label">FB 連結（可留空）</span>' +
@@ -8400,19 +8545,20 @@ function saveEdit(){
   const _lk = window.__readLinks("medicEditFb", "medicEditCard");
   if(_lk.bad){ alert("連結格式不正確，請貼上完整網址（例如 https://…）。"); return; }
   const s = subjects.find(x => x.id === editId);
-  const _before = {name: s.name, hp: typeof s.hp === "number" ? s.hp : 3, san: typeof s.san === "number" ? s.san : 3, bandages: s.bandages, syringes: s.syringes, medicCount: s.medicCount || 0, accidentCount: s.accidentCount || 0, egg: s.egg || ""};
+  const _before = {name: s.name, hp: typeof s.hp === "number" ? s.hp : 3, san: typeof s.san === "number" ? s.san : 3, bandages: s.bandages, syringes: s.syringes, saliva: s.saliva || 0, medicCount: s.medicCount || 0, accidentCount: s.accidentCount || 0, egg: s.egg || ""};
   const name = document.getElementById("medicEditName").value.trim();
   if(name) s.name = name;
   s.hp = clampInt(document.getElementById("medicEditHp").value, 0, 3);
   s.san = clampInt(document.getElementById("medicEditSan").value, 0, 3);
   s.bandages = clampInt(document.getElementById("medicEditBandages").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0));
   s.syringes = clampInt(document.getElementById("medicEditSyringes").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.syringes) || 0));
+  if(Auth.isAdmin && document.getElementById("medicEditSaliva")) s.saliva = clampInt(document.getElementById("medicEditSaliva").value, 0, 99);
   s.medicCount = clampInt(document.getElementById("medicEditMedicCount").value, 0, 99);
   s.accidentCount = clampInt(document.getElementById("medicEditAccidentCount").value, 0, 99);
   s.egg = document.getElementById("medicEditEgg").value.slice(0, 300);
   if(_lk.fb) s.fbUrl = _lk.fb; else delete s.fbUrl;
   if(_lk.card) s.cardUrl = _lk.card; else delete s.cardUrl;
-  if(window.SharedStore) SharedStore.logEdit("醫療清潔部隊", "醫療清潔部隊——" + _before.name, _before, {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes, medicCount: s.medicCount, accidentCount: s.accidentCount, egg: s.egg || ""});
+  if(window.SharedStore) SharedStore.logEdit("醫療清潔部隊", "醫療清潔部隊——" + _before.name, _before, {name: s.name, hp: s.hp, san: s.san, bandages: s.bandages, syringes: s.syringes, saliva: s.saliva || 0, medicCount: s.medicCount, accidentCount: s.accidentCount, egg: s.egg || ""});
   renderGrid();
   closeModal();
 }
@@ -8725,7 +8871,7 @@ function createSubject(name){
   subjects.push({
     owner: Auth.newOwner(), id: newId, name: name || ("新隊員" + newNum),
     hp: 3, san: 3, statuses: [],
-    bandages: 2, syringes: 2,
+    bandages: 2, syringes: 2, saliva: 0,
     deathCount: 0, madCount: 0, medicCount: 0, accidentCount: 0,
     avatarUrl: null
   });
@@ -8764,7 +8910,7 @@ function adminSaveNames(){
 }
 
 function adminResetAll(){
-  subjects.forEach(s => { s.hp = 3; s.san = 3; s.statuses = []; s.bandages = 2; s.syringes = 2; });
+  subjects.forEach(s => { s.hp = 3; s.san = 3; s.statuses = []; s.bandages = 2; s.syringes = 2; s.saliva = 0; });
   renderGrid();
   goStepAdmin("panel");
 }
