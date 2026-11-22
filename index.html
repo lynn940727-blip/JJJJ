@@ -3988,10 +3988,14 @@ const SharedStore = (function(){
       const _base = {u: (window.Auth&&Auth.uid())||"", n: (window.Auth&&Auth.nick())||"", ts: firebase.database.ServerValue.TIMESTAMP, k: "evt", msg: String(msg),
                             g: opts.g || "", dead: !!opts.dead};
       const _lref = d.ref(LOG_PATH);
-      if(opts.ud){
-        // ud = 這次行動改動的欄位（行動前／後），供「撤銷」使用；若資料庫規則不收這個欄位，退回成沒有 ud 的普通紀錄
-        _lref.push(Object.assign({ud: String(opts.ud)}, _base)).catch(err => {
-          console.warn("log with undo data failed, retry without it", err);
+      // ud = 這次行動改動的欄位（行動前／後），供「撤銷」使用；a = 行動者的實驗體編號，供 KPI 統計使用（改名也不會找不到）
+      // 若資料庫規則不收這些額外欄位，退回成沒有它們的普通紀錄
+      const _extra = {};
+      if(opts.ud) _extra.ud = String(opts.ud);
+      if(opts.a) _extra.a = String(opts.a);
+      if(Object.keys(_extra).length){
+        _lref.push(Object.assign(_extra, _base)).catch(err => {
+          console.warn("log with extra data failed, retry without it", err);
           _lref.push(_base).catch(e2 => console.warn("log failed", e2));
         });
       } else {
@@ -4078,7 +4082,10 @@ const SharedStore = (function(){
       const d = init();
       if(!d){ list.innerHTML = '<div class="log-empty">無法連上資料庫，暫時看不到紀錄。</div>'; return; }
       started = true;
-      const lref = d.ref(LOG_PATH).orderByChild("ts").limitToLast(500);
+      // 只顯示「目前這一期（兩週）」的紀錄：11/9–11/22、11/23–12/6、12/7–12/20……每兩週自動換一期，不設筆數上限
+      const _P = 14 * 86400000, _B = new Date("2026-11-09T00:00:00+08:00").getTime();
+      const _start = _B + Math.max(0, Math.floor((Date.now() - _B) / _P)) * _P;
+      const lref = d.ref(LOG_PATH).orderByChild("ts").startAt(_start);
       lref.once("value", () => draw());   // 第一批資料讀完（就算是空的）也要結束讀取動畫
       lref.on("child_removed", snap => {
         rows = rows.filter(x => x._k !== snap.key);
@@ -4091,6 +4098,7 @@ const SharedStore = (function(){
         if(editKey !== snap.key) later();
       });
       lref.on("child_added", snap => {
+        if(rows.some(x => x._k === snap.key)) return;
         const v = snap.val(); v._k = snap.key;
         rows.unshift(v); rows.sort((x, y) => (y.ts || 0) - (x.ts || 0)); later();
       }, err => {
@@ -7221,7 +7229,7 @@ async function applyAction(){
         o.__a = {f: _actFaction, id: String(_actId), c: c};   // 行動者的計數變化：撤銷時一併還原
         ud = JSON.stringify(o);
       }
-      SharedStore.logEvent(e[0], Object.assign({}, e[1], {ud: ud}));
+      SharedStore.logEvent(e[0], Object.assign({}, e[1], {ud: ud}, (wizard.mode === "attack" && _actFaction === "實驗體" && _actId) ? {a: String(_actId)} : {}));
     });
     if(_cntBase !== null){
       SharedStore.setCtx(_vb + "・次數", true);
@@ -7253,7 +7261,7 @@ async function applyRespawn(){
   try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
   if(r.ok){
     kpiMark(self.id);   // KPI：重生算一次
-    SharedStore.logEvent("「" + subjLabel(self) + "」重生。", {g: "實驗體", ud: buildUndo(before, after, self.id)});
+    SharedStore.logEvent("「" + subjLabel(self) + "」重生。", {g: "實驗體", a: self.id, ud: buildUndo(before, after, self.id)});
     if(modalOverlay.classList.contains("open")) goStep("respawnResult");
     return;
   }
@@ -7263,7 +7271,7 @@ async function applyRespawn(){
 /* ================= KPI：每兩週至少一次「攻擊別人」或「重生」（只算實驗體） =================
    WEEK1-2 = 11/9–11/22 23:59、WEEK3-4、WEEK5-6、WEEK7-8 各一期，每期重新算。
    達標紀錄存在 kpi_hits_v1/<實驗體編號>/<第幾期>（行動成功時自動記；管理員也可手動標記／取消），
-   管理員打開面板時，還會順便掃描最近 500 筆行動紀錄，補上「更新前就做過」的攻擊／重生。 */
+   管理員打開面板時，還會順便掃描達標第一期開始後的所有行動紀錄，補上「更新前就做過」的攻擊／重生。 */
 const KPI_BASE = new Date("2026-11-09T00:00:00+08:00").getTime();
 const KPI_DAY = 86400000, KPI_N = 4;
 const KPI_WEEKS = ["二", "四", "六", "八"];
@@ -7294,18 +7302,26 @@ async function kpiLoad(){
   try{ const sn = await d.ref("kpi_hits_v1").once("value"); kpiState.hits = sn.val() || {}; }
   catch(e){ kpiState.err = "讀取達標紀錄失敗：" + ((e && (e.code || e.message)) || e) + "（請確認資料庫規則已加入 kpi_hits_v1 並發布）"; }
   try{
-    const sn = await d.ref("bloodpool_log_v1").orderByChild("ts").limitToLast(500).once("value");
-    const labs = kpiSubjects().map(x => ({id: x.id, lab: "「" + subjLabel(x) + "」"}));
+    const sn = await d.ref("bloodpool_log_v1").orderByChild("ts").startAt(KPI_BASE).once("value");   // 第一期開始後的所有紀錄，不設筆數上限
+    const byId = {}; kpiSubjects().forEach(x => { byId[x.id] = x; });
     sn.forEach(function(ch){
       const e = ch.val() || {}, ts = Number(e.ts) || 0, i = kpiIntervalAt(ts);
       if(!i || !e.msg) return;
       const m = String(e.msg);
-      for(let k = 0; k < labs.length; k++){
-        if(m.indexOf(labs[k].lab) !== 0) continue;
-        const rest = m.slice(labs[k].lab.length);
-        if(/^(攻擊|擊殺|使.*陷入瘋狂|重生。)/.test(rest)){ (kpiState.log[labs[k].id] = kpiState.log[labs[k].id] || {})[i] = ts; }
-        break;
+      // 優先用紀錄裡存的行動者編號（e.a）；舊紀錄沒有，就從開頭的「實驗體NNN——名字」讀編號。兩種都不看名字，所以改名不影響。
+      let id = e.a ? String(e.a) : "";
+      let rest = "";
+      const mm = /^「實驗體([^「」—]+)——/.exec(m);
+      if(mm){
+        const end = m.indexOf("」", mm[0].length);
+        if(end > 0) rest = m.slice(end + 1);
+        if(!id) id = mm[1];
+      }else if(id && m.charAt(0) === "「"){
+        const end = m.indexOf("」");
+        if(end > 0) rest = m.slice(end + 1);
       }
+      if(!id || !byId[id] || !rest) return;
+      if(/^(攻擊|擊殺|使.*陷入瘋狂|重生。)/.test(rest)){ (kpiState.log[id] = kpiState.log[id] || {})[i] = ts; }
     });
   }catch(e){}
 }
@@ -7976,10 +7992,31 @@ function reRenderAdminPreserveScroll(){
   if(newBox) newBox.scrollTop = boxScroll;
 }
 
+/* 編號規則：新增 → 補最小的空號；刪除（網頁上手動新增的角色）→ 後面的編號自動遞補。
+   寫在程式裡的名冊（CODE_IDS）編號固定不動，新角色也不會佔用那些編號。 */
+function _idNum(id){ const n = parseInt(id, 10); return isNaN(n) ? null : n; }
+function _reservedNums(){ const r = new Set(); CODE_IDS.forEach(id => { const n = _idNum(id); if(n !== null) r.add(n); }); return r; }
+function nextFreeNum(){
+  const used = _reservedNums();
+  subjects.forEach(s => { const n = _idNum(s.id); if(n !== null) used.add(n); });
+  let n = 1; while(used.has(n)) n++;
+  return n;
+}
+function compactIdsAfter(delNum){
+  if(delNum === null) return;
+  const reserved = _reservedNums();
+  const movers = subjects.filter(s => !CODE_IDS.has(s.id) && _idNum(s.id) !== null && _idNum(s.id) > delNum)
+                         .sort((a, b) => _idNum(a.id) - _idNum(b.id));
+  let n = delNum;
+  movers.forEach(s => {
+    while(reserved.has(n)) n++;
+    s.id = String(n).padStart(3, "0");
+    n++;
+  });
+}
+
 function createSubject(name){
-  const nums = subjects.concat(tombstones).map(s => parseInt(s.id, 10)).filter(n => !isNaN(n));
-  const maxNum = nums.length ? Math.max(...nums) : 0;
-  const newNum = maxNum + 1;
+  const newNum = nextFreeNum();
   const newId = String(newNum).padStart(3, "0");
   subjects.push({
     owner: Auth.newOwner(), id: newId, name: name || ("新實驗體" + newNum),
@@ -8000,8 +8037,10 @@ function adminAddSubject(){
 function deleteSubject(id){
   const idx = subjects.findIndex(s => s.id === id);
   if(idx < 0) return;
+  const wasCode = CODE_IDS.has(id), delNum = _idNum(id);
   subjects.splice(idx, 1);
-  if(CODE_IDS.has(id) && !tombstones.some(t => t.id === id)) tombstones.push({id: id, deleted: true, codeName: CODE_NAMES[id]});
+  if(wasCode){ if(!tombstones.some(t => t.id === id)) tombstones.push({id: id, deleted: true, codeName: CODE_NAMES[id]}); }
+  else compactIdsAfter(delNum);
   renderGrid();
 }
 
@@ -8998,10 +9037,31 @@ function reRenderAdminPreserveScroll(){
   if(newBox) newBox.scrollTop = boxScroll;
 }
 
+/* 編號規則：新增 → 補最小的空號；刪除（網頁上手動新增的角色）→ 後面的編號自動遞補。
+   寫在程式裡的名冊（CODE_IDS）編號固定不動，新角色也不會佔用那些編號。 */
+function _idNum(id){ const n = parseInt(id, 10); return isNaN(n) ? null : n; }
+function _reservedNums(){ const r = new Set(); CODE_IDS.forEach(id => { const n = _idNum(id); if(n !== null) r.add(n); }); return r; }
+function nextFreeNum(){
+  const used = _reservedNums();
+  subjects.forEach(s => { const n = _idNum(s.id); if(n !== null) used.add(n); });
+  let n = 1; while(used.has(n)) n++;
+  return n;
+}
+function compactIdsAfter(delNum){
+  if(delNum === null) return;
+  const reserved = _reservedNums();
+  const movers = subjects.filter(s => !CODE_IDS.has(s.id) && _idNum(s.id) !== null && _idNum(s.id) > delNum)
+                         .sort((a, b) => _idNum(a.id) - _idNum(b.id));
+  let n = delNum;
+  movers.forEach(s => {
+    while(reserved.has(n)) n++;
+    s.id = String(n).padStart(3, "0");
+    n++;
+  });
+}
+
 function createSubject(name){
-  const nums = subjects.concat(tombstones).map(s => parseInt(s.id, 10)).filter(n => !isNaN(n));
-  const maxNum = nums.length ? Math.max(...nums) : 0;
-  const newNum = maxNum + 1;
+  const newNum = nextFreeNum();
   const newId = String(newNum).padStart(3, "0");
   subjects.push({
     owner: Auth.newOwner(), id: newId, name: name || ("新隊員" + newNum),
@@ -9022,8 +9082,10 @@ function adminAddSubject(){
 function deleteSubject(id){
   const idx = subjects.findIndex(s => s.id === id);
   if(idx < 0) return;
+  const wasCode = CODE_IDS.has(id), delNum = _idNum(id);
   subjects.splice(idx, 1);
-  if(CODE_IDS.has(id) && !tombstones.some(t => t.id === id)) tombstones.push({id: id, deleted: true, codeName: CODE_NAMES[id]});
+  if(wasCode){ if(!tombstones.some(t => t.id === id)) tombstones.push({id: id, deleted: true, codeName: CODE_NAMES[id]}); }
+  else compactIdsAfter(delNum);
   renderGrid();
 }
 
@@ -9459,9 +9521,31 @@ function rerenderAdmin(){
   if(nl)nl.scrollTop=ls;
   if(nb)nb.scrollTop=bs;
 }
+/* 編號規則：新增 → 補最小的空號；刪除（網頁上手動新增的角色）→ 後面的編號自動遞補。
+   寫在程式裡的名冊（CODE_IDS）編號固定不動，新角色也不會佔用那些編號。 */
+function _idNum(id){ const n = parseInt(id, 10); return isNaN(n) ? null : n; }
+function _reservedNums(){ const r = new Set(); CODE_IDS.forEach(id => { const n = _idNum(id); if(n !== null) r.add(n); }); return r; }
+function nextFreeNum(){
+  const used = _reservedNums();
+  subjects.forEach(s => { const n = _idNum(s.id); if(n !== null) used.add(n); });
+  let n = 1; while(used.has(n)) n++;
+  return n;
+}
+function compactIdsAfter(delNum){
+  if(delNum === null) return;
+  const reserved = _reservedNums();
+  const movers = subjects.filter(s => !CODE_IDS.has(s.id) && _idNum(s.id) !== null && _idNum(s.id) > delNum)
+                         .sort((a, b) => _idNum(a.id) - _idNum(b.id));
+  let n = delNum;
+  movers.forEach(s => {
+    while(reserved.has(n)) n++;
+    s.id = String(n).padStart(3, "0");
+    n++;
+  });
+}
+
 function createSubject(name){
-  const max=Math.max(0,...subjects.concat(tombstones).map(s=>parseInt(s.id,10)).filter(n=>!isNaN(n)));
-  const n=max+1;
+  const n=nextFreeNum();
   const id=String(n).padStart(3,"0");
   subjects.push({id,name:name||("新資助者"+n),avatarUrl:null,supportCount:0,tortureCount:0,owner:Auth.newOwner()});
   renderGrid();
@@ -9474,8 +9558,10 @@ function addSubject(){
 function deleteSubject(id){
   const i=subjects.findIndex(s=>s.id===id);
   if(i<0)return;
+  const wasCode=CODE_IDS.has(id), delNum=_idNum(id);
   subjects.splice(i,1);
-  if(CODE_IDS.has(id)&&!tombstones.some(t=>t.id===id))tombstones.push({id,deleted:true,codeName:CODE_NAMES[id]});
+  if(wasCode){ if(!tombstones.some(t=>t.id===id))tombstones.push({id,deleted:true,codeName:CODE_NAMES[id]}); }
+  else compactIdsAfter(delNum);
   renderGrid();
 }
 function delSubject(id){
