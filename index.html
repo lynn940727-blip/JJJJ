@@ -4735,7 +4735,7 @@ const Auth=(function(){
         +(an?'<div class="au-pend click au_row" data-v="claim"><div class="au-pend-h">已批准</div><div class="au-pend-s">你有 '+an+' 筆申請已批准，點此查看 ›</div></div>':"")
         +(pn?'<div class="au-pend click au_row" data-v="claim"><div class="au-pend-h">等待批准</div><div class="au-pend-s">你有 '+pn+' 筆申請正在等管理員審核，點此查看／取消 ›</div></div>':"")
         +row("inbox",MAIL_ICON,un?'<span class="au-badge amber">未讀 '+un+'</span>':"無新通知")
-        +(admin?row("admin","待批准的申請",'<span id="au_admcnt"></span>')+'<div class="au-row" id="au_addchar"><span>新增角色</span><span class="v">›</span></div>'+row("addadmin","新增管理員","")+'<div class="au-row" id="au_lbup"><span>上傳排行</span><span class="v">›</span></div>'+row("bind","綁定一覽",(()=>{ const ub=Object.keys(ST).reduce((n,f)=>n+roster(f).filter(s=>!s.owner).length,0); return ub?'<span class="au-badge amber">未綁定 '+ub+'</span>':"全部已綁定"; })()):"")
+        +(admin?row("admin","待批准的申請",'<span id="au_admcnt"></span>')+'<div class="au-row" id="au_addchar"><span>新增角色</span><span class="v">›</span></div>'+row("addadmin","新增管理員","")+'<div class="au-row" id="au_lbup"><span>上傳排行</span><span class="v">›</span></div>'+'<div class="au-row" id="au_kpi"><span>KPI 名單</span><span class="v">›</span></div>'+row("bind","綁定一覽",(()=>{ const ub=Object.keys(ST).reduce((n,f)=>n+roster(f).filter(s=>!s.owner).length,0); return ub?'<span class="au-badge amber">未綁定 '+ub+'</span>':"全部已綁定"; })()):"")
         +'<div class="au-sec"><span>我的角色</span><button class="au-mini au_row" data-v="claim">＋ 申請角色</button></div><div id="au_cards"></div>'
         +'<div class="au-sec"><span>收藏的實驗體</span><button class="au-mini au_row" data-v="fav">＋ 選擇收藏</button></div><div id="au_favcards"></div>'
         +(admin?"":'<div class="modal-note" style="word-break:break-all;font-size:11px;opacity:.5;margin-top:16px">UID：'+user.uid+"</div>");
@@ -4749,6 +4749,8 @@ const Auth=(function(){
     b.querySelectorAll(".au_row").forEach(r=>r.onclick=()=>{ if(r.dataset.v==="bind") nickCache={}; view=r.dataset.v; render(); });
     const lbu=b.querySelector("#au_lbup");
     if(lbu) lbu.onclick=()=>{ if(!admin){ alert("只有管理員可以上傳排行"); return; } hide(); if(window.LB&&LB.openAdmin) LB.openAdmin(); else alert("排行榜還沒載入完成，請稍後再試。"); };
+    const kpib=b.querySelector("#au_kpi");
+    if(kpib) kpib.onclick=()=>{ if(!admin){ alert("只有管理員可以查看 KPI 名單"); return; } hide(); if(window.openKpi) window.openKpi(); else alert("KPI 功能還沒載入完成，請稍後再試。"); };
     const addc=b.querySelector("#au_addchar");
     if(addc) addc.onclick=()=>{ if(!admin){ alert("只有管理員可以新增角色"); return; } hide(); openAddCharacter(); };
     if(view==="fav"){
@@ -6276,6 +6278,8 @@ function subjLabel(t){ return isMedicObj(t) ? "醫療清潔部隊——" + t.nam
 // 醫療隊治療：物理醫療消耗 1 個繃帶、精神醫療消耗 1 個針筒
 function medActor(){ return rosterOf(wizard.faction).find(x => x.id === wizard.selfId); }
 function medItemField(){ return wizard.statKey === "hp" ? "bandages" : "syringes"; }
+// 醫療隊治療「實驗體」才消耗繃帶／針筒；醫療隊互相治療（包含治療自己）不消耗
+function medUsesItem(){ return wizard.mode === "medical" && wizard.targetFaction !== MEDIC_F; }
 
 function actorLabel(){
   const me = rosterOf(wizard.faction).find(x => x.id === wizard.selfId);
@@ -6509,6 +6513,10 @@ function renderModalBody(){
       (function(){
         const me = medActor() || {};
         const b = Number(me.bandages) || 0, sy = Number(me.syringes) || 0;
+        if(!medUsesItem()){   // 治療醫療隊員：不消耗繃帶／針筒
+          return '<button class="choice-btn" onclick="chooseMedicalType(\'hp\')">物理醫療 ── HP +1（不消耗道具）</button>' +
+            '<button class="choice-btn" onclick="chooseMedicalType(\'san\')">精神醫療 ── SAN +1（不消耗道具）</button>';
+        }
         return '<button class="choice-btn" ' + (b <= 0 ? 'disabled' : '') + ' onclick="chooseMedicalType(\'hp\')">物理醫療 ── HP +1（消耗繃帶，剩餘 ' + b + '）</button>' +
           '<button class="choice-btn" ' + (sy <= 0 ? 'disabled' : '') + ' onclick="chooseMedicalType(\'san\')">精神醫療 ── SAN +1（消耗針筒，剩餘 ' + sy + '）</button>' +
           ((b <= 0 && sy <= 0) ? '<div class="modal-note">你的繃帶和針筒都用完了，無法進行醫療。</div>' : '');
@@ -6593,6 +6601,7 @@ function renderModalBody(){
           '<div class="result-line">目標：' + tWord() + ' ' + target.id + ' ' + target.name + '</div>' +
           '<div class="result-line">醫療方式：' + wizard.natureLabel + '</div>' +
           (function(){
+            if(!medUsesItem()) return '<div class="result-line">消耗道具：無（治療醫療隊員不消耗）</div>';
             const me = medActor() || {}, f = medItemField(), n = Number(me[f]) || 0;
             return '<div class="result-line">消耗道具：' + (f === "bandages" ? "繃帶" : "針筒") + ' x1（剩餘 ' + n + ' → ' + Math.max(0, n - 1) + '）</div>';
           })() +
@@ -7051,8 +7060,8 @@ function showWriteFail(eyebrow, r, retryLabel){
 
 async function applyAction(){
   if(writeBusy) return;
-  if(wizard.mode === "medical"){
-    // 治療要消耗道具：沒有道具就退回「選擇醫療方式」
+  if(medUsesItem()){
+    // 治療實驗體要消耗道具：沒有道具就退回「選擇醫療方式」
     const _me0 = medActor(), _f0 = medItemField();
     if(!_me0 || !(Number(_me0[_f0]) > 0)){
       const k = wizard.history.lastIndexOf("medicalType");
@@ -7077,7 +7086,7 @@ async function applyAction(){
   const _before = snapFields(_list);
   const _itF = medItemField();
   const _itNm = _itF === "bandages" ? "繃帶" : "針筒";
-  const _meNow = wizard.mode === "medical" ? medActor() : null;
+  const _meNow = medUsesItem() ? medActor() : null;
   const _remain = _meNow ? Math.max(0, (Number(_meNow[_itF]) || 0) - 1) : 0;
   wizard.itemUsedTxt = _meNow ? ("消耗" + _itNm + " x1（剩餘 " + _remain + "）") : "";
   const _vb = ({medical:"醫療", support:"資助", flesh:"060的血肉"})[wizard.mode] || (modeLabels[wizard.mode] && modeLabels[wizard.mode].verb) || wizard.mode;
@@ -7107,7 +7116,7 @@ async function applyAction(){
     }
     if(wizard.mode === "medical"){
       _log("「" + actorLabel() + "」治療「" + subjLabel(target) + "」\n" + _statTxt + "+1，解除狀態：" +
-        (wizard.removedNow || "無") + "。\n消耗" + _itNm + " x1（剩餘 " + _remain + "）。", {g: wizard.faction, to: target.owner, kind: "heal"}, tKey(target));
+        (wizard.removedNow || "無") + "。" + (_meNow ? "\n消耗" + _itNm + " x1（剩餘 " + _remain + "）。" : ""), {g: wizard.faction, to: target.owner, kind: "heal"}, tKey(target));
     } else if(_isOther){
       _log("「" + actorLabel() + "」資助「" + subjLabel(target) + "」\n" + wizard.natureLabel + "。", {g: wizard.faction, to: target.owner, kind: "support"}, tKey(target));
     } else {
@@ -7190,9 +7199,10 @@ async function applyAction(){
   let _r;
   try{ _r = await awaitWrite(_list, _before, _after); } finally { writeBusy = false; }
   if(_r.ok){
+    if(wizard.mode === "attack" && _actFaction === "實驗體" && _actId) kpiMark(_actId);   // KPI：攻擊別人算一次
     let _cntBase = null;
     if(_cntField && _actApp && _actApp.getCount && _actApp.adjustCount) _cntBase = _actApp.getCount(_actId, _cntField);
-    const _itemBase = (wizard.mode === "medical" && _cntBase !== null) ? _actApp.getCount(_actId, _itF) : null;
+    const _itemBase = (medUsesItem() && _cntBase !== null) ? _actApp.getCount(_actId, _itF) : null;
     _evts.forEach((e, i) => {
       let ud = buildUndo(_before, _after, e[2]);
       if(i === 0 && _salActor){   // 使用者的唾液消耗也放進撤銷資料（撤銷時會補回 1 個）
@@ -7242,12 +7252,137 @@ async function applyRespawn(){
   let r;
   try{ r = await awaitWrite(list, before, after); } finally { writeBusy = false; }
   if(r.ok){
+    kpiMark(self.id);   // KPI：重生算一次
     SharedStore.logEvent("「" + subjLabel(self) + "」重生。", {g: "實驗體", ud: buildUndo(before, after, self.id)});
     if(modalOverlay.classList.contains("open")) goStep("respawnResult");
     return;
   }
   showWriteFail("重生", r, "重新送出");
 }
+
+/* ================= KPI：每兩週至少一次「攻擊別人」或「重生」（只算實驗體） =================
+   WEEK1-2 = 11/9–11/22 23:59、WEEK3-4、WEEK5-6、WEEK7-8 各一期，每期重新算。
+   達標紀錄存在 kpi_hits_v1/<實驗體編號>/<第幾期>（行動成功時自動記；管理員也可手動標記／取消），
+   管理員打開面板時，還會順便掃描最近 500 筆行動紀錄，補上「更新前就做過」的攻擊／重生。 */
+const KPI_BASE = new Date("2026-11-09T00:00:00+08:00").getTime();
+const KPI_DAY = 86400000, KPI_N = 4;
+const KPI_WEEKS = ["二", "四", "六", "八"];
+function kpiRange(i){ const st = KPI_BASE + (i - 1) * 14 * KPI_DAY; return {s: st, e: st + 14 * KPI_DAY - 60000}; }
+function kpiIntervalAt(ts){ const i = Math.floor((ts - KPI_BASE) / (14 * KPI_DAY)) + 1; return (i >= 1 && i <= KPI_N) ? i : 0; }
+function kpiFmt(ts){ const d = new Date(ts + 8 * 3600000); return (d.getUTCMonth() + 1) + "/" + d.getUTCDate(); }
+const kpiKey = id => String(id).replace(/[.#$\/\[\]]/g, "_");
+function kpiDb(){ try{ if(typeof firebase === "undefined" || !firebase.database) return null; if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); return firebase.database(); }catch(e){ return null; } }
+function kpiMark(id){
+  try{
+    const i = kpiIntervalAt(Date.now()), d = kpiDb();
+    if(!i || !d) return;
+    d.ref("kpi_hits_v1/" + kpiKey(id) + "/" + i).set(Date.now()).catch(function(){});   // 已經有紀錄時規則會擋掉，沒關係
+  }catch(e){}
+}
+let kpiOv = null;
+const kpiState = {i: 1, hits: {}, log: {}, err: ""};
+function kpiStatus(sub, i){
+  if(((kpiState.hits[kpiKey(sub.id)]) || {})[i]) return "hit";
+  if(((kpiState.log[sub.id]) || {})[i]) return "log";
+  return "";
+}
+function kpiSubjects(){ return subjects.filter(s => !s.deleted); }
+async function kpiLoad(){
+  const d = kpiDb();
+  kpiState.err = ""; kpiState.hits = {}; kpiState.log = {};
+  if(!d){ kpiState.err = "連不上資料庫。"; return; }
+  try{ const sn = await d.ref("kpi_hits_v1").once("value"); kpiState.hits = sn.val() || {}; }
+  catch(e){ kpiState.err = "讀取達標紀錄失敗：" + ((e && (e.code || e.message)) || e) + "（請確認資料庫規則已加入 kpi_hits_v1 並發布）"; }
+  try{
+    const sn = await d.ref("bloodpool_log_v1").orderByChild("ts").limitToLast(500).once("value");
+    const labs = kpiSubjects().map(x => ({id: x.id, lab: "「" + subjLabel(x) + "」"}));
+    sn.forEach(function(ch){
+      const e = ch.val() || {}, ts = Number(e.ts) || 0, i = kpiIntervalAt(ts);
+      if(!i || !e.msg) return;
+      const m = String(e.msg);
+      for(let k = 0; k < labs.length; k++){
+        if(m.indexOf(labs[k].lab) !== 0) continue;
+        const rest = m.slice(labs[k].lab.length);
+        if(/^(攻擊|擊殺|使.*陷入瘋狂|重生。)/.test(rest)){ (kpiState.log[labs[k].id] = kpiState.log[labs[k].id] || {})[i] = ts; }
+        break;
+      }
+    });
+  }catch(e){}
+}
+function kpiList(i){
+  const unmet = [], met = [];
+  kpiSubjects().forEach(x => (kpiStatus(x, i) ? met : unmet).push(x));
+  return {unmet: unmet, met: met};
+}
+function kpiText(i){
+  const L = kpiList(i).unmet;
+  return "本企劃有兩週至少一張圖的KPI（攻擊、死亡圖都可），以下為尚未發圖名單，請記得在第" + KPI_WEEKS[i - 1] + "週前至少發一張，否則會被淘汰\n\n" +
+    (L.length ? L.map(x => subjLabel(x).replace("——", " ")).join("\n") : "（全員都已達標）");
+}
+function kpiDraw(msg){
+  if(!kpiOv) return;
+  const box = kpiOv.firstChild, i = kpiState.i, r = kpiRange(i), now = Date.now();
+  const lst = kpiList(i), total = lst.unmet.length + lst.met.length;
+  let left = "";
+  if(now > r.e) left = "這一期已截止";
+  else if(now < r.s) left = "這一期還沒開始";
+  else { const ms = r.e - now, dd = Math.floor(ms / KPI_DAY), hh = Math.floor((ms % KPI_DAY) / 3600000); left = "距截止還有 " + dd + " 天 " + hh + " 小時"; }
+  const opts = Array.from({length: KPI_N}, (_, k) => { const rg = kpiRange(k + 1); return '<option value="' + (k + 1) + '"' + (k + 1 === i ? ' selected' : '') + '>第' + (k + 1) + '期　WEEK' + (2 * k + 1) + '–' + (2 * k + 2) + '（' + kpiFmt(rg.s) + '–' + kpiFmt(rg.e) + ' 23:59）</option>'; }).join("");
+  const rowCss = 'display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px';
+  const btnCss = 'width:auto;margin:0;padding:4px 10px;font-size:12px';
+  const unmetHtml = lst.unmet.length ? lst.unmet.map(x => '<div style="' + rowCss + '"><span>' + escapeHTML(subjLabel(x).replace("——", " ")) + '</span><button class="modify-btn" style="' + btnCss + '" data-kpi="mark" data-id="' + escapeHTML(x.id) + '">標記達標</button></div>').join("") : '<div class="modal-note">這一期全員都已達標。</div>';
+  const metHtml = lst.met.map(x => { const st = kpiStatus(x, i); return '<div style="' + rowCss + '"><span>' + escapeHTML(subjLabel(x).replace("——", " ")) + '<span style="color:var(--bone-dim);font-size:11px">　' + (st === "hit" ? "已記錄" : "從行動紀錄判斷") + '</span></span>' + (st === "hit" ? '<button class="modify-btn" style="' + btnCss + '" data-kpi="unmark" data-id="' + escapeHTML(x.id) + '">取消</button>' : '') + '</div>'; }).join("");
+  box.innerHTML =
+    '<div class="modal-eyebrow">管理員模式</div><div class="modal-title">KPI 名單</div>' +
+    '<div class="modal-note">只算實驗體：每兩週至少「攻擊別人」或「重生」一次。被攻擊不算。</div>' +
+    '<select class="lb-sel" id="kpiSel">' + opts + '</select>' +
+    '<div class="modal-note">已達標 ' + lst.met.length + ' ／ 共 ' + total + ' 人　·　' + left + '</div>' +
+    (kpiState.err ? '<div class="modal-note" style="color:var(--c-crit)">' + escapeHTML(kpiState.err) + '</div>' : '') +
+    '<div class="modal-eyebrow" style="margin-top:14px">尚未達標（' + lst.unmet.length + '）</div>' + unmetHtml +
+    '<button class="confirm-btn" data-kpi="copy" style="margin-top:14px">複製未達標名單</button>' +
+    (msg ? '<div class="modal-note" id="kpiMsg">' + escapeHTML(msg) + '</div>' : '') +
+    (lst.met.length ? '<details style="margin-top:14px"><summary style="cursor:pointer;font-size:13px;color:var(--bone-dim)">已達標（' + lst.met.length + '）</summary>' + metHtml + '</details>' : '') +
+    '<button class="modify-btn" data-kpi="close" style="margin-top:14px">關閉</button>';
+}
+function kpiCopy(text){
+  const fb = function(){
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+    kpiDraw(ok ? "已複製。" : "瀏覽器擋住了複製，請改用下面的文字手動複製：\n" + text);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){ kpiDraw("已複製。"); }, fb); else fb();
+}
+async function openKpi(){
+  if(window.Auth && Auth.requireAdmin && !Auth.requireAdmin()) return;
+  if(!kpiOv){
+    kpiOv = document.createElement("div");
+    kpiOv.className = "modal-overlay"; kpiOv.style.zIndex = "10090";
+    kpiOv.innerHTML = '<div class="modal-box"></div>';
+    document.body.appendChild(kpiOv);
+    kpiOv.addEventListener("click", function(e){
+      if(e.target === kpiOv){ kpiOv.classList.remove("open"); return; }
+      const b = e.target.closest("[data-kpi]"); if(!b) return;
+      const act = b.getAttribute("data-kpi"), id = b.getAttribute("data-id");
+      if(act === "close"){ kpiOv.classList.remove("open"); return; }
+      if(act === "copy"){ kpiCopy(kpiText(kpiState.i)); return; }
+      const d = kpiDb(); if(!d) return;
+      const ref = d.ref("kpi_hits_v1/" + kpiKey(id) + "/" + kpiState.i);
+      if(act === "mark") ref.set(Date.now()).then(function(){ const k = kpiKey(id); (kpiState.hits[k] = kpiState.hits[k] || {})[kpiState.i] = Date.now(); kpiDraw(); }).catch(function(err){ alert("標記失敗：" + ((err && (err.code || err.message)) || err)); });
+      if(act === "unmark") ref.remove().then(function(){ const k = kpiKey(id); if(kpiState.hits[k]) delete kpiState.hits[k][kpiState.i]; kpiDraw(); }).catch(function(err){ alert("取消失敗：" + ((err && (err.code || err.message)) || err)); });
+    });
+    kpiOv.addEventListener("change", function(e){ if(e.target && e.target.id === "kpiSel"){ kpiState.i = +e.target.value; kpiDraw(); } });
+  }
+  const now = Date.now();
+  kpiState.i = kpiIntervalAt(now) || (now < KPI_BASE ? 1 : KPI_N);
+  kpiOv.firstChild.innerHTML = '<div class="modal-eyebrow">管理員模式</div><div class="modal-title">KPI 名單</div><div class="modal-note">讀取中…</div>';
+  kpiOv.classList.add("open");
+  await kpiLoad();
+  kpiDraw();
+}
+window.openKpi = openKpi;
 
 function confirmItemSelf(){
   const sel = document.getElementById("itemSelf");
