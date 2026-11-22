@@ -2922,6 +2922,16 @@
 @keyframes bpBodyIn{from{opacity:0}to{opacity:1}}
 #modalBody>*:not(.reveal-box),#medicModalBody>*:not(.reveal-box),#sponsorModalBody>*:not(.reveal-box),#logAdminBody>*:not(.reveal-box){animation:bpBodyIn .28s ease both;}
 .tut-card.tut-in{animation:bpBodyIn .3s ease both;}
+
+/* ---------- 手機鍵盤彈出時：視窗只佔「鍵盤上方看得到的區域」，輸入欄不會被鍵盤蓋住 ---------- */
+.modal-overlay,.medic-page .modal-overlay,.sponsor-page .modal-overlay{
+  inset:var(--vvt,0px) 0 auto 0;
+  height:var(--vvh,100dvh);
+  box-sizing:border-box;
+}
+.modal-overlay .modal-box,.medic-page .modal-overlay .modal-box,.sponsor-page .modal-overlay .modal-box{
+  max-height:min(82vh, calc(var(--vvh,100dvh) - 40px));
+}
 </style>
 </head>
 
@@ -10659,6 +10669,24 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   }
   render();
   window.renderLeaderboard = render;
+})();
+</script>
+<script>
+/* 鍵盤彈出（手機）時，跟著「實際看得到的畫面」調整視窗大小與位置，並把正在打字的欄位捲到看得見的地方 */
+(function(){
+  var vv = window.visualViewport, root = document.documentElement;
+  function upd(){
+    if(!vv) return;
+    root.style.setProperty("--vvh", vv.height + "px");
+    root.style.setProperty("--vvt", vv.offsetTop + "px");
+  }
+  if(vv){ vv.addEventListener("resize", upd); vv.addEventListener("scroll", upd); upd(); }
+  document.addEventListener("focusin", function(e){
+    var t = e.target;
+    if(!t || !t.closest || !t.closest(".modal-box")) return;
+    if(!/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+    setTimeout(function(){ upd(); try{ t.scrollIntoView({block: "center", behavior: "smooth"}); }catch(_){} }, 320);
+  });
 })();
 </script>
 </body>
