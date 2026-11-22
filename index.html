@@ -5489,6 +5489,7 @@ function mergeRemote(list){
       // FB／角卡連結：以資料庫為準，別的裝置清空也要跟著清空
       ["fbUrl", "cardUrl"].forEach(k => { const nl = r[k] || ""; if((s[k] || "") !== nl){ if(nl) s[k] = nl; else delete s[k]; changed = true; } });
       { const ns = !!r.storyAsk; if(!!s.storyAsk !== ns){ if(ns) s.storyAsk = true; else delete s.storyAsk; changed = true; } }   // 跑劇情標籤
+      { const np = Array.isArray(r.prevNames) ? r.prevNames : (r.prevNames ? Object.values(r.prevNames) : []); if(JSON.stringify(s.prevNames || []) !== JSON.stringify(np)){ if(np.length) s.prevNames = np; else delete s.prevNames; changed = true; } }   // 舊名
       // 名字：網頁上改過的會保留；但程式裡這個人的名字被改過，就以程式為準
       const nn = (r.name && r.codeName === CODE_NAMES[s.id]) ? r.name : CODE_NAMES[s.id];
       if(s.name !== nn){ s.name = nn; changed = true; }
@@ -5502,6 +5503,7 @@ function mergeRemote(list){
       if(!r.egg && s.egg){ delete s.egg; changed = true; }   // 別的裝置清空了隱藏台詞
       ["fbUrl", "cardUrl"].forEach(k => { if(!r[k] && s[k]){ delete s[k]; changed = true; } });
       if(!r.storyAsk && s.storyAsk){ delete s.storyAsk; changed = true; }
+      if(s.prevNames && !Array.isArray(s.prevNames)){ s.prevNames = Object.values(s.prevNames); }
     }
     delete byId[s.id];
   }
@@ -5524,6 +5526,7 @@ function toRecord(s){
   if(s.fbUrl) o.fbUrl = s.fbUrl;
   if(s.cardUrl) o.cardUrl = s.cardUrl;
   if(s.storyAsk) o.storyAsk = true;
+  if(Array.isArray(s.prevNames) && s.prevNames.length) o.prevNames = s.prevNames;   // 舊名紀錄（KPI 用）
   return o;
 }
 
@@ -7288,7 +7291,7 @@ function kpiMark(id){
   }catch(e){}
 }
 let kpiOv = null;
-const kpiState = {i: 1, hits: {}, log: {}, err: ""};
+const kpiState = {i: 1, hits: {}, log: {}, err: "", unmatched: {}};
 function kpiStatus(sub, i){
   if(((kpiState.hits[kpiKey(sub.id)]) || {})[i]) return "hit";
   if(((kpiState.log[sub.id]) || {})[i]) return "log";
@@ -7297,31 +7300,41 @@ function kpiStatus(sub, i){
 function kpiSubjects(){ return subjects.filter(s => !s.deleted); }
 async function kpiLoad(){
   const d = kpiDb();
-  kpiState.err = ""; kpiState.hits = {}; kpiState.log = {};
+  kpiState.err = ""; kpiState.hits = {}; kpiState.log = {}; kpiState.unmatched = {};
   if(!d){ kpiState.err = "連不上資料庫。"; return; }
   try{ const sn = await d.ref("kpi_hits_v1").once("value"); kpiState.hits = sn.val() || {}; }
   catch(e){ kpiState.err = "讀取達標紀錄失敗：" + ((e && (e.code || e.message)) || e) + "（請確認資料庫規則已加入 kpi_hits_v1 並發布）"; }
   try{
     const sn = await d.ref("bloodpool_log_v1").orderByChild("ts").startAt(KPI_BASE).once("value");   // 第一期開始後的所有紀錄，不設筆數上限
-    const byId = {}; kpiSubjects().forEach(x => { byId[x.id] = x; });
+    const subs = kpiSubjects(), byId = {}, byName = {};
+    subs.forEach(x => { byId[x.id] = x; [x.name].concat(Array.isArray(x.prevNames) ? x.prevNames : (x.prevNames ? Object.values(x.prevNames) : [])).forEach(n => { if(n){ const a = (byName[n] = byName[n] || []); if(a.indexOf(x) === -1) a.push(x); } }); });
+    kpiState.unmatched = {};
+    const mark = (id, i, ts) => { (kpiState.log[id] = kpiState.log[id] || {})[i] = ts; };
     sn.forEach(function(ch){
       const e = ch.val() || {}, ts = Number(e.ts) || 0, i = kpiIntervalAt(ts);
       if(!i || !e.msg) return;
       const m = String(e.msg);
-      // 優先用紀錄裡存的行動者編號（e.a）；舊紀錄沒有，就從開頭的「實驗體NNN——名字」讀編號。兩種都不看名字，所以改名不影響。
-      let id = e.a ? String(e.a) : "";
-      let rest = "";
+      if(m.indexOf("「實驗體") !== 0) return;   // 行動者必須是實驗體（醫療隊、資助者不算）
+      const end = m.indexOf("」");
+      if(end < 0) return;
+      const rest = m.slice(end + 1);
+      if(!/^(攻擊|擊殺|使.*陷入瘋狂|重生。)/.test(rest)) return;
+      // 找出行動者，依序嘗試（都不靠「現在的名字」就能找到的優先）：
+      // 1) 紀錄裡存的行動者編號 e.a（新紀錄）
+      // 2) 開頭是「實驗體NNN——名字」（重生等紀錄，有編號）
+      // 3) 開頭是「實驗體——名字」（攻擊紀錄，沒有編號）：用名字找；找不到（可能改過名）就用發出行動的帳號找他綁定的實驗體
+      let who = [];
       const mm = /^「實驗體([^「」—]+)——/.exec(m);
-      if(mm){
-        const end = m.indexOf("」", mm[0].length);
-        if(end > 0) rest = m.slice(end + 1);
-        if(!id) id = mm[1];
-      }else if(id && m.charAt(0) === "「"){
-        const end = m.indexOf("」");
-        if(end > 0) rest = m.slice(end + 1);
+      if(e.a && byId[String(e.a)]) who = [byId[String(e.a)]];
+      else if(mm && byId[mm[1]]) who = [byId[mm[1]]];
+      else if(!mm){
+        const nm = m.slice(m.indexOf("——") + 2, end);
+        who = byName[nm] || [];
+        if(who.length > 1 && e.u){ const own = who.filter(x => x.owner === e.u); if(own.length) who = own; }
+        if(!who.length && e.u){ const own = subs.filter(x => x.owner === e.u); if(own.length === 1) who = own; }
       }
-      if(!id || !byId[id] || !rest) return;
-      if(/^(攻擊|擊殺|使.*陷入瘋狂|重生。)/.test(rest)){ (kpiState.log[id] = kpiState.log[id] || {})[i] = ts; }
+      if(!who.length && !mm){ const nm2 = m.slice(m.indexOf("——") + 2, end); if(nm2) kpiState.unmatched[nm2] = (kpiState.unmatched[nm2] || 0) + 1; }
+      who.forEach(x => mark(x.id, i, ts));
     });
   }catch(e){}
 }
@@ -7357,8 +7370,19 @@ function kpiDraw(msg){
     '<div class="modal-eyebrow" style="margin-top:14px">尚未達標（' + lst.unmet.length + '）</div>' + unmetHtml +
     '<button class="confirm-btn" data-kpi="copy" style="margin-top:14px">複製未達標名單</button>' +
     (msg ? '<div class="modal-note" id="kpiMsg">' + escapeHTML(msg) + '</div>' : '') +
+    kpiAliasHtml() +
     (lst.met.length ? '<details style="margin-top:14px"><summary style="cursor:pointer;font-size:13px;color:var(--bone-dim)">已達標（' + lst.met.length + '）</summary>' + metHtml + '</details>' : '') +
     '<button class="modify-btn" data-kpi="close" style="margin-top:14px">關閉</button>';
+}
+function kpiAliasHtml(){
+  const names = Object.keys(kpiState.unmatched || {});
+  if(!names.length) return "";
+  const opts = '<option value="">選擇是誰…</option>' + kpiSubjects().map(x => '<option value="' + escapeHTML(x.id) + '">' + escapeHTML(subjLabel(x).replace("——", " ")) + '</option>').join("");
+  return '<div class="modal-eyebrow" style="margin-top:14px">對不到人的名字（' + names.length + '）</div>' +
+    '<div class="modal-note">這些名字在行動紀錄裡出現過，但現在沒有任何實驗體叫這個名字（多半是改過名）。選出是誰按「綁定」，之後就會算給那位，而且會一直記著。</div>' +
+    names.map(n => '<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="flex:1;min-width:0;word-break:break-all">' + escapeHTML(n) + '<span style="color:var(--bone-dim);font-size:11px">　' + kpiState.unmatched[n] + ' 筆</span></span>' +
+      '<select class="lb-sel" style="width:auto;max-width:46%;margin:0">' + opts + '</select>' +
+      '<button class="modify-btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px" data-kpi="alias" data-name="' + escapeHTML(n) + '">綁定</button></div>').join("");
 }
 function kpiCopy(text){
   const fb = function(){
@@ -7384,6 +7408,18 @@ async function openKpi(){
       const act = b.getAttribute("data-kpi"), id = b.getAttribute("data-id");
       if(act === "close"){ kpiOv.classList.remove("open"); return; }
       if(act === "copy"){ kpiCopy(kpiText(kpiState.i)); return; }
+      if(act === "alias"){
+        const sel = b.parentNode.querySelector("select"), sid = sel && sel.value, nm = b.getAttribute("data-name");
+        if(!sid){ kpiDraw("請先選擇是誰。"); return; }
+        const sub = subjects.find(x => x.id === sid); if(!sub) return;
+        const prev = Array.isArray(sub.prevNames) ? sub.prevNames.slice() : [];
+        if(prev.indexOf(nm) === -1) prev.push(nm);
+        sub.prevNames = prev.slice(-12);
+        SharedStore.setCtx("KPI・綁定舊名");
+        saveState();
+        kpiLoad().then(function(){ kpiDraw("已綁定：" + nm + " → " + subjLabel(sub).replace("——", " ")); });
+        return;
+      }
       const d = kpiDb(); if(!d) return;
       const ref = d.ref("kpi_hits_v1/" + kpiKey(id) + "/" + kpiState.i);
       if(act === "mark") ref.set(Date.now()).then(function(){ const k = kpiKey(id); (kpiState.hits[k] = kpiState.hits[k] || {})[kpiState.i] = Date.now(); kpiDraw(); }).catch(function(err){ alert("標記失敗：" + ((err && (err.code || err.message)) || err)); });
@@ -7636,6 +7672,15 @@ function clampInt(val, min, max){
   return Math.min(max, Math.max(min, n));
 }
 
+// 改名時把舊名記進 prevNames：之後行動紀錄裡出現舊名，KPI 還是找得到這個人
+function renameSubject(s, name){
+  if(!name || name === s.name) return;
+  const prev = Array.isArray(s.prevNames) ? s.prevNames.slice() : [];
+  if(s.name && prev.indexOf(s.name) === -1) prev.push(s.name);
+  s.prevNames = prev.filter(n => n !== name).slice(-12);
+  s.name = name;
+}
+
 function saveEdit(){
   const _lk = window.__readLinks("editFb", "editCard");
   if(_lk.bad){ alert("連結格式不正確，請貼上完整網址（例如 https://…）。"); return; }
@@ -7644,7 +7689,7 @@ function saveEdit(){
   const before = editSnap;
   const oldHp = s.hp, oldSan = s.san, oldDeath = s.deathCount, oldMad = s.madCount;
   const name = document.getElementById("editName").value.trim();
-  if(name) s.name = name;
+  if(name) renameSubject(s, name);
   s.hp = clampInt(document.getElementById("editHp").value, 0, 3);
   s.san = clampInt(document.getElementById("editSan").value, 0, 3);
   s.bandages = clampInt(document.getElementById("editBandages").value, 0, Auth.isAdmin ? 99 : Math.max(2, Number(s.bandages) || 0));
@@ -8054,7 +8099,7 @@ function adminSaveNames(){
     const input = document.getElementById("adminName_" + s.id);
     if(input){
       const val = input.value.trim();
-      if(val) s.name = val;
+      if(val) renameSubject(s, val);
     }
   });
   renderGrid();
