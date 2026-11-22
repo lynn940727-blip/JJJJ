@@ -2930,67 +2930,41 @@
 .mr-actions{position:relative;display:flex;justify-content:center;margin-top:30px}
 .mr-btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;color:var(--bone);background:rgba(181,2,15,.12);border:1px solid var(--c-crit);padding:10px 26px;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
 .mr-btn:hover{background:var(--c-crit);color:#fff;box-shadow:0 0 14px rgba(214,16,30,.45)}
-.mr-btn.solid{background:var(--c-crit);color:#fff}
-.mr-btn.solid:hover{background:#d6101e}
-.mr-btn:disabled{opacity:.5;cursor:default}
+
+/* 共用：頭像框（有頭像 = 實線框；沒上傳 = 跟名冊一樣的空白虛線框） */
+.mr-av{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:4px;border:1.5px solid var(--bone-dim);background:rgba(255,255,255,.04)}
+.mr-av img{width:100%;height:100%;object-fit:cover;display:block}
+.mr-av.empty{border:1.5px dashed var(--bone-dim);background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center}
+.mr-av.empty span{font-size:26px;line-height:1;color:var(--bone-dim);opacity:.8}
 
 /* 輪播展示區 */
 .mr-showcase{position:relative;width:100%;max-width:1000px;margin:34px auto 0;padding:6px 0;cursor:pointer;overflow:hidden}
 .mr-viewport{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.mr-track{display:flex;width:max-content;animation:mrScroll var(--dur,30s) linear infinite}
+.mr-track{display:flex;width:max-content;animation:mrScroll var(--dur,40s) linear infinite}
 .mr-showcase:hover .mr-track{animation-play-state:paused}
 @keyframes mrScroll{to{transform:translateX(-50%)}}
-.mr-item{position:relative;flex:none;width:clamp(84px,24vw,124px);aspect-ratio:3/4;margin-right:12px;overflow:hidden;background:var(--bg-panel);border:1px solid var(--line);box-shadow:0 6px 14px rgba(0,0,0,.5)}
-.mr-item img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-name{position:absolute;left:0;right:0;bottom:0;padding:22px 6px 7px;background:linear-gradient(180deg,rgba(10,7,6,0),rgba(10,7,6,.92));color:var(--bone);font-family:var(--serif);font-size:12px;letter-spacing:.1em;text-align:center}
-.mr-only{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:8px;font-family:var(--serif);font-size:13px;letter-spacing:.1em;color:var(--bone);text-align:center}
+.mr-item{position:relative;flex:none;width:clamp(84px,24vw,124px);margin-right:12px}
+.mr-item .mr-av{box-shadow:0 6px 14px rgba(0,0,0,.5)}
+.mr-item .mr-name{position:absolute;left:0;right:0;bottom:0;padding:22px 6px 7px;background:linear-gradient(180deg,rgba(10,7,6,0),rgba(10,7,6,.92));color:var(--bone);font-family:var(--serif);font-size:12px;letter-spacing:.06em;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* 完整名冊／編輯器／角卡視窗 */
-#masterPage .modal-box,#masterEditor .modal-box{width:min(1040px,100%);max-height:min(92vh,calc(var(--vvh,100dvh) - 20px))}
-#masterCard .modal-box{width:min(560px,100%)}
-.mr-sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;line-height:1.8;color:var(--bone-dim);margin:2px 0 20px}
-.mr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left}
-@media (min-width:600px){.mr-grid{grid-template-columns:repeat(4,1fr);gap:14px}}
-@media (min-width:900px){.mr-grid{grid-template-columns:repeat(5,1fr);gap:16px}}
-.mr-slot{position:relative;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 12px,transparent 12px 24px);font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--bone-dim);opacity:.8}
-.mr-slot.filled{padding:0;overflow:hidden;cursor:pointer;opacity:1;border:1px solid var(--line);background:var(--bg-panel);box-shadow:0 6px 14px rgba(0,0,0,.5);transition:transform .25s,border-color .25s,box-shadow .25s;-webkit-tap-highlight-color:transparent}
-.mr-slot.filled:hover{transform:translateY(-3px);border-color:var(--c-crit);box-shadow:0 10px 22px rgba(0,0,0,.6),0 0 14px rgba(214,16,30,.3)}
-.mr-slot img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-no{position:absolute;left:6px;top:5px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--c-crit);text-shadow:0 1px 3px #000;z-index:1}
+/* 完整名冊視窗 */
+#masterPage .modal-box{width:min(1040px,100%);max-height:min(92vh,calc(var(--vvh,100dvh) - 20px))}
+.mr-sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;line-height:1.8;color:var(--bone-dim);margin:2px 0 14px}
+#masterSearch{margin-bottom:6px}
+.mr-group{margin-top:22px}
+.mr-ghead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 0 10px;margin-bottom:14px;border-bottom:1px solid var(--line);font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.08em;color:var(--bone)}
+.mr-ghead small{font-family:var(--mono);font-weight:400;font-size:11px;letter-spacing:.12em;color:var(--c-crit)}
+.mr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 12px;text-align:left}
+@media (min-width:600px){.mr-grid{grid-template-columns:repeat(5,1fr);gap:18px 14px}}
+@media (min-width:900px){.mr-grid{grid-template-columns:repeat(7,1fr)}}
+.mr-tile{min-width:0}
+.mr-tid{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--c-crit)}
+.mr-tname{margin-top:1px;font-family:var(--serif);font-size:12.5px;letter-spacing:.04em;line-height:1.4;color:var(--bone);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mr-none{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--bone-dim);opacity:.6;padding:40px 0}
 @media (max-width:600px){
-  #masterPage,#masterEditor{padding:0}
-  #masterPage .modal-box,#masterEditor .modal-box{width:100vw;height:100%;max-height:none;border:none}
+  #masterPage{padding:0}
+  #masterPage .modal-box{width:100vw;height:100%;max-height:none;border:none}
 }
-
-/* 編輯器 */
-.mr-bar{position:sticky;top:-30px;z-index:8;display:flex;justify-content:space-between;gap:10px;margin:-30px -24px 18px;padding:14px 24px;background:var(--bg-panel-2);border-bottom:1px solid var(--line)}
-.mr-bar .mr-btn{padding:8px 18px;font-size:12px}
-.mr-list{display:flex;flex-direction:column;gap:10px;text-align:left}
-.mr-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 12px 8px 8px;background:var(--bg-panel);border:1px solid var(--line)}
-.mr-row.dirty{border-color:var(--c-crit)}
-.mr-row.busy{opacity:.55;pointer-events:none}
-.mr-rno{width:34px;flex:none;text-align:right;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--c-crit)}
-.mr-thumb{flex:none;width:54px;aspect-ratio:3/4;padding:0;overflow:hidden;cursor:pointer;border:1px dashed var(--bone-dim);background:transparent;color:var(--bone-dim);font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center}
-.mr-thumb.has{border:1px solid var(--line)}
-.mr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-rname{flex:1;min-width:0;margin:0 !important}
-.mr-x{flex:none;width:28px;height:28px;border-radius:50%;border:none;background:none;color:var(--bone-dim);font-size:14px;cursor:pointer;visibility:hidden}
-.mr-x.show{visibility:visible}
-.mr-x:hover{background:var(--c-crit);color:#fff}
-.mr-rcard{flex:0 0 100%;display:flex;align-items:center;gap:12px;margin-left:46px}
-.mr-cthumb{flex:none;width:96px;aspect-ratio:4/3;padding:0;overflow:hidden;cursor:pointer;border:1px dashed var(--bone-dim);background:transparent;color:var(--bone-dim);font-family:var(--mono);font-size:11px;letter-spacing:.1em;display:flex;align-items:center;justify-content:center}
-.mr-cthumb.has{border:1px solid var(--line)}
-.mr-cthumb img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-clabel{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--bone-dim)}
-.mr-cx{font-family:var(--mono);font-size:11px;color:var(--bone-dim);padding:4px 10px;border:1px solid var(--line);background:none;cursor:pointer;visibility:hidden}
-.mr-cx.show{visibility:visible}
-.mr-cx:hover{background:var(--c-crit);border-color:var(--c-crit);color:#fff}
-
-/* 角卡 */
-.mr-card-img{width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--bg-panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
-.mr-card-img img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-card-img span{font-family:var(--mono);font-size:13px;letter-spacing:.16em;color:var(--bone-dim);padding:12px}
-.mr-card-name{margin-top:14px;text-align:center;font-family:var(--serif);font-size:16px;letter-spacing:.12em;color:var(--bone)}
 @media (prefers-reduced-motion:reduce){.mr-track{animation:none}}
 
 /* ---------- 機構活動（籌備中） ---------- */
@@ -3601,16 +3575,13 @@
 
   <div class="roster-divider"></div>
 
-  <div class="mr-lede">點擊名冊或下方按鈕，查看完整總名冊。</div>
-  <div class="mr-showcase" id="masterShowcase" hidden title="點擊查看完整總名冊">
+  <div class="mr-lede">實驗體、醫療隊、資助者，全部成員一覽。</div>
+  <div class="mr-showcase" id="masterShowcase" hidden title="點擊查看更多">
     <div class="mr-viewport"><div class="mr-track" id="masterTrack"></div></div>
   </div>
-  <div class="master-empty" id="masterEmpty">— 尚無資料 —</div>
+  <div class="master-empty" id="masterEmpty">— 讀取中 —</div>
   <div class="mr-actions">
-    <button type="button" class="mr-btn" id="masterOpenBtn">查看總名冊</button>
-  </div>
-  <div style="text-align:center; margin-top:32px;">
-    <button class="admin-entry-btn" id="masterEditBtn">⚙ 編輯名冊（管理員）</button>
+    <button type="button" class="mr-btn" id="masterOpenBtn">查看更多</button>
   </div>
 
   <div style="text-align:center; margin-top:56px;">
@@ -3631,31 +3602,9 @@
     <button type="button" class="modal-close" id="masterPageClose" aria-label="關閉">×</button>
     <div class="modal-eyebrow">檔案 ⁄ 總名冊</div>
     <div class="modal-title">總名冊</div>
-    <div class="mr-sub">每位收容者都保留了專屬的立繪與角卡位置。點擊立繪查看角卡。</div>
-    <div class="mr-grid" id="masterPageGrid"></div>
-    <div class="mr-actions"><button type="button" class="mr-btn" id="masterPageEditBtn">編輯名冊</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="masterEditor">
-  <div class="modal-box mr-box">
-    <div class="mr-bar">
-      <button type="button" class="mr-btn" id="masterEditorBack">← 返回名冊</button>
-      <button type="button" class="mr-btn solid" id="masterEditorSave">儲存</button>
-    </div>
-    <div class="modal-eyebrow">檔案 ⁄ 總名冊 ⁄ 編輯</div>
-    <div class="modal-title">編輯總名冊</div>
-    <div class="mr-sub">每格可填入姓名、上傳 3:4 立繪與 4:3 角卡，完成後按右上角「儲存」更新名冊。</div>
-    <div class="mr-list" id="masterEditorList"></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="masterCard">
-  <div class="modal-box mr-card-box">
-    <button type="button" class="modal-close" id="masterCardClose" aria-label="關閉">×</button>
-    <div class="modal-eyebrow">角卡</div>
-    <div class="mr-card-img" id="masterCardImg"></div>
-    <div class="mr-card-name" id="masterCardName"></div>
+    <div class="mr-sub" id="masterPageSub"></div>
+    <input type="text" class="text-input" id="masterSearch" placeholder="搜尋編號或名稱" autocomplete="off">
+    <div id="masterPageBody"></div>
   </div>
 </div>
 
@@ -10880,205 +10829,85 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 })();
 </script>
 <script>
-/* ---------- 總名冊（共用資料，存在 Firebase：master_roster_v1/000…；只有管理員可編輯） ---------- */
+/* ---------- 總名冊：自動收錄實驗體、醫療隊、資助者全部成員（名字與頭像都跟各自名冊同步） ---------- */
 (function(){
-  var PATH = "master_roster_v1", N = 30;            // N = 名冊格數，要增減格數改這個數字
-  var data = blank(), draft = null, started = false, dirty = false, saving = false, pend = null;
   function $(id){ return document.getElementById(id); }
-  function blank(){ var a = []; for(var i = 0; i < N; i++) a.push({n: "", i: "", c: ""}); return a; }
-  function key(i){ return String(i).padStart(3, "0"); }
-  function no(i){ return String(i + 1).padStart(3, "0"); }
   function esc(t){ return String(t == null ? "" : t).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  function filled(e){ return !!(e.n || e.i); }
-  function fbdb(){ try{ if(typeof firebase === "undefined") return null; if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); return firebase.database(); }catch(e){ return null; } }
-  function norm(val){
-    var a = blank();
-    if(val) Object.keys(val).forEach(function(k){
-      var i = parseInt(k, 10), v = val[k];
-      if(i >= 0 && i < N && v) a[i] = {n: String(v.n || ""), i: String(v.i || ""), c: String(v.c || "")};
-    });
-    return a;
-  }
-  function copy(a){ return a.map(function(e){ return {n: e.n, i: e.i, c: e.c}; }); }
-  function isAdmin(){ return !!(window.Auth && Auth.requireAdmin && Auth.requireAdmin()); }
-
-  /* ----- 讀取（捲到附近或打開時才開始讀，避免一進網站就下載所有圖） ----- */
-  function start(){
-    if(started) return; started = true;
-    var db = fbdb(); if(!db){ started = false; return; }
-    db.ref(PATH).on("value", function(snap){
-      data = norm(snap.val()); renderAll();
-    }, function(err){
-      started = false; console.warn("master roster read failed", err);
-      var em = $("masterEmpty"); if(em){ em.textContent = "— 讀取失敗（請確認 Firebase 規則已加入 " + PATH + "） —"; em.hidden = false; }
+  var GROUPS = [
+    {key: "exp",     label: "實驗體", get: function(){ try{ return subjects; }catch(e){ return []; } }},
+    {key: "medic",   label: "醫療隊", get: function(){ try{ return window.medicApp ? window.medicApp.getSubjects() : []; }catch(e){ return []; } }},
+    {key: "sponsor", label: "資助者", get: function(){ try{ return window.sponsorApp ? window.sponsorApp.getSubjects() : []; }catch(e){ return []; } }}
+  ];
+  function collect(){
+    return GROUPS.map(function(g){
+      var list = (g.get() || []).filter(function(s){ return s && !s.deleted; }).map(function(s){
+        return {id: String(s.id), name: String(s.name || ""), av: s.avatarUrl || ""};
+      });
+      return {label: g.label, list: list};
     });
   }
-  var sec = $("masterRoster");
-  if(sec && "IntersectionObserver" in window){
-    var io = new IntersectionObserver(function(es){ if(es.some(function(e){ return e.isIntersecting; })){ start(); io.disconnect(); } }, {rootMargin: "900px 0px"});
-    io.observe(sec);
-  } else start();
+  function sig(gs){   // 便宜的變動檢查：編號、名字、頭像長度
+    return gs.map(function(g){ return g.list.map(function(p){ return p.id + "|" + p.name + "|" + (p.av ? p.av.length : 0); }).join(","); }).join(";");
+  }
+  function avHtml(p){
+    return p.av ? '<div class="mr-av"><img src="' + esc(p.av) + '" alt="" loading="lazy"></div>'
+                : '<div class="mr-av empty"><span>＋</span></div>';
+  }
 
-  /* ----- 顯示 ----- */
-  function renderAll(){
-    var cnt = data.filter(filled).length;
-    var meta = $("masterMetaLine"); if(meta) meta.textContent = "登錄數量 " + String(cnt).padStart(3, "0");
-    renderShowcase();
-    if($("masterPage").classList.contains("open")) renderGrid();
+  var last = "", gs = [];
+  function refresh(force){
+    var now = collect(), sg = sig(now);
+    if(!force && sg === last) return;
+    last = sg; gs = now;
+    renderMeta(); renderShowcase();
+    if($("masterPage").classList.contains("open")) renderPage();
+  }
+  function total(){ return gs.reduce(function(n, g){ return n + g.list.length; }, 0); }
+  function renderMeta(){
+    var m = $("masterMetaLine"); if(m) m.textContent = "登錄數量 " + String(total()).padStart(3, "0");
   }
   function renderShowcase(){
     var box = $("masterShowcase"), track = $("masterTrack"), em = $("masterEmpty");
-    var list = data.filter(filled);
-    if(!list.length){ box.hidden = true; em.textContent = "— 尚無資料 —"; em.hidden = false; track.innerHTML = ""; return; }
-    em.hidden = true; box.hidden = false;
+    var all = []; gs.forEach(function(g){ all = all.concat(g.list); });
+    if(!all.length){ box.hidden = true; em.textContent = "— 尚無資料 —"; em.hidden = false; return; }
+    var withAv = all.filter(function(p){ return p.av; });
+    var list = (withAv.length ? withAv : all).slice(0, 30);
     var half = [], reps = Math.max(1, Math.ceil(8 / list.length));
     for(var r = 0; r < reps; r++) half = half.concat(list);
-    var one = half.map(function(e){
-      return '<div class="mr-item">' + (e.i ? '<img src="' + e.i + '" alt="' + esc(e.n) + '" loading="lazy">' : '<div class="mr-only">' + esc(e.n) + '</div>') +
-             (e.i && e.n ? '<div class="mr-name">' + esc(e.n) + '</div>' : '') + '</div>';
+    var one = half.map(function(p){
+      return '<div class="mr-item">' + avHtml(p) + (p.name ? '<div class="mr-name">' + esc(p.name) + '</div>' : '') + '</div>';
     }).join("");
     track.innerHTML = one + one;
-    track.style.setProperty("--dur", Math.max(18, half.length * 4) + "s");
+    track.style.setProperty("--dur", Math.max(24, half.length * 3.5) + "s");
+    em.hidden = true; box.hidden = false;
   }
-  function renderGrid(){
-    $("masterPageGrid").innerHTML = data.map(function(e, i){
-      if(!filled(e)) return '<div class="mr-slot"><span>NO.' + no(i) + '</span></div>';
-      return '<div class="mr-slot filled" data-i="' + i + '" role="button" tabindex="0"><span class="mr-no">' + no(i) + '</span>' +
-        (e.i ? '<img src="' + e.i + '" alt="' + esc(e.n) + '" loading="lazy">' : '<div class="mr-only">' + esc(e.n) + '</div>') +
-        (e.i && e.n ? '<div class="mr-name">' + esc(e.n) + '</div>' : '') + '</div>';
-    }).join("");
+  function renderPage(){
+    var q = ($("masterSearch").value || "").trim().toLowerCase();
+    var html = "", shown = 0;
+    gs.forEach(function(g){
+      var list = q ? g.list.filter(function(p){ return p.id.toLowerCase().indexOf(q) > -1 || p.name.toLowerCase().indexOf(q) > -1; }) : g.list;
+      if(!list.length) return;
+      shown += list.length;
+      html += '<div class="mr-group"><div class="mr-ghead"><span>' + g.label + '</span><small>' + list.length + (q ? ' ／ ' + g.list.length : '') + ' 人</small></div><div class="mr-grid">' +
+        list.map(function(p){
+          return '<div class="mr-tile">' + avHtml(p) + '<div class="mr-tid">' + esc(p.id) + '</div><div class="mr-tname">' + esc(p.name || "—") + '</div></div>';
+        }).join("") + '</div></div>';
+    });
+    $("masterPageBody").innerHTML = html || '<div class="mr-none">— 找不到符合的成員 —</div>';
+    $("masterPageSub").textContent = "共 " + total() + " 人" + (q ? "，符合搜尋：" + shown + " 人" : "") + "。";
   }
 
-  /* ----- 開關視窗 ----- */
-  function openPage(){ start(); renderGrid(); $("masterPage").classList.add("open"); }
+  function openPage(){ refresh(true); $("masterSearch").value = ""; renderPage(); $("masterPage").classList.add("open"); $("masterPage").querySelector(".modal-box").scrollTop = 0; }
   function closePage(){ $("masterPage").classList.remove("open"); }
-  function openCard(i){
-    var e = data[i]; if(!e) return;
-    $("masterCardImg").innerHTML = e.c ? '<img src="' + e.c + '" alt="">' : '<span>尚無角卡</span>';
-    $("masterCardName").textContent = "NO." + no(i) + (e.n ? "　" + e.n : "");
-    $("masterCard").classList.add("open");
-  }
   $("masterShowcase").addEventListener("click", openPage);
   $("masterOpenBtn").addEventListener("click", openPage);
   $("masterPageClose").addEventListener("click", closePage);
   $("masterPage").addEventListener("click", function(e){ if(e.target === this) closePage(); });
-  $("masterCardClose").addEventListener("click", function(){ $("masterCard").classList.remove("open"); });
-  $("masterCard").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("open"); });
-  $("masterPageGrid").addEventListener("click", function(e){
-    var t = e.target.closest(".mr-slot.filled"); if(t) openCard(parseInt(t.getAttribute("data-i"), 10));
-  });
-  $("masterPageGrid").addEventListener("keydown", function(e){
-    if(e.key !== "Enter" && e.key !== " ") return;
-    var t = e.target.closest(".mr-slot.filled"); if(t){ e.preventDefault(); openCard(parseInt(t.getAttribute("data-i"), 10)); }
-  });
+  $("masterSearch").addEventListener("input", renderPage);
 
-  /* ----- 編輯器（管理員） ----- */
-  function openEditor(){
-    if(!isAdmin()) return;
-    start(); draft = copy(data); dirty = false;
-    renderEditor(); closePage(); $("masterEditor").classList.add("open");
-    $("masterEditor").querySelector(".modal-box").scrollTop = 0;
-  }
-  function closeEditor(force){
-    if(dirty && !force && !confirm("尚有未儲存的變更，確定要離開嗎？")) return;
-    $("masterEditor").classList.remove("open"); draft = null; dirty = false;
-    openPage();
-  }
-  $("masterEditBtn").addEventListener("click", openEditor);
-  $("masterPageEditBtn").addEventListener("click", openEditor);
-  $("masterEditorBack").addEventListener("click", function(){ closeEditor(false); });
-  $("masterEditor").addEventListener("click", function(e){ if(e.target === this) closeEditor(false); });
-
-  function rowDirty(i){ var a = draft[i], b = data[i]; return a.n !== b.n || a.i !== b.i || a.c !== b.c; }
-  function renderEditor(){
-    var box = $("masterEditor").querySelector(".modal-box"), top = box.scrollTop;
-    $("masterEditorList").innerHTML = draft.map(function(e, i){
-      return '<div class="mr-row' + (rowDirty(i) ? ' dirty' : '') + '" data-i="' + i + '">' +
-        '<div class="mr-rno">' + no(i) + '</div>' +
-        '<button type="button" class="mr-thumb' + (e.i ? ' has' : '') + '" data-a="pi" title="上傳立繪（3:4）">' + (e.i ? '<img src="' + e.i + '" alt="">' : '＋') + '</button>' +
-        '<input type="text" class="text-input mr-rname" maxlength="40" placeholder="姓名" value="' + esc(e.n) + '" data-a="name">' +
-        '<button type="button" class="mr-x' + (e.n || e.i || e.c ? ' show' : '') + '" data-a="clear" title="清空此格">✕</button>' +
-        '<div class="mr-rcard">' +
-          '<button type="button" class="mr-cthumb' + (e.c ? ' has' : '') + '" data-a="pc" title="上傳角卡（4:3）">' + (e.c ? '<img src="' + e.c + '" alt="">' : '角卡 ＋') + '</button>' +
-          '<span class="mr-clabel">角卡 4:3</span>' +
-          '<button type="button" class="mr-cx' + (e.c ? ' show' : '') + '" data-a="cc">移除角卡</button>' +
-        '</div></div>';
-    }).join("");
-    box.scrollTop = top;
-  }
-  function markDirty(i){
-    dirty = draft.some(function(_, k){ return rowDirty(k); });
-    var row = $("masterEditorList").querySelector('.mr-row[data-i="' + i + '"]');
-    if(row) row.classList.toggle("dirty", rowDirty(i));
-  }
-
-  var fileInput = document.createElement("input");
-  fileInput.type = "file"; fileInput.accept = "image/*"; fileInput.style.display = "none";
-  document.body.appendChild(fileInput);
-
-  $("masterEditorList").addEventListener("click", function(e){
-    var b = e.target.closest("[data-a]"); if(!b || !draft) return;
-    var row = b.closest(".mr-row"), i = parseInt(row.getAttribute("data-i"), 10), a = b.getAttribute("data-a");
-    if(a === "pi" || a === "pc"){ pend = {i: i, kind: a === "pc" ? "c" : "i"}; fileInput.click(); }
-    else if(a === "cc"){ draft[i].c = ""; renderEditor(); markDirty(i); }
-    else if(a === "clear"){ draft[i] = {n: "", i: "", c: ""}; renderEditor(); markDirty(i); }
-  });
-  $("masterEditorList").addEventListener("input", function(e){
-    var t = e.target; if(!draft || t.getAttribute("data-a") !== "name") return;
-    var i = parseInt(t.closest(".mr-row").getAttribute("data-i"), 10);
-    draft[i].n = t.value.trim().slice(0, 40); markDirty(i);
-    var x = t.closest(".mr-row").querySelector(".mr-x"); if(x) x.classList.toggle("show", !!(draft[i].n || draft[i].i || draft[i].c));
-  });
-
-  /* 圖片：置中裁成指定比例再壓縮，檔案小、載入快 */
-  function cropImage(file, W, H, q){
-    return new Promise(function(res, rej){
-      var rd = new FileReader();
-      rd.onload = function(){
-        var im = new Image();
-        im.onload = function(){
-          var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-          var cx = cv.getContext("2d"); cx.fillStyle = "#130f0e"; cx.fillRect(0, 0, W, H);
-          var sc = Math.max(W / im.width, H / im.height), w = im.width * sc, h = im.height * sc;
-          cx.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
-          res(cv.toDataURL("image/jpeg", q));
-        };
-        im.onerror = rej; im.src = rd.result;
-      };
-      rd.onerror = rej; rd.readAsDataURL(file);
-    });
-  }
-  fileInput.addEventListener("change", function(){
-    var f = fileInput.files && fileInput.files[0]; fileInput.value = "";
-    var p = pend; pend = null;
-    if(!f || !p || !draft) return;
-    var row = $("masterEditorList").querySelector('.mr-row[data-i="' + p.i + '"]');
-    if(row) row.classList.add("busy");
-    (p.kind === "c" ? cropImage(f, 800, 600, 0.82) : cropImage(f, 480, 640, 0.82)).then(function(url){
-      if(!draft) return;
-      draft[p.i][p.kind] = url; renderEditor(); markDirty(p.i);
-    }).catch(function(){ alert("無法讀取圖片，請換一張再試。"); if(row) row.classList.remove("busy"); });
-  });
-
-  /* 儲存：只送有變動的格子 */
-  $("masterEditorSave").addEventListener("click", function(){
-    if(saving || !draft) return;
-    if(!(window.Auth && Auth.isAdmin)){ alert("需要管理員身份"); return; }
-    var db = fbdb(); if(!db){ alert("無法連線到資料庫。"); return; }
-    var up = {}, n = 0;
-    draft.forEach(function(e, i){
-      if(!rowDirty(i)) return; n++;
-      if(!(e.n || e.i || e.c)) up[key(i)] = null;
-      else { var o = {}; if(e.n) o.n = e.n; if(e.i) o.i = e.i; if(e.c) o.c = e.c; up[key(i)] = o; }
-    });
-    if(!n){ closeEditor(true); return; }
-    saving = true; var btn = $("masterEditorSave"); btn.disabled = true; btn.textContent = "儲存中…";
-    db.ref(PATH).update(up).then(function(){
-      data = copy(draft); renderAll(); closeEditor(true);
-    }).catch(function(err){
-      alert("儲存失敗（" + ((err && err.code) || "未知原因") + "）。請確認已登入管理員，且 Firebase 規則已加入 " + PATH + "。");
-    }).then(function(){ saving = false; btn.disabled = false; btn.textContent = "儲存"; });
-  });
+  /* 名冊資料是各板塊從資料庫陸續載入的，所以載入完成前先輪詢；之後也每幾秒檢查一次有沒有變動 */
+  refresh(true);
+  setInterval(function(){ if(!document.hidden) refresh(false); }, 3000);
 })();
 </script>
 </body>
