@@ -2968,7 +2968,7 @@
 #eventRoom .event-card-soon .event-card-title{font-size:clamp(18px,5vw,22px);letter-spacing:.3em;text-indent:.3em;text-shadow:none}
 #eventRoom .event-card-soon .event-card-desc{font-family:var(--mono);font-size:11px;letter-spacing:.4em;opacity:.7}
 
-#eventRoom .event-card-poster{grid-column:1/-1;padding:0;min-height:0;aspect-ratio:1400/834;justify-content:flex-end;align-items:flex-end;background:#000}
+#eventRoom .event-card-poster{padding:0;min-height:0;aspect-ratio:1400/834;justify-content:flex-end;align-items:flex-end;background:#000}
 #eventRoom .event-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s ease,filter .3s ease}
 #eventRoom button.event-card-poster:hover .event-poster{transform:scale(1.03);filter:brightness(1.1)}
 #eventRoom .event-card-poster::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),transparent 35%);pointer-events:none}
@@ -2986,6 +2986,10 @@
 #eventRoom .event-card-poster .event-card-go{backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:background .25s ease,border-color .25s ease,color .25s ease}
 #eventRoom button.event-card-poster:hover .event-card-go{background:var(--c-crit);border-color:var(--c-crit)}
 #eventRoom .event-card-soon{border-style:dashed;background:rgba(255,255,255,.015)}
+#eventRoom .event-list{gap:44px}
+@media (min-width:700px){#eventRoom .event-list{gap:36px}}
+#eventRoom .event-card-poster{border:1px solid #b0141f;box-shadow:0 18px 50px rgba(0,0,0,.7)}
+#eventRoom button.event-card-poster:hover,#eventRoom button.event-card-poster:focus-visible,#eventRoom button.event-card-poster:active{border-color:#ff2b3d;box-shadow:0 0 14px rgba(214,16,30,.32),0 22px 55px rgba(0,0,0,.7)}
 #eventRoom .event-card-poster{container-type:inline-size}
 #eventRoom .event-card-poster .ep-tag,#eventRoom .event-card-poster .ep-title{position:absolute;z-index:1}
 #eventRoom .ep-tag{left:5%;top:7%;font-family:var(--mono);font-size:clamp(9px,1.4cqw,13px);letter-spacing:.32em;color:var(--bone);text-shadow:0 1px 6px #000}
@@ -3003,6 +3007,75 @@
 .modal-overlay .modal-box,.medic-page .modal-overlay .modal-box,.sponsor-page .modal-overlay .modal-box{
   max-height:min(82vh, calc(var(--vvh,100dvh) - 40px));
 }
+
+/* ---------- 歡迎來到血池肉林：參企偏好表（沿用角色卡的紅黑海報風） ---------- */
+#welcomeRoom{padding:0!important;background:#d2312a!important;color:#0d0908;position:relative;overflow:hidden;border-top:0;min-height:100vh;min-height:100dvh}
+#welcomeRoom>.roster-eyebrow,#welcomeRoom>.roster-head,#welcomeRoom>.roster-divider{display:none}
+#welcomeRoom::before{content:"";position:absolute;inset:0 auto 0 0;width:20px;height:auto;background:repeating-linear-gradient(180deg,#0d0908 0 64px,transparent 64px 112px);z-index:3;pointer-events:none}
+#welcomeRoom::after{content:"";position:absolute;inset:0;width:auto;height:auto;background:repeating-radial-gradient(circle at 86% 76%,transparent 0 24px,#d2312a 24px 27px);z-index:1;pointer-events:none;opacity:.9;transform:none;border:0}
+#welcomeRoom .wl-wedge{position:absolute;inset:0;background:#1b1918;clip-path:polygon(0 80%,100% 54%,100% 100%,0 100%);z-index:0}
+#welcomeRoom:not(.wl-cover) .wl-wedge,#welcomeRoom:not(.wl-cover)::after{display:none}
+#welcomeRoom.wl-cover .wl-backwrap{display:none}
+
+/* 封面 */
+#welcomeRoom .wl-intro{position:relative;z-index:2;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:space-between;padding:56px 24px 44px 46px;max-width:620px;margin:0 auto}
+#welcomeRoom .wl-top{display:flex;justify-content:space-between;font:600 12px var(--mono);letter-spacing:.22em}
+#welcomeRoom .wl-title{font-family:var(--serif);font-weight:900;font-size:clamp(48px,17vw,112px);line-height:1;letter-spacing:-.02em;margin-top:6vh}
+#welcomeRoom .wl-title span{display:block}
+#welcomeRoom .wl-title span+span{padding-left:.3em}
+#welcomeRoom .wl-sub{margin-top:22px}
+#welcomeRoom .wl-sub b{display:inline-block;background:#0d0908;color:#efe6d6;font:900 22px var(--serif);letter-spacing:.35em;padding:9px 12px 9px 22px;transform:skewX(-8deg)}
+#welcomeRoom .wl-vit{margin-top:24px;display:grid;gap:8px}
+#welcomeRoom .wl-vit div{display:flex;align-items:center;gap:8px}
+#welcomeRoom .wl-vit em{font:900 20px var(--serif);font-style:normal;width:56px}
+#welcomeRoom .wl-vit i{width:50px;height:13px;background:#0d0908;transform:skewX(-22deg)}
+#welcomeRoom .wl-bot{display:flex;flex-direction:column;align-items:flex-start}
+#welcomeRoom .wl-start{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:360px;background:#d2312a;color:#0d0908;border:3px solid #0d0908;padding:18px 22px;font:900 24px var(--serif);letter-spacing:.3em;box-shadow:6px 6px 0 #efe6d6;cursor:pointer;transition:transform .15s,box-shadow .15s}
+#welcomeRoom .wl-start b{font:600 22px var(--mono);letter-spacing:0}
+#welcomeRoom .wl-start:hover,#welcomeRoom .wl-start:active{transform:translate(-2px,-2px);box-shadow:9px 9px 0 #efe6d6}
+#welcomeRoom .wl-link{background:none;border:0;color:#efe6d6;font:500 13px var(--mono);letter-spacing:.1em;margin-top:22px;cursor:pointer;opacity:.75}
+
+/* 表單頁 */
+#welcomeRoom .wl{position:relative;z-index:2;max-width:580px;margin:0 auto;padding:0 14px 20px 34px}
+#welcomeRoom .wl-bar{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;background:#0d0908;color:#efe6d6;margin:0 -14px 0 -34px;padding:46px 14px 18px 54px}
+#welcomeRoom .wl-bar span{flex-basis:100%;font:600 11px var(--mono);letter-spacing:.24em;color:#d2312a}
+#welcomeRoom .wl-bar b{font:900 24px var(--serif)}
+#welcomeRoom .wl-bar em{font:700 13px var(--serif);font-style:normal;letter-spacing:.3em;color:var(--bone-dim)}
+#welcomeRoom .wl-panel{background:#151212;color:var(--bone);padding:4px 18px 26px;margin-top:20px;box-shadow:8px 8px 0 rgba(13,9,8,.4)}
+#welcomeRoom .wl-q{padding:24px 0 22px;border-bottom:1px solid #2b201d}
+#welcomeRoom .wl-q h3{display:flex;align-items:baseline;gap:10px;font:900 21px var(--serif);color:#efe6d6;margin-bottom:12px}
+#welcomeRoom .wl-q h3 i{font:600 12px var(--mono);font-style:normal;color:#d2312a;letter-spacing:.1em}
+#welcomeRoom .wl-opts{display:flex;flex-wrap:wrap;gap:8px}
+#welcomeRoom .wl-opts .choice-btn{width:auto;flex:1 1 auto;margin:0;text-align:center;background:#0d0908;border:1px solid #3a2926;border-radius:0;color:#e6ddcf;font:700 15px var(--serif);padding:13px 10px;transition:border-color .15s,background .15s}
+#welcomeRoom .wl-opts .choice-btn:hover{background:#0d0908;border-color:#d2312a}
+#welcomeRoom .wl-opts .choice-btn.on{background:#d2312a;border-color:#d2312a;color:#0d0908}
+#welcomeRoom .wl-opts.nw{flex-wrap:nowrap;gap:6px}
+#welcomeRoom .wl-opts.nw .choice-btn{min-width:0;padding:13px 2px;font-size:12px;white-space:nowrap}
+#welcomeRoom .wl-tg{margin-bottom:8px}
+#welcomeRoom .wl-tg .choice-btn{flex:0 1 auto;padding:9px 13px;font-size:13px}
+#welcomeRoom .wl-sq .choice-btn{display:block;padding:14px 4px 12px;font-size:17px}
+#welcomeRoom .bars{display:flex;gap:4px;justify-content:center;margin-bottom:8px}
+#welcomeRoom .bars b{width:18px;height:8px;background:currentColor;opacity:.22;transform:skewX(-22deg)}
+#welcomeRoom .b1 b:nth-child(1),#welcomeRoom .b2 b:nth-child(-n+2),#welcomeRoom .b3 b{opacity:1}
+#welcomeRoom .text-input{background:#0d0908;border:0;border-bottom:3px solid #d2312a;color:#efe6d6;font:700 22px var(--serif);padding:12px 6px;margin:0}
+#welcomeRoom .text-input:focus{outline:none;background:#1a1110}
+#welcomeRoom .wl-ch{display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:8px;background:#0d0908;border:1px solid #3a2926;border-left:5px solid #3a2926;cursor:pointer}
+#welcomeRoom .wl-ch.on{border-color:#d2312a;background:#1f1211}
+#welcomeRoom .wl-ch img,#welcomeRoom .wl-ch .ph{width:48px;height:48px;object-fit:cover;flex:none;border:1px solid #3a2926;background:#241a18}
+#welcomeRoom .wl-ch b{font:900 17px var(--serif)}
+#welcomeRoom .wl-ch small{display:block;font:600 12px var(--mono);color:#d2312a;letter-spacing:.08em}
+#welcomeRoom .wl-note{font-size:13px;color:var(--bone-dim);padding:14px;border:1px dashed #3a2926;line-height:1.8;cursor:pointer}
+#welcomeRoom .wl-up{display:block;border:2px dashed #d2312a;padding:22px;text-align:center;cursor:pointer;color:#efe6d6;font-size:14px;background:#0d0908}
+#welcomeRoom .wl-up img{max-height:180px;max-width:100%;display:block;margin:0 auto 10px;border:1px solid #3a2926}
+#welcomeRoom .wl-up input{display:none}
+#welcomeRoom #wlErr{color:#ff7a70;font-size:13px;min-height:20px;margin:16px 0 8px}
+#welcomeRoom #wlGo{background:#d2312a;border:0;color:#0d0908;font:900 18px var(--serif);letter-spacing:.3em;padding:18px;box-shadow:6px 6px 0 rgba(239,230,214,.2)}
+#welcomeRoom #wlRes{margin-top:30px;text-align:center}
+#welcomeRoom #wlOut{width:100%;max-width:420px;border:3px solid #efe6d6;margin:12px 0 18px}
+#welcomeRoom .wl-dl{border-color:#efe6d6;color:#efe6d6}
+#welcomeRoom .wl-backwrap{position:relative;z-index:2;text-align:center;padding:30px 0 60px}
+#welcomeRoom #welcomeBackBtn{background:rgba(13,9,8,.1);border-color:#0d0908;color:#0d0908;animation:none}
+#welcomeRoom #welcomeBackBtn .dot{background:#0d0908;box-shadow:none}
 </style>
 </head>
 
@@ -3651,7 +3724,7 @@
   <div class="roster-eyebrow">檔案 ⁄ 機構活動</div>
   <div class="roster-head">
     <h2>機構活動</h2>
-    <div class="roster-head-right"><div class="meta">活動數量 001</div></div>
+    <div class="roster-head-right"><div class="meta">活動數量 002</div></div>
   </div>
   <div class="roster-divider"></div>
   <div class="event-list">
@@ -3661,13 +3734,15 @@
       <span class="ep-title"><span class="ep-t1">匿名情感</span><span class="ep-t2">收容室</span></span>
       <span class="event-card-go">more <i>→</i></span>
     </button>
-    <div class="event-card event-card-soon" aria-hidden="true">
-      <span class="event-card-tag">EVENT ⁄ 02</span>
-      <span class="event-card-title">敬請期待</span>
-      <span class="event-card-desc">STAND BY</span>
-    </div>
+    <button type="button" class="event-card event-card-poster" id="welcomeEnterBtn" aria-label="歡迎來到血池肉林　進入活動">
+      <img class="event-poster" alt="" src="">
+      <span class="ep-tag">EVENT ⁄ 02</span>
+      <span class="ep-title"><span class="ep-t1">歡迎來到</span><span class="ep-t2">血池肉林</span></span>
+      <span class="event-card-go">more <i>→</i></span>
+    </button>
   </div>
 </section>
+<script>(function(){var im=document.querySelectorAll("#eventRoom .event-poster");for(var i=1;i<im.length;i++)im[i].src=im[0].src;})();</script>
 
 <footer>
   <p>血池肉林 收容設施 ｜ 本報告僅供內部觀測使用</p>
@@ -3696,6 +3771,62 @@
 
   <div style="text-align:center; margin-top:32px;">
     <button class="observe-btn observe-btn-ominous" id="ominousBtn" title="？">？</button>
+  </div>
+</section>
+
+<footer>
+  <p>血池肉林 收容設施 ｜ 本報告僅供內部觀測使用</p>
+  <p>一切數據如有異常，請勿嘗試介入</p>
+</footer>
+
+<section class="roster snap-section wl-cover" id="welcomeRoom">
+  <div class="roster-eyebrow">檔案 ⁄ 機構活動</div>
+  <div class="roster-head"><h2>歡迎來到血池肉林</h2></div>
+  <div class="roster-divider"></div>
+  <div class="wl-wedge"></div>
+
+  <div class="wl-intro" id="wlIntro">
+    <div class="wl-top"><span>GROTESQUE PROJECT</span><span>ENTRY FORM</span></div>
+    <div class="wl-mid">
+      <div class="wl-title" role="heading" aria-level="2"><span>歡迎來到</span><span>血池肉林</span></div>
+      <div class="wl-sub"><b>參企偏好表</b></div>
+      <div class="wl-vit"><div><em>HP</em><i></i><i></i><i></i></div><div><em>SAN</em><i></i><i></i><i></i></div></div>
+    </div>
+    <div class="wl-bot">
+      <button type="button" class="wl-start" id="wlStart"><span>開始測驗</span><b>→</b></button>
+      <button type="button" class="wl-link" id="wlBack1">← 返回機構活動</button>
+    </div>
+  </div>
+
+  <div class="wl" id="wlQuiz" hidden>
+    <header class="wl-bar"><span>GROTESQUE PROJECT</span><b>歡迎來到血池肉林</b><em>參企偏好表</em></header>
+    <div class="wl-panel">
+      <div class="wl-q"><h3><i>01</i>陣營</h3><div class="wl-opts" id="wlFac"></div></div>
+      <div class="wl-q"><h3><i>02</i>暱稱</h3>
+        <input type="text" class="text-input" id="wlNick" maxlength="14" placeholder="請問暱稱是什麼？" autocomplete="off"></div>
+      <div class="wl-q"><h3><i>03</i>社交強度</h3><div class="wl-opts wl-sq" id="wlSoc"></div></div>
+      <div class="wl-q"><h3><i>04</i>參企重心</h3><span class="field-label">可多選</span>
+        <div class="wl-opts nw" id="wlFoc"></div></div>
+      <div class="wl-q"><h3><i>05</i>標籤</h3><span class="field-label">想放哪些都可以，可多選</span>
+        <div id="wlTags"></div></div>
+      <div class="wl-q"><h3><i>06</i>展示角色</h3><span class="field-label">從你已批准綁定的角色中選一個</span>
+        <div id="wlChars"></div></div>
+      <div class="wl-q"><h3><i>07</i>角色卡</h3>
+        <label class="wl-up" id="wlUp"><span id="wlUpT">上傳你的角色卡</span><input type="file" id="wlFile" accept="image/*"></label></div>
+
+      <div id="wlErr"></div>
+      <button type="button" class="modify-btn" id="wlGo">生成登記證</button>
+
+      <div id="wlRes" hidden>
+        <span class="field-label">按下載，或長按圖片儲存</span>
+        <img id="wlOut" alt="參企登記證">
+        <button type="button" class="modify-btn wl-dl" id="wlDl">下載圖片</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wl-backwrap">
+    <button class="observe-btn" id="welcomeBackBtn"><span class="dot"></span>返回機構活動</button>
   </div>
 </section>
 
@@ -5913,6 +6044,7 @@ const FORWARD_MODE = {
   5: "none",   // 總名冊 -> 行動紀錄 (button only)
   6: "none",   // action log -> 排行榜 (plain scrolling only; keeps the log footer / ? egg untouched)
   8: "none",   // 機構活動 (card only)
+  10: "none",  // 歡迎來到血池肉林 (button only)
   9: "none",   // 匿名情感收容室 (long card wall; button / menu only)
 };
 
@@ -5966,6 +6098,14 @@ document.getElementById("emoBtn").addEventListener("click", () => {
 
 document.getElementById("emoEnterBtn").addEventListener("click", () => {
   withTransitionLock(() => jumpToIndex(9));   // 機構活動 -> 匿名情感收容室
+});
+
+document.getElementById("welcomeEnterBtn").addEventListener("click", () => {
+  withTransitionLock(() => jumpToIndex(10));  // 機構活動 -> 歡迎來到血池肉林
+});
+
+document.getElementById("welcomeBackBtn").addEventListener("click", () => {
+  withTransitionLock(() => jumpToIndex(8));   // 歡迎來到血池肉林 -> 返回機構活動
 });
 
 document.getElementById("eventBtn").addEventListener("click", () => {
@@ -10889,6 +11029,159 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   /* 各名冊是從資料庫陸續載入的，所以每幾秒檢查一次有沒有變動，有才重畫 */
   refresh();
   setInterval(function(){ if(!document.hidden) refresh(); }, 3000);
+})();
+</script>
+<script>
+/* ---------- 歡迎來到血池肉林：參企偏好表（登入與角色綁定直接用網站的 Auth） ---------- */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
+  var FACS=["實驗體","醫療隊","資助者"], FOCUS=["欣賞作品","繪圖創作","企友交流","OC牽線互動"], LV={"低":1,"中":2,"高":3};
+  var S={faction:"",social:"",focus:[],tags:[],char:null,card:null}, out=null, lastSig="";
+  function rosterOf(f){try{
+    if(f==="實驗體") return subjects;
+    if(f==="醫療隊") return window.medicApp?medicApp.getSubjects():[];
+    return window.sponsorApp?sponsorApp.getSubjects():[];
+  }catch(e){return [];}}
+  function mine(f){var u=Auth.uid();return (rosterOf(f)||[]).filter(function(s){return s&&!s.deleted&&u&&s.owner===u;})
+    .sort(function(a,b){return String(a.id).localeCompare(String(b.id),"en",{numeric:true});});}
+  function opts(host,list,multi,fn,lab){
+    host.innerHTML=list.map(function(v){return '<button type="button" class="choice-btn" data-v="'+v+'">'+(lab?lab(v):v)+'</button>';}).join("");
+    host.onclick=function(e){var b=e.target.closest(".choice-btn");if(!b)return;
+      if(multi)b.classList.toggle("on");else{[].forEach.call(host.children,function(c){c.classList.remove("on");});b.classList.add("on");}
+      fn([].filter.call(host.children,function(c){return c.classList.contains("on");}).map(function(c){return c.getAttribute("data-v");}));};
+  }
+  opts($("wlFac"),FACS,false,function(v){S.faction=v[0]||"";S.char=null;lastSig="";showChars();});
+  opts($("wlSoc"),["高","中","低"],false,function(v){S.social=v[0]||"";},function(v){return '<i class="bars b'+LV[v]+'"><b></b><b></b><b></b></i>'+v;});
+  opts($("wlFoc"),FOCUS,true,function(v){S.focus=v;});
+  var TAGS=[["I人","E人","請找我玩"],["我愛攻擊","我愛醫療","我愛事故","我愛資助","我愛折磨"],["常駐語音房","常駐愛在血肉間","常駐創作紀錄"],["拼成就","佛系玩","一輩子血池肉林"]];
+  $("wlTags").innerHTML=TAGS.map(function(g){return '<div class="wl-opts wl-tg">'+g.map(function(v){return '<button type="button" class="choice-btn" data-v="'+v+'">'+v+'</button>';}).join("")+'</div>';}).join("");
+  $("wlTags").onclick=function(e){var b=e.target.closest(".choice-btn");if(!b)return;b.classList.toggle("on");
+    S.tags=[].map.call($("wlTags").querySelectorAll(".choice-btn.on"),function(c){return c.getAttribute("data-v");});};
+  $("wlBack1").onclick=function(){$("welcomeBackBtn").click();};
+  $("wlStart").onclick=function(){$("welcomeRoom").classList.remove("wl-cover");$("wlIntro").hidden=true;$("wlQuiz").hidden=false;$("welcomeRoom").scrollIntoView({block:"start"});lastSig="";showChars();};
+
+  function showChars(){
+    var host=$("wlChars"),f=S.faction,u=Auth.uid();
+    var list=(f&&u)?mine(f):[], sig=(u||"")+"|"+f+"|"+list.map(function(r){return r.id+"~"+r.name+"~"+(r.avatarUrl?1:0);}).join(",");
+    if(sig===lastSig)return; lastSig=sig;
+    if(!f){host.innerHTML='<div class="wl-note" style="cursor:default">請先選擇陣營。</div>';return;}
+    if(!u){host.innerHTML='<div class="wl-note" id="wlNeed">登入後會列出你已綁定的角色，點這裡登入。</div>';$("wlNeed").onclick=function(){Auth.requireLogin();};return;}
+    if(!list.length){S.char=null;host.innerHTML='<div class="wl-note" style="cursor:default">你在「'+f+'」底下沒有已批准的角色。請換個陣營，或先到帳號面板申請綁定，等管理員批准後再來。</div>';return;}
+    host.innerHTML=list.map(function(r,i){return '<div class="wl-ch'+(S.char&&S.char.id===r.id?' on':'')+'" data-i="'+i+'">'+
+      (r.avatarUrl?'<img src="'+esc(r.avatarUrl)+'" alt="">':'<span class="ph"></span>')+
+      '<span><b>'+esc(r.name||("NO."+r.id))+'</b>'+(f==="實驗體"?'<small>NO. '+esc(r.id)+'</small>':'')+'</span></div>';}).join("");
+    if(S.char&&!list.some(function(r){return r.id===S.char.id;}))S.char=null;
+    host.onclick=function(e){var el=e.target.closest(".wl-ch");if(!el)return;
+      S.char=list[+el.getAttribute("data-i")];
+      [].forEach.call(host.children,function(c){c.classList.toggle("on",c===el);});};
+  }
+  /* 名冊與登入狀態是陸續載入的，所以輕量地輪詢，有變動才重畫 */
+  setInterval(function(){
+    if(document.hidden||!$("welcomeRoom"))return;
+    showChars();
+    if(!$("wlNick").value&&window.Auth&&Auth.nick())$("wlNick").value=Auth.nick();
+  },1500);
+  $("welcomeEnterBtn").addEventListener("click",function(){$("welcomeRoom").classList.add("wl-cover");$("wlIntro").hidden=false;$("wlQuiz").hidden=true;setTimeout(function(){lastSig="";showChars();},60);});
+
+  $("wlFile").addEventListener("change",function(e){
+    var fl=e.target.files[0];if(!fl)return;
+    var rd=new FileReader();
+    rd.onload=function(){var im=new Image();im.onload=function(){
+      S.card=im;var o=$("wlUp").querySelector("img");if(o)o.remove();
+      var t=document.createElement("img");t.src=rd.result;t.alt="";$("wlUp").prepend(t);$("wlUpT").textContent="已選擇，點擊可更換";
+    };im.src=rd.result;};
+    rd.readAsDataURL(fl);
+  });
+
+  $("wlGo").onclick=async function(){
+    if(!Auth.requireLogin())return;
+    var nick=$("wlNick").value.trim(),err=$("wlErr"),miss=[];
+    if(!S.faction)miss.push("陣營");if(!nick)miss.push("暱稱");if(!S.social)miss.push("社交強度");
+    if(!S.focus.length)miss.push("參企重心");if(!S.char)miss.push("展示角色");if(!S.card)miss.push("角色卡");
+    if(miss.length){err.textContent="還沒填："+miss.join("、");return;}
+    err.textContent="";var btn=$("wlGo");btn.disabled=true;
+    try{
+      out=await draw(nick);
+      $("wlOut").src=out.toDataURL("image/png");
+      $("wlRes").hidden=false;$("wlRes").scrollIntoView({behavior:"smooth",block:"start"});
+    }catch(e){err.textContent="生成失敗："+(e.message||e);}
+    btn.disabled=false;
+  };
+  $("wlDl").onclick=function(){out.toBlob(function(b){
+    var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="血池肉林-參企登記證.png";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  });};
+
+  /* ---------- 海報繪製 1080×1920 ---------- */
+  var RED="#d2312a",INK="#0d0908",BONE="#efe6d6",SERIF='"Noto Serif TC",serif',MONO='"IBM Plex Mono",monospace';
+  function fit(g,t,wt,fam,max,min,w){var s=max;for(;s>min;s-=4){g.font=wt+" "+s+"px "+fam;if(g.measureText(t).width<=w)break;}g.font=wt+" "+s+"px "+fam;return s;}
+  function wrap(g,t,w){var o=[],l="";for(var ch of t){if(g.measureText(l+ch).width>w&&l){o.push(l);l=ch;}else l+=ch;}if(l)o.push(l);return o;}
+  async function draw(nick){
+    var f=S.faction,c=S.char,isS=f==="實驗體",name=c.name||("NO."+c.id);
+    var all="歡迎來到血池肉林參企偏好登記陣營實驗體醫療隊資助者社交強度高中低"+FOCUS.join("")+S.tags.join("")+nick+name+"我正在參加";
+    await Promise.all([document.fonts.load("900 100px "+SERIF,all),document.fonts.load("700 22px "+SERIF,all),document.fonts.load("600 30px "+MONO,"GROTESQUE PROJECT NO.SOCIALNICKNAMEFACTION0123456789")]);
+    var cv=document.createElement("canvas");cv.width=1080;cv.height=1920;
+    var g=cv.getContext("2d");g.textBaseline="alphabetic";
+    g.fillStyle=RED;g.fillRect(0,0,1080,1920);
+    var band=function(){g.beginPath();g.moveTo(420,540);g.lineTo(1080,430);g.lineTo(1080,1470);g.lineTo(330,1470);g.closePath();};
+    g.fillStyle="#1d1b1b";band();g.fill();
+    g.save();band();g.clip();g.strokeStyle="rgba(210,49,42,.38)";g.lineWidth=3;
+    for(var r=70;r<=560;r+=44){g.beginPath();g.arc(900,1010,r,0,7);g.stroke();}
+    g.restore();
+    g.fillStyle=INK;for(var y0=40;y0<1900;y0+=150)g.fillRect(0,y0,46,90);
+    g.fillStyle=INK;g.letterSpacing="4px";g.font="600 34px "+MONO;g.fillText("GROTESQUE PROJECT",90,110);
+    g.font="500 26px "+MONO;g.fillText("參企偏好登記",90,520);g.letterSpacing="0px";
+    g.font="900 150px "+SERIF;g.fillText("歡迎來到",86,292);g.fillText("血池肉林",86,448);
+    g.fillStyle=INK;g.beginPath();g.arc(890,262,150,0,7);g.fill();
+    g.strokeStyle=BONE;g.lineWidth=3;g.setLineDash([10,9]);g.beginPath();g.arc(890,262,134,0,7);g.stroke();g.setLineDash([]);
+    g.fillStyle=BONE;g.textAlign="center";g.letterSpacing="5px";g.font="600 24px "+MONO;g.fillText("FACTION",890,210);g.letterSpacing="0px";
+    fit(g,f,"900",SERIF,84,40,230);g.fillText(f,890,296);g.textAlign="left";
+    var im=S.card,sc=Math.min(600/im.width,820/im.height),w=im.width*sc,h=im.height*sc,x=1020-w,y=600;
+    g.fillStyle=INK;g.fillRect(x+16,y+16,w,h);g.drawImage(im,x,y,w,h);
+    g.strokeStyle=BONE;g.lineWidth=4;g.strokeRect(x,y,w,h);
+    var ly=640;g.fillStyle=INK;
+    if(isS){g.letterSpacing="3px";g.font="600 30px "+MONO;g.fillText("NO.",90,ly+28);g.letterSpacing="0px";
+      fit(g,String(c.id),"900",SERIF,130,60,290);g.fillText(String(c.id),86,ly+150);ly+=200;}
+    var ns=isS?52:64;g.font="900 "+ns+"px "+SERIF;
+    wrap(g,name,290).slice(0,4).forEach(function(ln,i){g.fillText(ln,90,ly+ns+i*(ns+14));});
+    g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("SOCIAL",90,1250);g.letterSpacing="0px";
+    var lv=LV[S.social];
+    for(var i=0;i<3;i++){
+      var bx=90+i*92,by=1274;
+      g.beginPath();g.moveTo(bx+18,by);g.lineTo(bx+82,by);g.lineTo(bx+64,by+36);g.lineTo(bx,by+36);g.closePath();
+      if(i<lv){g.fillStyle=INK;g.fill();}else{g.strokeStyle=INK;g.lineWidth=4;g.stroke();}
+    }
+    g.fillStyle=INK;g.font="900 46px "+SERIF;g.fillText("社交強度 "+S.social,90,1378);
+    /* 下半部：暱稱 → 蓋章 → 標籤 */
+    g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("NICKNAME",90,1508);g.letterSpacing="0px";
+    fit(g,nick,"900",SERIF,110,50,900);g.fillText(nick,86,1612);
+    g.font="900 34px "+SERIF;var sx=90,sy=1640;
+    S.focus.forEach(function(t,i){
+      var tw=g.measureText(t).width+40;
+      if(sx+tw>1000){sx=90;sy+=70;}
+      g.save();g.translate(sx+tw/2,sy+26);g.rotate(((i*37%7)-3)*0.012);
+      g.strokeStyle=INK;g.lineWidth=5;g.strokeRect(-tw/2,-27,tw,54);
+      g.lineWidth=2;g.strokeRect(-tw/2+6,-21,tw-12,42);
+      g.fillStyle=INK;g.textAlign="center";g.fillText(t,0,12);g.restore();
+      sx+=tw+16;
+    });
+    var tg=S.tags;
+    if(tg.length){
+      var lay=function(sz){g.font="700 "+sz+"px "+SERIF;var px=90,row=0,pos=[];
+        tg.forEach(function(t){var tw=g.measureText(t).width+28;if(px+tw>1000&&px>90){px=90;row++;}pos.push([px,row,tw]);px+=tw+10;});
+        return {pos:pos,rows:row+1};};
+      var sz=22,L=lay(sz);for(;sz>14&&L.rows>3;sz-=2)L=lay(sz);
+      var rh=sz+14,top=sy+54+22;g.font="700 "+sz+"px "+SERIF;
+      L.pos.forEach(function(p,i){var ty=top+p[1]*(rh+10);
+        g.fillStyle=INK;g.fillRect(p[0],ty,p[2],rh);
+        g.fillStyle=BONE;g.textAlign="center";g.fillText(tg[i],p[0]+p[2]/2,ty+rh-8);g.textAlign="left";});
+    }
+    g.textAlign="left";g.fillStyle=INK;g.letterSpacing="2px";g.font="600 24px "+MONO;
+    g.fillText("GROTESQUE PROJECT",90,1888);g.textAlign="right";g.letterSpacing="0px";
+    g.font="900 28px "+SERIF;g.fillText("我正在參加血池肉林",1020,1888);g.textAlign="left";
+    return cv;
+  }
 })();
 </script>
 </body>
