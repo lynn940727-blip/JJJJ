@@ -3054,20 +3054,21 @@
 #welcomeRoom .wl-q h3{display:flex;align-items:baseline;gap:10px;font:900 21px var(--serif);color:#efe6d6;margin-bottom:12px}
 #welcomeRoom .wl-q h3 i{font:600 12px var(--mono);font-style:normal;color:#d2312a;letter-spacing:.1em}
 #welcomeRoom .wl-opts{display:flex;flex-wrap:wrap;gap:8px}
-#welcomeRoom .wl-opts .choice-btn{width:auto;flex:1 1 auto;margin:0;text-align:center;background:#0d0908;border:1px solid #3a2926;border-radius:0;color:#e6ddcf;font:700 15px var(--serif);padding:13px 10px;transition:border-color .15s,background .15s}
+#welcomeRoom .wl-opts .choice-btn{width:auto;flex:1 1 auto;margin:0;text-align:center;background:#0d0908;border:1px solid #3a2926;border-radius:0;color:#e6ddcf;font:700 15px var(--serif);padding:9px 10px;transition:border-color .15s,background .15s}
 #welcomeRoom .wl-opts .choice-btn:hover{background:#0d0908;border-color:#d2312a}
 #welcomeRoom .wl-opts .choice-btn.on{background:#d2312a;border-color:#d2312a;color:#0d0908}
 #welcomeRoom .wl-opts.nw{flex-wrap:nowrap;gap:6px}
-#welcomeRoom .wl-opts.nw .choice-btn{min-width:0;padding:13px 2px;font-size:12px;white-space:nowrap}
+#welcomeRoom .wl-opts.nw .choice-btn{min-width:0;padding:9px 2px;font-size:13px;white-space:nowrap}
+#welcomeRoom .wl-opts .choice-btn{min-height:50px;box-sizing:border-box;display:flex;align-items:center;justify-content:center}
 #welcomeRoom .wl-tg{margin-bottom:8px}
 #welcomeRoom .wl-custom{display:flex;gap:8px;margin-top:4px}
 #welcomeRoom .wl-custom .text-input{flex:1 1 auto;min-width:0;margin:0}
 #welcomeRoom .wl-custom .choice-btn{flex:0 0 auto;width:auto;margin:0;padding:0 18px;background:#0d0908;border:1px solid #3a2926;border-radius:0;color:#e6ddcf;font:700 15px var(--serif)}
 #welcomeRoom .wl-opts.wl-tg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-#welcomeRoom .wl-tg .choice-btn{flex:none;width:100%;min-height:46px;padding:9px 6px;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1.25;word-break:break-all}
-#welcomeRoom .wl-sq .choice-btn{display:block;padding:14px 4px 12px;font-size:17px}
-#welcomeRoom .bars{display:flex;gap:4px;justify-content:center;margin-bottom:8px}
-#welcomeRoom .bars b{width:18px;height:8px;background:currentColor;opacity:.22;transform:skewX(-22deg)}
+#welcomeRoom .wl-tg .choice-btn{flex:none;width:100%;min-height:50px;padding:9px 6px;font-size:15px;display:flex;align-items:center;justify-content:center;line-height:1.25;word-break:break-all}
+#welcomeRoom .wl-sq .choice-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;font-size:15px}
+#welcomeRoom .bars{display:flex;gap:3px;justify-content:center;margin-bottom:4px}
+#welcomeRoom .bars b{width:14px;height:6px;background:currentColor;opacity:.22;transform:skewX(-22deg)}
 #welcomeRoom .b1 b:nth-child(1),#welcomeRoom .b2 b:nth-child(-n+2),#welcomeRoom .b3 b{opacity:1}
 #welcomeRoom .text-input{background:#0d0908;border:0;border-bottom:3px solid #d2312a;color:#efe6d6;font:700 22px var(--serif);padding:12px 6px;margin:0}
 #welcomeRoom .text-input:focus{outline:none;background:#1a1110}
@@ -11070,7 +11071,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   opts($("wlSoc"),["高","中","低"],false,function(v){S.social=v[0]||"";},function(v){return '<i class="bars b'+LV[v]+'"><b></b><b></b><b></b></i>'+v;});
   opts($("wlCre"),["高","中","低"],false,function(v){S.create=v[0]||"";},function(v){return '<i class="bars b'+LV[v]+'"><b></b><b></b><b></b></i>'+v;});
   opts($("wlFoc"),FOCUS,true,function(v){S.focus=v;});
-  var TAGS=[["I人","E人","請找我玩"],["我愛攻擊","我愛醫療","我愛事故","我愛資助","我愛折磨","仰臥起坐"],["常駐語音房","常駐愛在血肉間","常駐創作紀錄"],["拼成就","佛系玩","一輩子血池肉林"]];
+  var TAGS=[["I人","E人"],["我愛攻擊","我愛醫療","我愛事故","我愛資助","我愛折磨","仰臥起坐"],["常駐語音房","常駐愛在血肉間","常駐創作紀錄"],["拼成就","佛系玩","請找我玩","一輩子血池肉林"]];
   $("wlTags").innerHTML=TAGS.map(function(g){return '<div class="wl-opts wl-tg">'+g.map(function(v){return '<button type="button" class="choice-btn" data-v="'+v+'">'+v+'</button>';}).join("")+'</div>';}).join("");
   $("wlTags").onclick=function(e){var b=e.target.closest(".choice-btn");if(!b)return;
     if(!b.classList.contains("on")&&$("wlTags").querySelectorAll(".choice-btn.on").length>=6)return;
