@@ -11156,7 +11156,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   var PAL={
     "實驗體":{bg:"#d2312a",ink:"#0d0908",band:"#1d1b1b",ring:"rgba(210,49,42,.38)",strip:"#0d0908",head:"#0d0908",title:"#0d0908",badgeBg:"#0d0908",badgeFg:BONE,cardLine:BONE,shadow:"#0d0908",tagBg:"#0d0908",tagFg:BONE,nickSh:"#0d0908"},
     "醫療隊":{bg:"#ffffff",ink:"#1a1414",band:"#383838",ring:"rgba(226,35,26,.85)",strip:"#1a1414",head:"#1a1414",title:"#1a1414",badgeBg:"#1a1414",badgeFg:"#ffffff",cardLine:"#ffffff",shadow:"#1a1414",tagBg:"#1a1414",tagFg:"#ffffff",nickSh:"#1a1414"},
-    "資助者":{bg:"#060606",ink:"#e2231a",band:"#2a2a2a",ring:"rgba(226,35,26,.85)",strip:"#e2231a",head:"#e2231a",title:"#e2231a",badgeBg:"#e2231a",badgeFg:"#060606",cardLine:"#e2231a",shadow:"#e2231a",tagBg:"#2a2a2a",tagFg:"#e2231a",nickSh:"#e2231a"}
+    "資助者":{bg:"#060606",ink:"#e2231a",band:"#2a2a2a",ring:"rgba(226,35,26,.85)",strip:"#e2231a",head:"#e2231a",title:"#e2231a",badgeBg:"#e2231a",badgeFg:"#060606",cardLine:"#e2231a",shadow:"#e2231a",tagBg:"#e2231a",tagFg:"#060606",nickSh:"#e2231a"}
   };
   function fit(g,t,wt,fam,max,min,w){var s=max;for(;s>min;s-=4){g.font=wt+" "+s+"px "+fam;if(g.measureText(t).width<=w)break;}g.font=wt+" "+s+"px "+fam;return s;}
   function wrap(g,t,w){var o=[],l="";for(var ch of t){if(g.measureText(l+ch).width>w&&l){o.push(l);l=ch;}else l+=ch;}if(l)o.push(l);return o;}
