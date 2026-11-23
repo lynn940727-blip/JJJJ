@@ -11198,6 +11198,12 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     /* 左欄：名稱(大)／編號(小)／社交強度／創作頻率 */
     var ly=640;g.fillStyle=INK;
     var nsz,lines,avail=x-86-24,cjk=/[\u3400-\u9fff]/.test(name),found=false;
+    var segs=(name.match(/[^.．·・‧•]+[.．·・‧•]?/g)||[]).map(function(t){return t.trim();}).filter(Boolean);
+    if(segs.length>1){
+      if(segs.length>3)segs=[segs[0],segs[1],segs.slice(2).join("")];
+      for(var z0=130;z0>=40;z0-=6){g.font="900 "+z0+"px "+SERIF;
+        if(segs.every(function(t){return g.measureText(t).width<=avail;})||z0<=40){nsz=z0;lines=segs;found=true;break;}}
+    }
     for(var ml=1;ml<=3&&!found;ml++){
       var lo=ml===1?(cjk?96:40):(ml===2?72:56);
       for(var z=130;z>=lo;z-=6){g.font="900 "+z+"px "+SERIF;var ls=wrap(g,name,avail);
