@@ -5992,11 +5992,11 @@ let needFreshGesture = false; // after a jump, ignore leftover swipe/inertia unt
 const ARRIVE_COOLDOWN_MS = 900; // must stay on a page at least this long before another auto-jump
 const WHEEL_FRESH_GAP_MS = 180; // wheel pause that marks the start of a new gesture
 let lastWheelTs = 0;
-function jumpToIndex(i){
+function jumpToIndex(i, instant){
   if(i < 0 || i >= snapSections.length) return;
   flashScreen();
   needFreshGesture = true; touchStartY = null;
-  const goTo = () => window.scrollTo({top: snapSections[i].offsetTop, behavior:"smooth"});
+  const goTo = () => window.scrollTo({top: snapSections[i].offsetTop, behavior: instant ? "instant" : "smooth"});
   goTo();
   // 長距離平滑捲動中若版面高度變動或被手勢打斷，會停在半路（卡在名冊）。
   // 這裡等捲動停下後檢查有沒有到位，沒到就再捲一次。
@@ -6113,7 +6113,7 @@ document.getElementById("emoEnterBtn").addEventListener("click", () => {
 });
 
 document.getElementById("welcomeEnterBtn").addEventListener("click", () => {
-  withTransitionLock(() => jumpToIndex(10));  // 機構活動 -> 參企偏好表
+  withTransitionLock(() => jumpToIndex(10, true));  // 機構活動 -> 參企偏好表（直接進入，不滾動）
 });
 
 document.getElementById("welcomeBackBtn").addEventListener("click", () => {
@@ -11144,7 +11144,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,legacy);else legacy();
   };
   /* 分享連結帶 #welcome：打開網站後自動前往這個活動頁 */
-  if(location.hash==="#welcome"){var go=function(){setTimeout(function(){try{withTransitionLock(function(){jumpToIndex(10);});}catch(e){}},900);};
+  if(location.hash==="#welcome"){var go=function(){setTimeout(function(){try{withTransitionLock(function(){jumpToIndex(10,true);});}catch(e){}},900);};
     if(document.readyState==="complete")go();else window.addEventListener("load",go);}
   $("wlDl").onclick=function(){out.toBlob(function(b){
     var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="血池肉林-參企登記證.png";
