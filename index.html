@@ -2923,76 +2923,27 @@
 #modalBody>*:not(.reveal-box),#medicModalBody>*:not(.reveal-box),#sponsorModalBody>*:not(.reveal-box),#logAdminBody>*:not(.reveal-box){animation:bpBodyIn .28s ease both;}
 .tut-card.tut-in{animation:bpBodyIn .3s ease both;}
 
-/* ---------- 總名冊（尚未填入資料） ---------- */
-#masterRoster .master-empty{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--bone-dim);opacity:.5;padding:56px 0}
-#masterRoster .master-empty[hidden],#masterRoster .mr-showcase[hidden]{display:none}
-.mr-lede{position:relative;text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--bone-dim);margin:0 0 6px}
-.mr-actions{position:relative;display:flex;justify-content:center;margin-top:30px}
-.mr-btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;color:var(--bone);background:rgba(181,2,15,.12);border:1px solid var(--c-crit);padding:10px 26px;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
-.mr-btn:hover{background:var(--c-crit);color:#fff;box-shadow:0 0 14px rgba(214,16,30,.45)}
-
-/* 共用：頭像框（有頭像 = 實線框；沒上傳 = 跟名冊一樣的空白虛線框） */
-.mr-av{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:4px;border:1.5px solid var(--bone-dim);background:rgba(255,255,255,.04)}
+/* ---------- 總名冊 ---------- */
+#masterRoster .mr-wrap{position:relative;max-width:1180px;margin:0 auto}
+.mr-group + .mr-group{margin-top:64px}
+.mr-ghead{display:flex;align-items:center;gap:14px;margin:0 0 24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.mr-ghead::before{content:"";flex:none;width:3px;height:30px;background:var(--c-crit);box-shadow:0 0 10px rgba(181,2,15,.6)}
+.mr-ghead h3{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(20px,3vw,26px);letter-spacing:.06em;color:var(--bone);text-shadow:0 2px 0 var(--blood-dim)}
+.mr-ghead .en{font-family:var(--mono);font-size:10px;letter-spacing:.32em;color:var(--c-crit);opacity:.8;align-self:flex-end;padding-bottom:3px}
+.mr-ghead .ct{margin-left:auto;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--clinical);white-space:nowrap}
+.mr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 16px}
+@media (min-width:600px){.mr-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:38px 24px}}
+@media (min-width:960px){.mr-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:44px 30px}}
+.mr-tile{min-width:0;text-align:center}
+.mr-av{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;border-radius:4px;border:1.5px solid var(--bone-dim);background:rgba(255,255,255,.04);box-shadow:0 8px 18px rgba(0,0,0,.45);transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease}
+.mr-tile:hover .mr-av{border-color:var(--c-crit);box-shadow:0 10px 22px rgba(0,0,0,.55),0 0 16px rgba(181,2,15,.45);transform:translateY(-3px)}
 .mr-av img{width:100%;height:100%;object-fit:cover;display:block}
-.mr-av.empty{border:1.5px dashed var(--bone-dim);background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center}
-.mr-av.empty span{font-size:26px;line-height:1;color:var(--bone-dim);opacity:.8}
-
-/* 輪播展示區 */
-.mr-showcase{position:relative;width:100%;max-width:1000px;margin:34px auto 0;padding:6px 0;cursor:pointer;overflow:hidden}
-.mr-viewport{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.mr-track{display:flex;width:max-content;animation:mrScroll var(--dur,40s) linear infinite}
-.mr-showcase:hover .mr-track{animation-play-state:paused}
-@keyframes mrScroll{to{transform:translateX(-50%)}}
-.mr-item{position:relative;flex:none;width:clamp(84px,24vw,124px);margin-right:12px}
-.mr-item .mr-av{box-shadow:0 6px 14px rgba(0,0,0,.5)}
-.mr-item .mr-name{position:absolute;left:0;right:0;bottom:0;padding:22px 6px 7px;background:linear-gradient(180deg,rgba(10,7,6,0),rgba(10,7,6,.92));color:var(--bone);font-family:var(--serif);font-size:12px;letter-spacing:.06em;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* 完整名冊視窗 */
-#masterPage .modal-box{width:min(1040px,100%);max-height:min(92vh,calc(var(--vvh,100dvh) - 20px))}
-.mr-sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;line-height:1.8;color:var(--bone-dim);margin:2px 0 14px}
-#masterSearch{margin-bottom:6px}
-.mr-group{margin-top:22px}
-.mr-ghead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 0 10px;margin-bottom:14px;border-bottom:1px solid var(--line);font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:.08em;color:var(--bone)}
-.mr-ghead small{font-family:var(--mono);font-weight:400;font-size:11px;letter-spacing:.12em;color:var(--c-crit)}
-.mr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 12px;text-align:left}
-@media (min-width:600px){.mr-grid{grid-template-columns:repeat(5,1fr);gap:18px 14px}}
-@media (min-width:900px){.mr-grid{grid-template-columns:repeat(7,1fr)}}
-.mr-tile{min-width:0}
-.mr-tid{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--c-crit)}
-.mr-tname{margin-top:1px;font-family:var(--serif);font-size:12.5px;letter-spacing:.04em;line-height:1.4;color:var(--bone);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.mr-none{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--bone-dim);opacity:.6;padding:40px 0}
-@media (max-width:600px){
-  #masterPage{padding:0}
-  #masterPage .modal-box{width:100vw;height:100%;max-height:none;border:none}
-}
-/* 標題列的投票鍵（仿匿名情感收容室的投稿鍵） */
-#masterRoster .roster-head-right{flex-direction:row;align-items:center;justify-content:space-between;gap:16px}
-#masterRoster .emo-post-btn{flex:none}
-@media (max-width:520px){#masterRoster .roster-head-right{width:100%;align-items:center}}
-
-/* 輪播三排 */
-.mr-row{margin-top:18px}
-.mr-row:first-child{margin-top:0}
-.mr-rlabel{display:flex;align-items:baseline;gap:10px;padding:0 4px;margin-bottom:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;color:var(--c-crit)}
-.mr-rlabel small{font-size:10px;letter-spacing:.14em;color:var(--bone-dim)}
-.mr-rnone{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--bone-dim);opacity:.55;padding:30px 0;border:1px dashed var(--line)}
-.mr-rank{position:absolute;left:6px;top:4px;z-index:2;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--c-crit);text-shadow:0 1px 3px #000}
-
-/* 投票模式 */
-.mr-tile.votable{cursor:pointer;-webkit-tap-highlight-color:transparent}
-.mr-tile.votable .mr-av{transition:border-color .2s,box-shadow .2s}
-.mr-tile.votable:hover .mr-av{border-color:var(--bone)}
-.mr-tile.sel .mr-av{border:2px solid var(--c-crit);box-shadow:0 0 14px rgba(214,16,30,.5)}
-.mr-tile.sel .mr-av::after{content:"✓";position:absolute;right:0;top:0;width:22px;height:22px;background:var(--c-crit);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
-.mr-tile.sel .mr-tname{color:#ff2b3d}
-.mr-vc{margin-top:2px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--bone-dim)}
-.mr-votebar{position:sticky;bottom:-26px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px -24px -26px;padding:12px 24px;background:var(--bg-panel-2);border-top:1px solid var(--line)}
-.mr-votebar[hidden]{display:none}
-#masterVoteMsg{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;line-height:1.6;color:var(--bone-dim)}
-#masterVoteMsg.warn{color:#ff2b3d}
-.mr-votebar .mr-btn{flex:none;padding:9px 18px}
-.mr-btn:disabled{opacity:.45;cursor:default;pointer-events:none}
-@media (prefers-reduced-motion:reduce){.mr-track{animation:none}}
+.mr-av.empty{border-style:dashed;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;box-shadow:none}
+.mr-av.empty span{font-size:30px;line-height:1;color:var(--bone-dim);opacity:.8}
+.mr-tid{margin-top:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--clinical)}
+.mr-tid b{color:var(--c-crit);font-weight:600}
+.mr-tname{margin:6px auto 0;max-width:100%;font-family:var(--serif);font-weight:600;font-size:14px;letter-spacing:.06em;line-height:1.5;color:var(--bone);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mr-none{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--bone-dim);opacity:.6;padding:56px 0}
 
 /* ---------- 機構活動（籌備中） ---------- */
 #eventRoom .event-soon{position:relative;max-width:900px;margin:0 auto;padding:96px 20px 72px;text-align:center;border:1px solid var(--line);background:var(--bg-panel-2)}
@@ -3597,17 +3548,14 @@
     <h2>總名冊</h2>
     <div class="roster-head-right">
       <div class="meta" id="masterMetaLine">登錄數量 000</div>
-      <div class="emo-btns"><button type="button" class="emo-post-btn" id="masterVoteBtn" title="投票">投票 ＋</button></div>
+      <div class="roster-search"><input type="text" id="masterSearch" placeholder="搜尋編號或名稱" autocomplete="off"></div>
     </div>
   </div>
 
   <div class="roster-divider"></div>
 
-  <div class="mr-lede">各陣營票數最高的前 10 位，會出現在這裡。</div>
-  <div class="mr-showcase" id="masterShowcase" hidden title="點擊查看更多"></div>
-  <div class="master-empty" id="masterEmpty">— 讀取中 —</div>
-  <div class="mr-actions">
-    <button type="button" class="mr-btn" id="masterOpenBtn">查看更多</button>
+  <div class="mr-wrap">
+    <div id="masterBody"><div class="mr-none">— 讀取中 —</div></div>
   </div>
 
   <div style="text-align:center; margin-top:56px;">
@@ -3622,21 +3570,6 @@
   <p>血池肉林 收容設施 ｜ 本報告僅供內部觀測使用</p>
   <p>一切數據如有異常，請勿嘗試介入</p>
 </footer>
-
-<div class="modal-overlay" id="masterPage">
-  <div class="modal-box mr-box">
-    <button type="button" class="modal-close" id="masterPageClose" aria-label="關閉">×</button>
-    <div class="modal-eyebrow">檔案 ⁄ 總名冊</div>
-    <div class="modal-title" id="masterPageTitle">總名冊</div>
-    <div class="mr-sub" id="masterPageSub"></div>
-    <input type="text" class="text-input" id="masterSearch" placeholder="搜尋編號或名稱" autocomplete="off">
-    <div id="masterPageBody"></div>
-    <div class="mr-votebar" id="masterVoteBar" hidden>
-      <span id="masterVoteMsg"></span>
-      <button type="button" class="mr-btn" id="masterVoteSubmit">送出投票</button>
-    </div>
-  </div>
-</div>
 
 <section class="roster snap-section" id="logRoster">
 <div class="roster-eyebrow">檔案 ⁄ 行動紀錄</div>
@@ -10859,172 +10792,54 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 })();
 </script>
 <script>
-/* ---------- 總名冊：自動收錄三個陣營全員；投票決定輪播（每陣營票數最高的前 10 名） ----------
-   投票存在 Firebase：master_votes_v1/<帳號>/<exp|medic|sponsor>/<編號> = true
-   每人每個陣營最多 3 票（共 9 票），可以重新送出修改。 */
+/* ---------- 總名冊：自動收錄實驗體、醫療隊、資助者全部成員（名字與頭像都跟各自名冊同步） ---------- */
 (function(){
-  var VPATH = "master_votes_v1", PER = 3, TOP = 10;
   function $(id){ return document.getElementById(id); }
   function esc(t){ return String(t == null ? "" : t).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var GROUPS = [
-    {key: "exp",     label: "實驗體", get: function(){ try{ return subjects; }catch(e){ return []; } }},
-    {key: "medic",   label: "醫療隊", get: function(){ try{ return window.medicApp ? window.medicApp.getSubjects() : []; }catch(e){ return []; } }},
-    {key: "sponsor", label: "資助者", get: function(){ try{ return window.sponsorApp ? window.sponsorApp.getSubjects() : []; }catch(e){ return []; } }}
+    {label: "實驗體", en: "SUBJECTS", get: function(){ try{ return subjects; }catch(e){ return []; } }},
+    {label: "醫療隊", en: "MEDICAL", get: function(){ try{ return window.medicApp ? window.medicApp.getSubjects() : []; }catch(e){ return []; } }},
+    {label: "資助者", en: "SPONSORS", get: function(){ try{ return window.sponsorApp ? window.sponsorApp.getSubjects() : []; }catch(e){ return []; } }}
   ];
-  var gs = [], last = "", votesAll = {}, tally = {exp: {}, medic: {}, sponsor: {}};
-  var mode = "view", sel = {exp: {}, medic: {}, sponsor: {}}, submitting = false, msgTimer = null;
-  function isAdm(){ return !!(window.Auth && Auth.isAdmin); }
-  function myUid(){ return (window.Auth && Auth.uid && Auth.uid()) || ""; }
-
   function collect(){
     return GROUPS.map(function(g){
-      return {key: g.key, label: g.label, list: (g.get() || []).filter(function(s){ return s && !s.deleted; }).map(function(s){
+      return {label: g.label, en: g.en, list: (g.get() || []).filter(function(s){ return s && !s.deleted; }).map(function(s){
         return {id: String(s.id), name: String(s.name || ""), av: s.avatarUrl || ""};
       })};
     });
   }
-  function recount(){
-    tally = {exp: {}, medic: {}, sponsor: {}};
-    Object.keys(votesAll || {}).forEach(function(uid){
-      var v = votesAll[uid] || {};
-      GROUPS.forEach(function(g){
-        var m = v[g.key]; if(!m || typeof m !== "object") return;
-        Object.keys(m).forEach(function(id){ if(m[id] === true) tally[g.key][id] = (tally[g.key][id] || 0) + 1; });
-      });
-    });
+  function sig(gs){   // 便宜的變動檢查：編號、名字、頭像長度
+    return gs.map(function(g){ return g.list.map(function(p){ return p.id + "|" + p.name + "|" + (p.av ? p.av.length : 0); }).join(","); }).join(";");
   }
-  function top(g){
-    return g.list.filter(function(p){ return tally[g.key][p.id] > 0; }).sort(function(a, b){
-      return (tally[g.key][b.id] - tally[g.key][a.id]) || (parseInt(a.id, 10) - parseInt(b.id, 10)) || (a.id < b.id ? -1 : 1);
-    }).slice(0, TOP);
-  }
-  function total(){ return gs.reduce(function(n, g){ return n + g.list.length; }, 0); }
   function avHtml(p){
-    return p.av ? '<div class="mr-av"><img src="' + esc(p.av) + '" alt="" loading="lazy"></div>' : '<div class="mr-av empty"><span>＋</span></div>';
+    return p.av ? '<div class="mr-av"><img src="' + esc(p.av) + '" alt="" loading="lazy"></div>'
+                : '<div class="mr-av empty"><span>＋</span></div>';
   }
-
-  /* ----- 讀票 ----- */
-  function fbdb(){ try{ if(typeof firebase === "undefined") return null; if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); return firebase.database(); }catch(e){ return null; } }
-  try{
-    var db0 = fbdb();
-    if(db0) db0.ref(VPATH).on("value", function(snap){
-      votesAll = snap.val() || {}; recount(); refresh(true);
-    }, function(err){ console.warn("master votes read failed", err); });
-  }catch(e){}
-
-  /* ----- 顯示 ----- */
-  function refresh(force){
-    var now = collect();
-    var sg = now.map(function(g){ return g.list.map(function(p){ return p.id + "|" + p.name + "|" + (p.av ? p.av.length : 0); }).join(","); }).join(";") + "#" + JSON.stringify(tally);
-    if(!force && sg === last) return;
-    last = sg; gs = now;
-    var m = $("masterMetaLine"); if(m) m.textContent = "登錄數量 " + String(total()).padStart(3, "0");
-    renderShowcase();
-    if($("masterPage").classList.contains("open")) renderPage();
-  }
-  function renderShowcase(){
-    var box = $("masterShowcase"), em = $("masterEmpty");
-    if(!total()){ box.hidden = true; em.textContent = "— 讀取中 —"; em.hidden = false; return; }
-    em.hidden = true; box.hidden = false;
-    box.innerHTML = gs.map(function(g){
-      var t = top(g), head = '<div class="mr-rlabel">' + g.label + '<small>TOP ' + TOP + '</small></div>';
-      if(!t.length) return '<div class="mr-row">' + head + '<div class="mr-rnone">— 尚未有投票 —</div></div>';
-      var half = [], reps = Math.max(1, Math.ceil(8 / t.length));
-      for(var r = 0; r < reps; r++) half = half.concat(t.map(function(p, i){ return {p: p, rank: i + 1}; }));
-      var one = half.map(function(x){
-        return '<div class="mr-item"><span class="mr-rank">' + String(x.rank).padStart(2, "0") + '</span>' + avHtml(x.p) + (x.p.name ? '<div class="mr-name">' + esc(x.p.name) + '</div>' : '') + '</div>';
-      }).join("");
-      return '<div class="mr-row">' + head + '<div class="mr-viewport"><div class="mr-track" style="--dur:' + Math.max(24, half.length * 3.5) + 's">' + one + one + '</div></div></div>';
-    }).join("");
-  }
-  function counts(){ return gs.map(function(g){ return g.label + " " + Object.keys(sel[g.key]).length + "／" + PER; }).join("　"); }
-  function renderPage(){
-    var q = ($("masterSearch").value || "").trim().toLowerCase(), vote = mode === "vote";
-    var html = "", shown = 0;
+  var last = null, gs = [];
+  function render(){
+    var q = ($("masterSearch").value || "").trim().toLowerCase();
+    var total = gs.reduce(function(n, g){ return n + g.list.length; }, 0);
+    $("masterMetaLine").textContent = "登錄數量 " + String(total).padStart(3, "0");
+    var html = "";
     gs.forEach(function(g){
       var list = q ? g.list.filter(function(p){ return p.id.toLowerCase().indexOf(q) > -1 || p.name.toLowerCase().indexOf(q) > -1; }) : g.list;
       if(!list.length) return;
-      shown += list.length;
-      var right = vote ? '已選 <span data-gc="' + g.key + '">' + Object.keys(sel[g.key]).length + '</span>／' + PER + ' 票' : list.length + (q ? ' ／ ' + g.list.length : '') + ' 人';
-      html += '<div class="mr-group"><div class="mr-ghead"><span>' + g.label + '</span><small>' + right + '</small></div><div class="mr-grid">' +
+      html += '<div class="mr-group"><div class="mr-ghead"><h3>' + g.label + '</h3><span class="en">' + g.en + '</span><span class="ct">' + list.length + (q ? ' ／ ' + g.list.length : '') + ' 人</span></div><div class="mr-grid">' +
         list.map(function(p){
-          var on = vote && sel[g.key][p.id];
-          return '<div class="mr-tile' + (vote ? ' votable' : '') + (on ? ' sel' : '') + '" data-g="' + g.key + '" data-id="' + esc(p.id) + '">' + avHtml(p) +
-            '<div class="mr-tid">' + esc(p.id) + '</div><div class="mr-tname">' + esc(p.name || "—") + '</div>' +
-            (isAdm() ? '<div class="mr-vc">' + (tally[g.key][p.id] || 0) + ' 票</div>' : '') + '</div>';
+          return '<div class="mr-tile">' + avHtml(p) + '<div class="mr-tid">NO. <b>' + esc(p.id) + '</b></div><div class="mr-tname">' + esc(p.name || "—") + '</div></div>';
         }).join("") + '</div></div>';
     });
-    $("masterPageBody").innerHTML = html || '<div class="mr-none">— 找不到符合的成員 —</div>';
-    $("masterPageSub").textContent = vote
-      ? "每個陣營最多投 3 票（共 9 票）。點擊頭像選取，再點一次取消，選好後按「送出投票」。"
-      : "共 " + total() + " 人" + (q ? "，符合搜尋：" + shown + " 人" : "") + "。";
+    $("masterBody").innerHTML = html || '<div class="mr-none">' + (total ? "— 找不到符合的成員 —" : "— 尚無資料 —") + '</div>';
   }
-  function setMsg(text, warn){
-    var m = $("masterVoteMsg"); m.textContent = text; m.className = warn ? "warn" : "";
-    clearTimeout(msgTimer);
-    if(warn) msgTimer = setTimeout(function(){ m.textContent = counts(); m.className = ""; }, 1800);
+  function refresh(){
+    var now = collect(), sg = sig(now);
+    if(sg === last) return;
+    last = sg; gs = now; render();
   }
-
-  /* ----- 開關 ----- */
-  function openPage(m){
-    if(m === "vote"){
-      if(!(window.Auth && Auth.requireLogin && Auth.requireLogin())) return;
-      var mine = (votesAll && votesAll[myUid()]) || {};
-      sel = {exp: {}, medic: {}, sponsor: {}};
-      refresh(true);
-      gs.forEach(function(g){
-        var ex = {}; g.list.forEach(function(p){ ex[p.id] = 1; });
-        var v = mine[g.key] || {};
-        Object.keys(v).forEach(function(id){ if(v[id] === true && ex[id] && Object.keys(sel[g.key]).length < PER) sel[g.key][id] = true; });
-      });
-    } else refresh(true);
-    mode = m === "vote" ? "vote" : "view";
-    $("masterPageTitle").textContent = mode === "vote" ? "全員投票" : "總名冊";
-    $("masterVoteBar").hidden = mode !== "vote";
-    if(mode === "vote"){ setMsg(counts(), false); $("masterVoteSubmit").disabled = false; $("masterVoteSubmit").textContent = "送出投票"; }
-    $("masterSearch").value = ""; renderPage();
-    $("masterPage").classList.add("open"); $("masterPage").querySelector(".modal-box").scrollTop = 0;
-  }
-  function closePage(){ $("masterPage").classList.remove("open"); }
-  $("masterShowcase").addEventListener("click", function(){ openPage("view"); });
-  $("masterOpenBtn").addEventListener("click", function(){ openPage("view"); });
-  $("masterVoteBtn").addEventListener("click", function(){ openPage("vote"); });
-  $("masterPageClose").addEventListener("click", closePage);
-  $("masterPage").addEventListener("click", function(e){ if(e.target === this) closePage(); });
-  $("masterSearch").addEventListener("input", renderPage);
-
-  $("masterPageBody").addEventListener("click", function(e){
-    if(mode !== "vote") return;
-    var t = e.target.closest(".mr-tile.votable"); if(!t) return;
-    var g = t.getAttribute("data-g"), id = t.getAttribute("data-id");
-    if(sel[g][id]){ delete sel[g][id]; }
-    else {
-      if(Object.keys(sel[g]).length >= PER){ var lb = GROUPS.filter(function(x){ return x.key === g; })[0].label; setMsg(lb + "最多只能投 " + PER + " 票，請先取消其他人。", true); return; }
-      sel[g][id] = true;
-    }
-    t.classList.toggle("sel", !!sel[g][id]);
-    var c = $("masterPageBody").querySelector('[data-gc="' + g + '"]'); if(c) c.textContent = Object.keys(sel[g]).length;
-    setMsg(counts(), false);
-  });
-
-  $("masterVoteSubmit").addEventListener("click", function(){
-    if(submitting) return;
-    if(!(window.Auth && Auth.requireLogin && Auth.requireLogin())) return;
-    var uid = myUid(), db = fbdb(); if(!uid || !db){ setMsg("無法連線，請稍後再試。", true); return; }
-    var o = {}; GROUPS.forEach(function(g){ var ids = Object.keys(sel[g.key]); if(ids.length){ o[g.key] = {}; ids.forEach(function(id){ o[g.key][id] = true; }); } });
-    submitting = true; var btn = $("masterVoteSubmit"); btn.disabled = true; btn.textContent = "送出中…";
-    db.ref(VPATH + "/" + uid).set(Object.keys(o).length ? o : null).then(function(){
-      votesAll[uid] = Object.keys(o).length ? o : undefined; recount(); refresh(true);
-      btn.textContent = "已送出 ✓"; setTimeout(closePage, 700);
-    }).catch(function(err){
-      btn.disabled = false; btn.textContent = "送出投票";
-      setMsg("送出失敗（" + ((err && err.code) || "未知原因") + "）。請確認 Firebase 規則已加入 " + VPATH + "。", true);
-    }).then(function(){ submitting = false; });
-  });
-
-  /* 名冊資料是各板塊從資料庫陸續載入的，所以每幾秒檢查一次有沒有變動 */
-  refresh(true);
-  setInterval(function(){ if(!document.hidden) refresh(false); }, 3000);
+  $("masterSearch").addEventListener("input", render);
+  /* 各名冊是從資料庫陸續載入的，所以每幾秒檢查一次有沒有變動，有才重畫 */
+  refresh();
+  setInterval(function(){ if(!document.hidden) refresh(); }, 3000);
 })();
 </script>
 </body>
