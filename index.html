@@ -11194,7 +11194,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     /* 左欄：名稱(大)／編號(小)／社交強度／創作頻率 */
     var ly=640;g.fillStyle=INK;
     var chs=Array.from(name),nsz,lines;
-    nsz=130;g.font="900 "+nsz+"px "+SERIF;
+    nsz=chs.length===3?fit(g,name,"900",SERIF,130,40,x-86-24):130;g.font="900 "+nsz+"px "+SERIF;
     if(chs.length===4)lines=[chs.slice(0,2).join(""),chs.slice(2).join("")];
     else{lines=[name];if(g.measureText(name).width>900)lines=wrap(g,name,900).slice(0,3);}
     g.fillStyle=INK;
