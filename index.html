@@ -3819,7 +3819,7 @@
         <div class="wl-opts nw" id="wlFoc"></div></div>
       <div class="wl-q"><h3><i>06</i>標籤</h3><span class="field-label">想放哪些都可以，可多選</span>
         <div id="wlTags"></div>
-        <div class="wl-custom"><input type="text" class="text-input" id="wlTagIn" maxlength="10" placeholder="自訂標籤，自己打（最多 3 個）" autocomplete="off"><button type="button" class="choice-btn" id="wlTagAdd">加入</button></div></div>
+        <div class="wl-custom"><input type="text" class="text-input" id="wlTagIn" maxlength="10" placeholder="自訂標籤，自己打（最多 6 個）" autocomplete="off"><button type="button" class="choice-btn" id="wlTagAdd">加入</button></div></div>
       <div class="wl-q"><h3><i>07</i>展示角色</h3><span class="field-label">從你已批准綁定的角色中選一個</span>
         <div id="wlChars"></div></div>
       <div class="wl-q"><h3><i>08</i>角色卡</h3>
@@ -11076,7 +11076,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     var box=$("wlTags"),cu=box.querySelector(".wl-cu");
     if(!cu){cu=document.createElement("div");cu.className="wl-opts wl-tg wl-cu";box.appendChild(cu);}
     var dup=[].some.call(box.querySelectorAll(".choice-btn"),function(c){return c.getAttribute("data-v")===v;});
-    if(dup||cu.children.length>=3){inp.value="";return;}
+    if(dup||cu.children.length>=6){inp.value="";return;}
     var b=document.createElement("button");b.type="button";b.className="choice-btn on";b.setAttribute("data-v",v);b.textContent=v;cu.appendChild(b);
     inp.value="";
     S.tags=[].map.call(box.querySelectorAll(".choice-btn.on"),function(c){return c.getAttribute("data-v");});
@@ -11174,7 +11174,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     g.restore();
     g.fillStyle=P.strip;for(var y0=40;y0<1900;y0+=150)g.fillRect(0,y0,46,90);
     g.fillStyle=P.head;g.letterSpacing="4px";g.font="600 34px "+MONO;g.fillText("GROTESQUE PROJECT",90,110);
-    g.fillStyle=INK;g.font="500 26px "+MONO;g.fillText("參企偏好登記",90,520);g.letterSpacing="0px";
+    g.fillStyle=INK;g.font="500 26px "+MONO;g.fillText("參企偏好表",90,520);g.letterSpacing="0px";
     g.fillStyle=P.title;g.font="900 150px "+SERIF;g.fillText("歡迎來到",86,292);g.fillText("血池肉林",86,448);
     /* 陣營徽章 */
     var cx=890,cy=262;
@@ -11209,13 +11209,14 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       }
       g.fillStyle=INK;g.font="900 46px "+SERIF;g.fillText(zh+" "+val,90,yl+128);
     };
-    meter("SOCIAL","社交強度",S.social,1130);
-    meter("CREATE","創作頻率",S.create,1290);
+    var my=ly+(isS?135:40);
+    meter("SOCIAL","社交強度",S.social,my);
+    meter("CREATE","創作頻率",S.create,my+150);
     /* 下半部：暱稱 → 蓋章 → 標籤 */
-    g.fillStyle=INK;g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("NICKNAME",90,1508);g.letterSpacing="0px";
+    g.fillStyle=INK;g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("NICKNAME",90,1470);g.letterSpacing="0px";
     fit(g,nick,"900",SERIF,110,50,900);
-    g.fillStyle=INK;g.fillText(nick,86,1612);
-    g.font="900 34px "+SERIF;var sx=90,sy=1640;
+    g.fillStyle=INK;g.fillText(nick,86,1574);
+    g.font="900 34px "+SERIF;var sx=90,sy=1606;
     S.focus.forEach(function(t,i){
       var tw=g.measureText(t).width+40;
       if(sx+tw>1000){sx=90;sy+=70;}
@@ -11230,7 +11231,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       var lay=function(sz){g.font="700 "+sz+"px "+SERIF;var px=90,row=0,pos=[];
         tg.forEach(function(t){var tw=g.measureText(t).width+28;if(px+tw>1000&&px>90){px=90;row++;}pos.push([px,row,tw]);px+=tw+10;});
         return {pos:pos,rows:row+1};};
-      var sz=22,L=lay(sz);for(;sz>14&&L.rows>3;sz-=2)L=lay(sz);
+      var sz=22,L=lay(sz);for(;sz>14&&L.rows>4;sz-=2)L=lay(sz);
       var rh=sz+14,top=sy+54+22;g.font="700 "+sz+"px "+SERIF;
       L.pos.forEach(function(p,i){var ty=top+p[1]*(rh+10);
         g.fillStyle=P.tagBg;g.fillRect(p[0],ty,p[2],rh);
