@@ -3058,6 +3058,9 @@
 #welcomeRoom .wl-opts.nw{flex-wrap:nowrap;gap:6px}
 #welcomeRoom .wl-opts.nw .choice-btn{min-width:0;padding:13px 2px;font-size:12px;white-space:nowrap}
 #welcomeRoom .wl-tg{margin-bottom:8px}
+#welcomeRoom .wl-custom{display:flex;gap:8px;margin-top:4px}
+#welcomeRoom .wl-custom .text-input{flex:1 1 auto;min-width:0;margin:0}
+#welcomeRoom .wl-custom .choice-btn{flex:0 0 auto;width:auto;margin:0;padding:0 18px;background:#0d0908;border:1px solid #3a2926;border-radius:0;color:#e6ddcf;font:700 15px var(--serif)}
 #welcomeRoom .wl-tg .choice-btn{flex:0 1 auto;padding:9px 13px;font-size:13px}
 #welcomeRoom .wl-sq .choice-btn{display:block;padding:14px 4px 12px;font-size:17px}
 #welcomeRoom .bars{display:flex;gap:4px;justify-content:center;margin-bottom:8px}
@@ -3815,7 +3818,8 @@
       <div class="wl-q"><h3><i>05</i>參企重心</h3><span class="field-label">可多選</span>
         <div class="wl-opts nw" id="wlFoc"></div></div>
       <div class="wl-q"><h3><i>06</i>標籤</h3><span class="field-label">想放哪些都可以，可多選</span>
-        <div id="wlTags"></div></div>
+        <div id="wlTags"></div>
+        <div class="wl-custom"><input type="text" class="text-input" id="wlTagIn" maxlength="10" placeholder="自訂標籤，自己打（最多 3 個）" autocomplete="off"><button type="button" class="choice-btn" id="wlTagAdd">加入</button></div></div>
       <div class="wl-q"><h3><i>07</i>展示角色</h3><span class="field-label">從你已批准綁定的角色中選一個</span>
         <div id="wlChars"></div></div>
       <div class="wl-q"><h3><i>08</i>角色卡</h3>
@@ -11067,6 +11071,18 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   $("wlTags").innerHTML=TAGS.map(function(g){return '<div class="wl-opts wl-tg">'+g.map(function(v){return '<button type="button" class="choice-btn" data-v="'+v+'">'+v+'</button>';}).join("")+'</div>';}).join("");
   $("wlTags").onclick=function(e){var b=e.target.closest(".choice-btn");if(!b)return;b.classList.toggle("on");
     S.tags=[].map.call($("wlTags").querySelectorAll(".choice-btn.on"),function(c){return c.getAttribute("data-v");});};
+  var addCustom=function(){
+    var inp=$("wlTagIn"),v=inp.value.trim();if(!v)return;
+    var box=$("wlTags"),cu=box.querySelector(".wl-cu");
+    if(!cu){cu=document.createElement("div");cu.className="wl-opts wl-tg wl-cu";box.appendChild(cu);}
+    var dup=[].some.call(box.querySelectorAll(".choice-btn"),function(c){return c.getAttribute("data-v")===v;});
+    if(dup||cu.children.length>=3){inp.value="";return;}
+    var b=document.createElement("button");b.type="button";b.className="choice-btn on";b.setAttribute("data-v",v);b.textContent=v;cu.appendChild(b);
+    inp.value="";
+    S.tags=[].map.call(box.querySelectorAll(".choice-btn.on"),function(c){return c.getAttribute("data-v");});
+  };
+  $("wlTagAdd").onclick=addCustom;
+  $("wlTagIn").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();addCustom();}});
   $("wlBack1").onclick=function(){$("welcomeBackBtn").click();};
   $("wlStart").onclick=function(){var it=$("wlIntro"),qz=$("wlQuiz"),rm=$("welcomeRoom");
     it.classList.remove("wl-fin");it.classList.add("wl-fout");
@@ -11139,8 +11155,8 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   var SERIF='"Noto Serif TC",serif',MONO='"IBM Plex Mono",monospace',BONE="#efe6d6";
   var PAL={
     "實驗體":{bg:"#d2312a",ink:"#0d0908",band:"#1d1b1b",ring:"rgba(210,49,42,.38)",strip:"#0d0908",head:"#0d0908",title:"#0d0908",badgeBg:"#0d0908",badgeFg:BONE,cardLine:BONE,shadow:"#0d0908",tagBg:"#0d0908",tagFg:BONE,nickSh:"#0d0908"},
-    "醫療隊":{bg:"#67c4c9",ink:"#1a1414",band:"#383838",ring:"rgba(226,35,26,.85)",strip:"#1a1414",head:"#1a1414",title:"#1a1414",badgeBg:"#ffffff",badgeFg:"#e2231a",cardLine:"#ffffff",shadow:"#1a1414",tagBg:"#1a1414",tagFg:"#e8f6f6",nickSh:"#1a1414"},
-    "資助者":{bg:"#060606",ink:"#e2231a",band:"#2a2a2a",ring:"rgba(226,35,26,.85)",strip:"#e2231a",head:"#e2231a",title:"#e2231a",badgeBg:"#ffffff",badgeFg:"#e2231a",cardLine:"#e2231a",shadow:"#e2231a",tagBg:"#2a2a2a",tagFg:"#e2231a",nickSh:"#e2231a"}
+    "醫療隊":{bg:"#ffffff",ink:"#1a1414",band:"#383838",ring:"rgba(226,35,26,.85)",strip:"#1a1414",head:"#1a1414",title:"#1a1414",badgeBg:"#1a1414",badgeFg:"#ffffff",cardLine:"#ffffff",shadow:"#1a1414",tagBg:"#1a1414",tagFg:"#ffffff",nickSh:"#1a1414"},
+    "資助者":{bg:"#060606",ink:"#e2231a",band:"#2a2a2a",ring:"rgba(226,35,26,.85)",strip:"#e2231a",head:"#e2231a",title:"#e2231a",badgeBg:"#e2231a",badgeFg:"#060606",cardLine:"#e2231a",shadow:"#e2231a",tagBg:"#2a2a2a",tagFg:"#e2231a",nickSh:"#e2231a"}
   };
   function fit(g,t,wt,fam,max,min,w){var s=max;for(;s>min;s-=4){g.font=wt+" "+s+"px "+fam;if(g.measureText(t).width<=w)break;}g.font=wt+" "+s+"px "+fam;return s;}
   function wrap(g,t,w){var o=[],l="";for(var ch of t){if(g.measureText(l+ch).width>w&&l){o.push(l);l=ch;}else l+=ch;}if(l)o.push(l);return o;}
