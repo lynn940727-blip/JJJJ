@@ -11177,7 +11177,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     nsz=130;g.font="900 "+nsz+"px "+SERIF;
     if(chs.length===4)lines=[chs.slice(0,2).join(""),chs.slice(2).join("")];
     else{lines=[name];if(g.measureText(name).width>900)lines=wrap(g,name,900).slice(0,3);}
-    g.fillStyle="#ffffff";
+    g.fillStyle=INK;
     lines.forEach(function(ln,i){g.fillText(ln,86,ly+nsz+i*(nsz+8));});
     g.fillStyle=INK;
     ly+=lines.length*(nsz+8)+16;
@@ -11198,7 +11198,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     /* 下半部：暱稱 → 蓋章 → 標籤 */
     g.fillStyle=INK;g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("NICKNAME",90,1508);g.letterSpacing="0px";
     fit(g,nick,"900",SERIF,110,50,900);
-    g.fillStyle="#ffffff";g.fillText(nick,86,1612);
+    g.fillStyle=INK;g.fillText(nick,86,1612);
     g.font="900 34px "+SERIF;var sx=90,sy=1640;
     S.focus.forEach(function(t,i){
       var tw=g.measureText(t).width+40;
