@@ -11204,18 +11204,19 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     if(isS){g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("NO.",90,ly+20);g.letterSpacing="0px";
       fit(g,String(c.id),"900",SERIF,76,40,290);g.fillText(String(c.id),88,ly+100);}
     var meter=function(en,zh,val,yl){
-      g.fillStyle=INK;g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText(en,90,yl);g.letterSpacing="0px";
+      g.fillStyle=INK;g.letterSpacing="3px";g.font="600 20px "+MONO;g.fillText(en,90,yl);g.letterSpacing="0px";
       var lv=LV[val];
       for(var k=0;k<3;k++){
-        var bx=90+k*92,by=yl+24;
-        g.beginPath();g.moveTo(bx+18,by);g.lineTo(bx+82,by);g.lineTo(bx+64,by+36);g.lineTo(bx,by+36);g.closePath();
-        if(k<lv){g.fillStyle=INK;g.fill();}else{g.strokeStyle=INK;g.lineWidth=4;g.stroke();}
+        var bx=90+k*66,by=yl+16;
+        g.beginPath();g.moveTo(bx+13,by);g.lineTo(bx+59,by);g.lineTo(bx+46,by+26);g.lineTo(bx,by+26);g.closePath();
+        if(k<lv){g.fillStyle=INK;g.fill();}else{g.strokeStyle=INK;g.lineWidth=3;g.stroke();}
       }
-      g.fillStyle=INK;g.font="900 46px "+SERIF;g.fillText(zh+" "+val,90,yl+128);
+      g.fillStyle=INK;g.font="900 34px "+SERIF;g.fillText(zh+" "+val,90,yl+90);
     };
-    var my=ly+(isS?135:40);
+    var my=ly+(isS?170:80);
     meter("SOCIAL","社交強度",S.social,my);
-    meter("CREATE","創作頻率",S.create,my+190);
+    meter("CREATE","創作頻率",S.create,my+150);
+
     /* 下半部：暱稱 → 蓋章 → 標籤 */
     g.fillStyle=INK;g.letterSpacing="3px";g.font="600 26px "+MONO;g.fillText("NICKNAME",90,1468);g.letterSpacing="0px";
     fit(g,nick,"900",SERIF,110,50,900);
@@ -11233,14 +11234,14 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     var tg=S.tags;
     if(tg.length){
       var lay=function(sz){g.font="700 "+sz+"px "+SERIF;var px=90,row=0,pos=[];
-        tg.forEach(function(t){var tw=g.measureText(t).width+28;if(px+tw>1000&&px>90){px=90;row++;}pos.push([px,row,tw]);px+=tw+10;});
+        tg.forEach(function(t){var tw=g.measureText(t).width+40;if(px+tw>1000&&px>90){px=90;row++;}pos.push([px,row,tw]);px+=tw+12;});
         return {pos:pos,rows:row+1};};
       var top=sy+54+44,avail=1880-top;
-      var sz=22,L=lay(sz);for(;sz>14&&L.rows*(sz+28)>avail;sz-=2)L=lay(sz);
-      var rh=sz+14;g.font="700 "+sz+"px "+SERIF;
-      L.pos.forEach(function(p,i){var ty=top+p[1]*(rh+14);
+      var sz=32,L=lay(sz);for(;sz>18&&L.rows*(sz+36)>avail;sz-=2)L=lay(sz);
+      var rh=sz+22;g.font="700 "+sz+"px "+SERIF;
+      L.pos.forEach(function(p,i){var ty=top+p[1]*(rh+16);
         g.fillStyle=P.tagBg;g.fillRect(p[0],ty,p[2],rh);
-        g.fillStyle=P.tagFg;g.textAlign="center";g.fillText(tg[i],p[0]+p[2]/2,ty+rh-8);g.textAlign="left";});
+        g.fillStyle=P.tagFg;g.textAlign="center";g.fillText(tg[i],p[0]+p[2]/2,ty+rh-13);g.textAlign="left";});
     }
     g.textAlign="left";g.letterSpacing="0px";
     return cv;
