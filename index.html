@@ -3787,15 +3787,15 @@
 
 <section class="roster snap-section wl-cover" id="welcomeRoom">
   <div class="roster-eyebrow">檔案 ⁄ 機構活動</div>
-  <div class="roster-head"><h2>參企偏好表</h2></div>
+  <div class="roster-head"><h2>歡迎來到血池肉林</h2></div>
   <div class="roster-divider"></div>
   <div class="wl-wedge"></div>
 
   <div class="wl-intro" id="wlIntro">
     <div class="wl-top"><span>GROTESQUE PROJECT</span><span>ENTRY FORM</span></div>
     <div class="wl-mid">
-      <div class="wl-title" role="heading" aria-level="2"><span>參企</span><span>偏好表</span></div>
-      <div class="wl-sub"><b>歡迎來到血池肉林</b></div>
+      <div class="wl-title" role="heading" aria-level="2"><span>歡迎來到</span><span>血池肉林</span></div>
+      <div class="wl-sub"><b>參企偏好表</b></div>
       <div class="wl-vit"><div><em>HP</em><i></i><i></i><i></i></div><div><em>SAN</em><i></i><i></i><i></i></div></div>
     </div>
     <div class="wl-bot">
@@ -3805,7 +3805,7 @@
   </div>
 
   <div class="wl" id="wlQuiz" hidden>
-    <header class="wl-bar"><span>GROTESQUE PROJECT</span><b>參企偏好表</b><em>歡迎來到血池肉林</em></header>
+    <header class="wl-bar"><span>GROTESQUE PROJECT</span><b>歡迎來到血池肉林</b><em>參企偏好表</em></header>
     <div class="wl-panel">
       <div class="wl-q"><h3><i>01</i>陣營</h3><div class="wl-opts" id="wlFac"></div></div>
       <div class="wl-q"><h3><i>02</i>暱稱</h3>
@@ -11159,20 +11159,14 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     g.fillStyle=P.strip;for(var y0=40;y0<1900;y0+=150)g.fillRect(0,y0,46,90);
     g.fillStyle=P.head;g.letterSpacing="4px";g.font="600 34px "+MONO;g.fillText("GROTESQUE PROJECT",90,110);
     g.fillStyle=INK;g.font="500 26px "+MONO;g.fillText("參企偏好登記",90,520);g.letterSpacing="0px";
-    g.fillStyle=P.title;g.font="900 150px "+SERIF;g.fillText("參企",86,292);g.fillText("偏好表",86,448);
+    g.fillStyle=P.title;g.font="900 150px "+SERIF;g.fillText("歡迎來到",86,292);g.fillText("血池肉林",86,448);
     /* 陣營徽章 */
     var cx=890,cy=262;
-    if(f==="資助者"){
-      g.beginPath();g.moveTo(cx,cy-165);g.lineTo(cx+165,cy);g.lineTo(cx,cy+165);g.lineTo(cx-165,cy);g.closePath();
-      g.fillStyle=P.badgeBg;g.fill();g.strokeStyle=P.badgeFg;g.lineWidth=14;g.stroke();
-    }else{
-      g.fillStyle=P.badgeBg;g.beginPath();g.arc(cx,cy,150,0,7);g.fill();
-      g.strokeStyle=f==="實驗體"?BONE:INK;g.lineWidth=3;
-      if(f==="實驗體"){g.setLineDash([10,9]);g.beginPath();g.arc(cx,cy,134,0,7);g.stroke();g.setLineDash([]);}
-      else{g.beginPath();g.arc(cx,cy,150,0,7);g.stroke();}
-    }
+    g.fillStyle=P.badgeBg;g.beginPath();g.arc(cx,cy,150,0,7);g.fill();
+    g.strokeStyle=P.badgeFg;g.lineWidth=3;
+    g.setLineDash([10,9]);g.beginPath();g.arc(cx,cy,134,0,7);g.stroke();g.setLineDash([]);
     g.fillStyle=P.badgeFg;g.textAlign="center";g.letterSpacing="5px";g.font="600 24px "+MONO;g.fillText("FACTION",cx,cy-52);g.letterSpacing="0px";
-    fit(g,f,"900",SERIF,84,40,f==="資助者"?170:230);g.fillText(f,cx,cy+34);g.textAlign="left";
+    fit(g,f,"900",SERIF,84,40,230);g.fillText(f,cx,cy+34);g.textAlign="left";
     /* 角色卡 */
     var im=S.card,sc=Math.min(600/im.width,820/im.height),w=im.width*sc,h=im.height*sc,x=1020-w,y=600;
     g.fillStyle=P.shadow;g.fillRect(x+16,y+16,w,h);g.drawImage(im,x,y,w,h);
