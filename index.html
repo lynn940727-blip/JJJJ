@@ -3072,6 +3072,8 @@
 #welcomeRoom .b1 b:nth-child(1),#welcomeRoom .b2 b:nth-child(-n+2),#welcomeRoom .b3 b{opacity:1}
 #welcomeRoom .text-input{background:#0d0908;border:0;border-bottom:3px solid #d2312a;color:#efe6d6;font:700 22px var(--serif);padding:12px 6px;margin:0}
 #welcomeRoom .text-input:focus{outline:none;background:#1a1110}
+#welcomeRoom .text-input::placeholder{color:#c9bfae;opacity:1;font-weight:600}
+#welcomeRoom .text-input::-webkit-input-placeholder{color:#c9bfae;opacity:1}
 #welcomeRoom .wl-ch{display:flex;align-items:center;gap:14px;padding:10px 12px;margin-bottom:8px;background:#0d0908;border:1px solid #3a2926;border-left:5px solid #3a2926;cursor:pointer}
 #welcomeRoom .wl-ch.on{border-color:#d2312a;background:#1f1211}
 #welcomeRoom .wl-ch img,#welcomeRoom .wl-ch .ph{width:48px;height:48px;object-fit:cover;flex:none;border:1px solid #3a2926;background:#241a18}
@@ -11197,7 +11199,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     var ly=640;g.fillStyle=INK;
     var nsz,lines,avail=x-86-24,cjk=/[\u3400-\u9fff]/.test(name),found=false;
     for(var ml=1;ml<=3&&!found;ml++){
-      var lo=ml===1?(cjk?96:56):(ml===2?72:56);
+      var lo=ml===1?(cjk?96:40):(ml===2?72:56);
       for(var z=130;z>=lo;z-=6){g.font="900 "+z+"px "+SERIF;var ls=wrap(g,name,avail);
         if(ls.length<=ml){nsz=z;lines=ls;found=true;break;}}
     }
