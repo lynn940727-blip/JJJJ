@@ -4386,10 +4386,9 @@ const SharedStore = (function(){
       const d = init();
       if(!d){ list.innerHTML = '<div class="log-empty">無法連上資料庫，暫時看不到紀錄。</div>'; return; }
       started = true;
-      // 只顯示「目前這一期（兩週）」的紀錄：11/9–11/22、11/23–12/6、12/7–12/20……每兩週自動換一期，不設筆數上限
-      const _P = 14 * 86400000, _B = new Date("2026-11-09T00:00:00+08:00").getTime();
-      const _start = _B + Math.max(0, Math.floor((Date.now() - _B) / _P)) * _P;
-      const lref = d.ref(LOG_PATH).orderByChild("ts").startAt(_start);
+      // 顯示最近 800 筆紀錄（依時間排序、新的在前）；超過 800 筆時，最舊的會自動被擠出清單
+      const LOG_SHOW_MAX = 800;
+      const lref = d.ref(LOG_PATH).orderByChild("ts").limitToLast(LOG_SHOW_MAX);
       lref.once("value", () => draw());   // 第一批資料讀完（就算是空的）也要結束讀取動畫
       lref.on("child_removed", snap => {
         rows = rows.filter(x => x._k !== snap.key);
