@@ -682,6 +682,12 @@
   .legend-dot.warn{background:var(--c-warn);}
   .legend-dot.crit{background:var(--c-crit);}
   .legend-dot.dead{background:var(--c-dead);}
+  .legend-dot.story{background:var(--c-san);}
+  /* 實驗體名冊：篩選按鈕縮小 */
+  #expLegend{font-size:10.5px;}
+  #expLegend:has(.legend-btn){gap:6px;}
+  #expLegend .legend-btn{padding:3px 9px; gap:5px; border-radius:3px;}
+  #expLegend .legend-dot{width:7px; height:7px;}
 
   .grid{
     max-width:1180px;
@@ -3575,6 +3581,7 @@
     <button type="button" class="legend-item legend-btn" data-f="warn" onclick="setStatusFilter('warn')" title="只顯示「異常」，再點一次取消"><span class="legend-dot warn"></span>異常</button>
     <button type="button" class="legend-item legend-btn" data-f="crit" onclick="setStatusFilter('crit')" title="只顯示「瀕死」，再點一次取消"><span class="legend-dot crit"></span>瀕死</button>
     <button type="button" class="legend-item legend-btn" data-f="dead" onclick="setStatusFilter('dead')" title="只顯示「死亡」，再點一次取消"><span class="legend-dot dead"></span>死亡</button>
+    <button type="button" class="legend-item legend-btn" data-f="story" onclick="setStatusFilter('story')" title="只顯示有「跑劇情」標籤的實驗體，再點一次取消"><span class="legend-dot story"></span>跑劇情</button>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -3748,7 +3755,7 @@
   <div class="roster-eyebrow">檔案 ⁄ 機構活動</div>
   <div class="roster-head">
     <h2>機構活動</h2>
-    <div class="roster-head-right"><div class="meta">活動數量 002</div></div>
+    <div class="roster-head-right"><div class="meta">活動數量 003</div></div>
   </div>
   <div class="roster-divider"></div>
   <div class="event-list">
@@ -3762,6 +3769,12 @@
       <img class="event-poster" alt="" src="">
       <span class="ep-tag">EVENT ⁄ 02</span>
       <span class="ep-title"><span class="ep-t1">參企</span><span class="ep-t2">偏好表</span></span>
+      <span class="event-card-go">more <i>→</i></span>
+    </button>
+    <button type="button" class="event-card event-card-poster" id="wheelEnterBtn" aria-label="實驗體大轉盤　進入活動">
+      <img class="event-poster" alt="" src="">
+      <span class="ep-tag">EVENT ⁄ 03</span>
+      <span class="ep-title"><span class="ep-t1">實驗體</span><span class="ep-t2">大轉盤</span></span>
       <span class="event-card-go">more <i>→</i></span>
     </button>
   </div>
@@ -5711,7 +5724,6 @@ const subjects = [
   {id: "026", name: "邦尼", hp: 3, san: 3},
   {id: "027", name: "努布爾", hp: 3, san: 3},
   {id: "028", name: "吉恩", hp: 3, san: 3},
-  {id: "029", name: "天蠶蛾", hp: 3, san: 3},
   {id: "030", name: "蟹妮", hp: 3, san: 3},
   {id: "031", name: "柯洛", hp: 3, san: 3},
   {id: "032", name: "1", hp: 3, san: 3},
@@ -5736,7 +5748,6 @@ const subjects = [
   {id: "051", name: "螳螂先生", hp: 3, san: 3},
   {id: "052", name: "翡翠星", hp: 3, san: 3},
   {id: "053", name: "魅", hp: 3, san: 3},
-  {id: "054", name: "時雨蝶", hp: 3, san: 3},
   {id: "055", name: "蛸", hp: 3, san: 3},
   {id: "056", name: "iZ", hp: 3, san: 3},
   {id: "057", name: "結花", hp: 3, san: 3},
@@ -5750,6 +5761,7 @@ const subjects = [
 subjects.forEach(s => { s.statuses = []; s.bandages = 2; s.syringes = 2; s.saliva = 0; s.deathCount = 0; s.madCount = 0; s.avatarUrl = null; });
 
 const STORAGE_KEY = "bloodpool_subjects_v1";   // 同時是 Firebase 節點名稱、也是離線備援用的 localStorage key
+const RETIRED_IDS = new Set(["029","054"]);   // 已淘汰（天蠶蛾、時雨蝶）：不再出現，資料庫舊紀錄一律忽略，編號也不再分配給新角色
 const CODE_IDS = new Set(subjects.map(s => s.id));   // 寫在程式裡的名冊：編號 / aliases 以程式為準
 const CODE_NAMES = {};                                 // 程式裡目前寫的名字；資料庫裡記著「改名當下程式的名字」，程式一改就以程式為準
 subjects.forEach(s => { CODE_NAMES[s.id] = s.name; });
@@ -5815,6 +5827,7 @@ function mergeRemote(list){
     if(!byId[r.id]) return;
     if(r.deleted) return;
     if(CODE_IDS.has(r.id)) return;   // 程式名冊裡的人在這台被管理員刪掉了，重新整理前維持刪除
+    if(RETIRED_IDS.has(r.id)) return;   // 已淘汰的實驗體，忽略資料庫舊紀錄
     subjects.push(Object.assign(subjectDefaults(), r));
     changed = true;
   });
@@ -5895,7 +5908,7 @@ function escapeHTML(str){
 
 const grid = document.getElementById("grid");
 const metaLine = document.getElementById("metaLine");
-let statusFilter = null;   // 點上方「良好／異常／瀕死／死亡」可只顯示該類，再點一次取消
+let statusFilter = null;   // 點上方「良好／異常／瀕死／死亡／跑劇情」可只顯示該類，再點一次取消
 function setStatusFilter(k){ statusFilter = (statusFilter === k) ? null : k; renderGrid(); }
 function syncLegend(){
   document.querySelectorAll("#expLegend .legend-btn").forEach(b => b.classList.toggle("active", b.dataset.f === statusFilter));
@@ -5908,7 +5921,7 @@ function renderGrid(){
   subjects.forEach(s => {
     const c = classify(s.hp, s.san);
     counts[c.dead ? "dead" : c.cardClass]++;
-    if(statusFilter && (c.dead ? "dead" : c.cardClass) !== statusFilter) return;
+    if(statusFilter === "story"){ if(!s.storyAsk) return; } else if(statusFilter && (c.dead ? "dead" : c.cardClass) !== statusFilter) return;
 
     let noteHTML;
     if(s.statuses.length > 0){   // 死亡後狀態照樣顯示，重生才會清除
@@ -8370,7 +8383,7 @@ function reRenderAdminPreserveScroll(){
 /* 編號規則：新增 → 補最小的空號；刪除（網頁上手動新增的角色）→ 後面的編號自動遞補。
    寫在程式裡的名冊（CODE_IDS）編號固定不動，新角色也不會佔用那些編號。 */
 function _idNum(id){ const n = parseInt(id, 10); return isNaN(n) ? null : n; }
-function _reservedNums(){ const r = new Set(); CODE_IDS.forEach(id => { const n = _idNum(id); if(n !== null) r.add(n); }); return r; }
+function _reservedNums(){ const r = new Set(); RETIRED_IDS.forEach(id => { const n = _idNum(id); if(n !== null) r.add(n); }); CODE_IDS.forEach(id => { const n = _idNum(id); if(n !== null) r.add(n); }); return r; }
 function nextFreeNum(){
   const used = _reservedNums();
   subjects.forEach(s => { const n = _idNum(s.id); if(n !== null) used.add(n); });
@@ -11273,5 +11286,228 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   }
 })();
 </script>
+<style>
+#wheelOv{position:fixed;inset:0;z-index:100005;background:#0a0706;color:var(--bone,#e6ddcf);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#wheelOv.on{display:block}
+#wheelOv .wh-in{max-width:560px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 18px 40px;text-align:center}
+#wheelOv .wh-top{display:flex;justify-content:space-between;align-items:center;font:600 11px var(--mono,monospace);letter-spacing:.3em;color:#b5020f}
+#wheelOv .wh-x{background:none;border:1px solid rgba(214,16,30,.5);color:var(--bone,#e6ddcf);font:600 12px var(--mono,monospace);letter-spacing:.15em;padding:8px 14px;border-radius:999px;cursor:pointer}
+#wheelOv h2{margin:18px 0 4px;font-family:var(--serif,serif);font-weight:900;font-size:clamp(26px,8vw,36px);letter-spacing:.2em;text-indent:.2em;text-shadow:0 2px 0 #7a0e0e,0 6px 18px rgba(122,14,14,.5)}
+#wheelOv .wh-sub{font:11px var(--mono,monospace);letter-spacing:.3em;opacity:.55;margin-bottom:18px}
+#wheelOv .wh-box{position:relative;width:min(88vw,420px);aspect-ratio:1;margin:0 auto}
+#wheelOv canvas{width:100%;height:100%;display:block}
+#wheelOv .wh-ptr{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:28px solid #e6ddcf;filter:drop-shadow(0 2px 4px #000);z-index:2}
+#wheelOv .wh-go{margin:22px auto 0;display:block;width:min(88vw,420px);background:#7a0e0e;color:#fff;border:2px solid #b5020f;padding:15px;font:900 20px var(--serif,serif);letter-spacing:.5em;text-indent:.5em;border-radius:12px;cursor:pointer;box-shadow:0 8px 24px rgba(122,14,14,.45)}
+#wheelOv .wh-go:disabled{opacity:.45;cursor:default}
+#wheelOv .wh-opt{margin:14px auto 0;width:min(88vw,420px);display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;opacity:.85}
+#wheelOv .wh-sec{margin:26px auto 8px;width:min(88vw,420px);display:flex;justify-content:space-between;align-items:center;font:600 11px var(--mono,monospace);letter-spacing:.25em;color:#b5020f}
+#wheelOv .wh-sec span button{background:none;border:1px solid #3a2a28;color:var(--bone,#e6ddcf);font:11px var(--mono,monospace);padding:5px 9px;margin-left:6px;border-radius:6px;cursor:pointer}
+#wheelOv .wh-chips{width:min(88vw,420px);margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+#wheelOv .wh-chip{border:1px solid #3a2a28;background:#130f0e;color:#a89f92;padding:6px 10px;border-radius:999px;font-size:12px;cursor:pointer;user-select:none}
+#wheelOv .wh-chip.on{border-color:#b5020f;background:#3a1210;color:#f2cec0}
+#wheelOv .wh-chip.dead{text-decoration:line-through;opacity:.7}
+#wheelOv .wh-fnote{width:min(88vw,420px);margin:8px auto 0;font-size:11px;opacity:.5;text-align:center}
+#wheelOv .wh-chip.fx{padding:7px 12px}
+#wheelOv .wh-chip small{opacity:.6;font-size:10px;margin-left:3px}
+#wheelOv .wh-hist{width:min(88vw,420px);margin:0 auto;text-align:left;font:12px var(--mono,monospace);line-height:1.9;opacity:.8}
+#wheelOv .wh-mask{position:fixed;inset:0;z-index:5;background:rgba(5,3,3,.88);display:none;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+#wheelOv .wh-mask.on{display:flex}
+#wheelOv .wh-card{width:min(92vw,400px);margin:auto;text-align:center;animation:whPop .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes whPop{from{opacity:0;transform:scale(.8) translateY(20px)}to{opacity:1;transform:none}}
+@keyframes whGlow{0%,100%{box-shadow:0 0 34px rgba(181,2,15,.28),0 20px 60px #000}50%{box-shadow:0 0 62px rgba(214,16,30,.5),0 20px 60px #000}}
+#wheelOv .wh-lbl{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 16px;font:600 12px var(--mono,monospace);letter-spacing:.5em;text-indent:.5em;color:#d6101e;text-shadow:0 0 14px rgba(214,16,30,.6)}
+#wheelOv .wh-lbl::before,#wheelOv .wh-lbl::after{content:"";flex:0 0 38px;height:1px;background:linear-gradient(90deg,transparent,#b5020f)}
+#wheelOv .wh-lbl::after{transform:scaleX(-1)}
+#wheelOv .wh-rc{text-align:left;padding:30px 28px 30px;gap:20px;animation:whGlow 2.6s ease-in-out infinite}
+#wheelOv .wh-rc:hover{background:var(--c-card-base)}
+#wheelOv .wh-rc.dead:hover{background:var(--c-dead)}
+#wheelOv .wh-rc .avatar-shape{cursor:default}
+#wheelOv .wh-rc .avatar-empty{cursor:default}
+#wheelOv .wh-rc .avatar-empty:hover{border-color:var(--bone-dim);background:rgba(255,255,255,0.07)}
+#wheelOv .wh-rc .has-avatar:hover{filter:none;border-color:var(--bone-dim)}
+#wheelOv .wh-rc .avatar-ch{font:900 40px var(--serif,serif);color:var(--bone-dim);line-height:1}
+#wheelOv .wh-rc .codename{font-size:28px;word-break:break-all;line-height:1.25}
+#wheelOv .wh-btns{display:flex;gap:10px;margin-top:20px}
+#wheelOv .wh-btns button{flex:1;padding:13px 6px;border-radius:10px;font:900 16px var(--serif,serif);letter-spacing:.25em;text-indent:.25em;cursor:pointer}
+#wheelOv .wh-ok{background:#7a0e0e;color:#fff;border:2px solid #b5020f}
+#wheelOv .wh-again{background:none;color:var(--bone,#e6ddcf);border:2px solid #3a2a28}
+
+/* ===== 轉盤頁面美化 ===== */
+#wheelOv{background:radial-gradient(ellipse 120% 60% at 50% 0%,#2b0e0d 0%,#140a09 45%,#0a0706 80%)}
+#wheelOv .wh-in{max-width:520px;padding-bottom:70px}
+#wheelOv h2{margin:34px 0 8px}
+#wheelOv .wh-sub{margin-bottom:0;letter-spacing:.45em;text-indent:.45em}
+#wheelOv .wh-orn{width:150px;height:1px;margin:18px auto 38px;background:linear-gradient(90deg,transparent,#b5020f,transparent);position:relative}
+#wheelOv .wh-orn::after{content:"";position:absolute;left:50%;top:-3px;width:7px;height:7px;background:#b5020f;transform:translateX(-50%) rotate(45deg)}
+#wheelOv .wh-box{width:min(78vw,360px)}
+#wheelOv .wh-box::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(181,2,15,.5);box-shadow:0 0 46px rgba(181,2,15,.22),inset 0 0 34px rgba(0,0,0,.65);pointer-events:none}
+#wheelOv .wh-ptr{top:-20px;z-index:2}
+#wheelOv .wh-go{width:min(78vw,360px);margin:44px auto 0;padding:16px;border-radius:14px;background:linear-gradient(180deg,#931414,#5c0a0a);box-shadow:0 8px 26px rgba(122,14,14,.45)}
+#wheelOv .wh-sum{margin:28px auto 4px;font:600 12px var(--mono,monospace);letter-spacing:.25em;text-indent:.25em;color:#a89f92}
+#wheelOv .wh-sum b{color:#d6101e;font-size:15px}
+#wheelOv .wh-d{width:min(88vw,420px);margin:16px auto 0;background:rgba(19,15,14,.85);border:1px solid #2c1d1b;border-radius:14px;text-align:left;overflow:hidden}
+#wheelOv .wh-d>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:16px 18px;font:600 12px var(--mono,monospace);letter-spacing:.25em;color:var(--bone,#e6ddcf);-webkit-tap-highlight-color:transparent}
+#wheelOv .wh-d>summary::-webkit-details-marker{display:none}
+#wheelOv .wh-d>summary::after{content:"＋";color:#b5020f;font-size:14px;letter-spacing:0}
+#wheelOv .wh-d[open]>summary::after{content:"－"}
+#wheelOv .wh-d[open]>summary{border-bottom:1px solid #2c1d1b}
+#wheelOv #whHistN{color:#b5020f;margin-left:.6em;letter-spacing:.1em;flex:1}
+#wheelOv .wh-body{padding:4px 18px 20px}
+#wheelOv .wh-body .wh-sec{width:auto;margin:22px 0 12px}
+#wheelOv .wh-body .wh-chips{width:auto;justify-content:flex-start;gap:8px}
+#wheelOv .wh-body .wh-fnote{width:auto;text-align:left;margin:12px 0 0;line-height:1.6}
+#wheelOv .wh-body .wh-opt{width:auto;justify-content:flex-start;margin:18px 0 0}
+#wheelOv .wh-body .wh-hist{width:auto;margin:14px 0 0}
+#wheelOv .wh-d2{margin-top:2px;border:1px dashed #3a2a28;border-radius:10px}
+#wheelOv .wh-d2>summary{list-style:none;cursor:pointer;padding:11px 14px;font:11px var(--mono,monospace);letter-spacing:.15em;color:#a89f92;text-align:center}
+#wheelOv .wh-d2>summary::-webkit-details-marker{display:none}
+#wheelOv .wh-d2[open]>summary{border-bottom:1px dashed #3a2a28}
+#wheelOv .wh-scroll{max-height:260px;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
+#wheelOv .wh-chip{padding:5px 10px;font-size:12px}
+#wheelOv .wh-chip.fx{padding:7px 13px}
+</style>
+<div id="wheelOv" role="dialog" aria-label="實驗體大轉盤"><div class="wh-mask" id="whMask"><div class="wh-card">
+    <div class="wh-lbl">抽 中</div>
+    <div class="card wh-rc" id="whCard"></div>
+    <div class="wh-btns"><button type="button" class="wh-ok" id="whOk">確認</button><button type="button" class="wh-again" id="whAgain">再抽一次</button></div>
+  </div></div>
+  <div class="wh-in">
+  <div class="wh-top"><span>EVENT ⁄ 03</span><button type="button" class="wh-x" id="whClose">返回機構活動</button></div>
+  <h2>實驗體大轉盤</h2><div class="wh-sub">隨機抽取實驗體</div><div class="wh-orn"></div>
+  <div class="wh-box"><div class="wh-ptr"></div><canvas id="whCv"></canvas></div>
+  <button type="button" class="wh-go" id="whGo">抽取</button>
+  <div class="wh-sum" id="whSum">本輪參與 0 ／ 0 位</div>
+  <details class="wh-d" id="whSet">
+    <summary>篩選與名單設定</summary>
+    <div class="wh-body">
+      <div class="wh-sec"><span>篩選條件</span><span><button type="button" id="whFReset">恢復預設</button></span></div>
+      <div class="wh-chips" id="whFilters"></div>
+      <div class="wh-fnote">條件變更後會自動重選參與名單，之後仍可手動增減</div>
+      <label class="wh-opt"><input type="checkbox" id="whRm"> 抽中後移出轉盤（不重複抽）</label>
+      <div class="wh-sec"><span id="whCnt">參與名單</span><span><button type="button" id="whAlive">僅存活</button><button type="button" id="whAll">全選</button><button type="button" id="whNone">清空</button></span></div>
+      <details class="wh-d2"><summary>點此展開名單，逐一增減</summary><div class="wh-chips wh-scroll" id="whChips"></div></details>
+    </div>
+  </details>
+  <details class="wh-d" id="whHistD">
+    <summary>抽取紀錄<span id="whHistN"></span></summary>
+    <div class="wh-body">
+      <div class="wh-hist" id="whHist">尚無紀錄</div>
+      <div class="wh-sec"><span></span><span><button type="button" id="whClr">清除紀錄</button></span></div>
+    </div>
+  </details>
+</div></div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var ov=$("wheelOv"),cv=$("whCv"),g=cv.getContext("2d");
+  var sel=new Set(),inited=false,rot=0,spinning=false,hist=[];
+  var FDEF={ok:true,warn:true,crit:true,dead:false,noStory:true},flt=Object.assign({},FDEF);
+  var FLAB=[["ok","良好"],["warn","異常"],["crit","瀕死"],["dead","死亡"],["noStory","排除「跑劇情」標籤"]];
+  function stOf(s){if(dead(s))return "dead";var v=Math.max(3-s.hp,3-s.san);return v===0?"ok":(v===1?"warn":"crit");}
+  function match(s){if(!flt[stOf(s)])return false;if(flt.noStory&&s.storyAsk)return false;return true;}
+  function applyFlt(){sel.clear();all().forEach(function(s){if(match(s))sel.add(String(s.id));});}
+  function fchips(){$("whFilters").innerHTML=FLAB.map(function(f){return '<span class="wh-chip fx'+(flt[f[0]]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+'</span>';}).join("");}
+  var COLS=["#5a0b0b","#8a1414","#3a1210","#a31a1a","#2a0f0e","#701010"];
+  function all(){try{return subjects.slice();}catch(e){return [];}}
+  function dead(s){return s.hp===0||s.san===0;}
+  function cands(){var a=all();return a.filter(function(s){return sel.has(String(s.id));});}
+  function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function size(){var w=cv.clientWidth||320,d=Math.min(window.devicePixelRatio||1,2);cv.width=cv.height=Math.round(w*d);return w*d;}
+  function draw(){
+    var W=size(),R=W/2-4,list=cands(),n=list.length;
+    g.clearRect(0,0,W,W);g.save();g.translate(W/2,W/2);
+    if(!n){g.fillStyle="#130f0e";g.beginPath();g.arc(0,0,R,0,7);g.fill();g.fillStyle="#a89f92";g.font="700 "+W*0.05+"px serif";g.textAlign="center";g.fillText("請選擇參與名單",0,0);g.restore();return;}
+    var a=Math.PI*2/n;
+    for(var i=0;i<n;i++){
+      var s0=rot+i*a;
+      g.beginPath();g.moveTo(0,0);g.arc(0,0,R,s0,s0+a);g.closePath();
+      g.fillStyle=COLS[(n>1&&i===n-1&&i%COLS.length===0)?2:i%COLS.length];g.fill();
+      g.strokeStyle="rgba(230,221,207,.25)";g.lineWidth=1.5;g.stroke();
+      g.save();g.rotate(s0+a/2);g.textAlign="right";g.textBaseline="middle";g.fillStyle="#efe6d6";
+      var fs=Math.max(8,Math.min(W*0.045,R*a*0.5));if(n>20)fs=Math.max(8,Math.min(W*0.05,R*a*0.62));g.font="700 "+fs+"px 'Noto Serif TC',serif";
+      var nm=n>20?String(list[i].id):list[i].name;if(nm.length>7)nm=nm.slice(0,6)+"…";
+      g.fillText(nm,R-W*0.035,0);g.restore();
+    }
+    g.beginPath();g.arc(0,0,R,0,7);g.strokeStyle="#b5020f";g.lineWidth=3;g.stroke();g.beginPath();g.arc(0,0,W*0.055,0,7);g.fillStyle="#0a0706";g.fill();g.strokeStyle="#b5020f";g.lineWidth=3;g.stroke();
+    g.restore();
+  }
+  function chips(){
+    var a=all();$("whChips").innerHTML=a.map(function(s){
+      var id=String(s.id);return '<span class="wh-chip'+(sel.has(id)?' on':'')+(dead(s)?' dead':'')+'" data-id="'+esc(id)+'">'+esc(id)+' '+esc(s.name)+(s.storyAsk?'<small>劇情</small>':'')+'</span>';}).join("");
+    $("whCnt").textContent="參與名單 "+cands().length+" ／ "+a.length;$("whSum").innerHTML="本輪參與 <b>"+cands().length+"</b> ／ "+a.length+" 位";
+  }
+  function refresh(){$("whHistN").textContent=hist.length?"（"+hist.length+"）":"";fchips();chips();draw();$("whGo").disabled=spinning||!cands().length;}
+  function open(){
+    var a=all();
+    if(!inited&&a.length){applyFlt();inited=true;}
+    var ids=new Set(a.map(function(s){return String(s.id);}));sel.forEach(function(i){if(!ids.has(i))sel.delete(i);});
+    ov.classList.add("on");ov.scrollTop=0;document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";
+    refresh();
+  }
+  function close(){if(spinning)return;hideResult();ov.classList.remove("on");document.documentElement.style.overflow="";document.body.style.overflow="";}
+  function rnd(n){if(window.crypto&&crypto.getRandomValues){var u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n;}return Math.floor(Math.random()*n);}
+  function spin(){
+    var list=cands(),n=list.length;if(spinning||!n)return;
+    var w=rnd(n),a=Math.PI*2/n,TAU=Math.PI*2;
+    var jitter=(Math.random()-0.5)*a*0.7;
+    var base=1.5*Math.PI-(w+0.5)*a+jitter;
+    var delta=(((base-rot)%TAU)+TAU)%TAU+TAU*(5+rnd(3));
+    var from=rot,dur=4800+rnd(1200),t0=performance.now();
+    spinning=true;$("whGo").disabled=true;
+    function step(now){
+      var p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,4);
+      rot=from+delta*e;draw();
+      if(p<1){requestAnimationFrame(step);return;}
+      spinning=false;rot=((rot%TAU)+TAU)%TAU;
+      var s=list[w];
+      hist.unshift(s.id+" "+s.name);
+      $("whHist").innerHTML=hist.slice(0,30).map(function(h,i){return (hist.length-i)+". "+esc(h);}).join("<br>");
+      if($("whRm").checked)sel.delete(String(s.id));
+      showResult(s);refresh();
+    }
+    requestAnimationFrame(step);
+  }
+  function showResult(s){
+    var c=null;try{c=classify(s.hp,s.san);}catch(e){}
+    var cls=c?c.cardClass:"ok",tag=c?c.tagClass:"ok",label=c?c.label:"",txt=c?c.text:"";
+    var av=s.avatarUrl?'<div class="avatar-shape avatar-square has-avatar"><img src="'+esc(s.avatarUrl)+'" alt=""></div>'
+      :'<div class="avatar-shape avatar-square avatar-empty"><span class="avatar-ch">'+esc(String(s.name).charAt(0))+'</span></div>';
+    var sts=Array.isArray(s.statuses)?s.statuses:[];
+    var note=sts.length?sts.map(function(t){return '<span class="status-pill">'+esc(t)+'</span>';}).join(""):txt;
+    var tags="";try{tags=window.__linkTags?window.__linkTags(s,true):"";}catch(e){}
+    var bar=function(v,t){try{return segBar(v,t);}catch(e){var h="";for(var i=0;i<3;i++)h+='<div class="seg '+(i<v?t+'-fill':'empty')+'"></div>';return h;}};
+    var card=$("whCard");card.className="card wh-rc "+cls;
+    card.innerHTML=
+      '<div class="card-top"><div class="id-num">編號 <b>'+esc(s.id)+'</b></div><div class="status '+tag+'">'+esc(label)+'</div></div>'+
+      '<div class="codename-line">'+av+'<div class="codename">'+esc(s.name)+'</div></div>'+tags+
+      '<div class="stat-row"><div class="stat-label"><span>HP</span><span>'+s.hp+'/3</span></div><div class="segs">'+bar(s.hp,"hp")+'</div></div>'+
+      '<div class="stat-row"><div class="stat-label"><span>SAN</span><span>'+s.san+'/3</span></div><div class="segs">'+bar(s.san,"san")+'</div></div>'+
+      '<div class="item-count">繃帶 x<b>'+(s.bandages||0)+'</b>　／　針筒 x<b>'+(s.syringes||0)+'</b>'+(s.saliva>0?'　／　唾液 x<b>'+s.saliva+'</b>':'')+'　　　死亡 x<b>'+(s.deathCount||0)+'</b>／瘋狂 x<b>'+(s.madCount||0)+'</b></div>'+
+      '<div class="note">'+note+'</div>';
+    $("whMask").classList.add("on");
+    $("whMask").scrollTop=0;
+  }
+  function hideResult(){$("whMask").classList.remove("on");}
+  $("whOk").onclick=hideResult;
+  $("whAgain").onclick=function(){hideResult();setTimeout(spin,150);};
+  $("wheelEnterBtn").addEventListener("click",open);
+  $("whClose").onclick=close;$("whGo").onclick=spin;
+  $("whChips").addEventListener("click",function(e){
+    var c=e.target.closest(".wh-chip");if(!c||spinning)return;
+    var id=c.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);refresh();});
+  $("whFilters").addEventListener("click",function(e){
+    var c=e.target.closest(".wh-chip");if(!c||spinning)return;
+    var k=c.dataset.f;flt[k]=!flt[k];applyFlt();refresh();});
+  $("whFReset").onclick=function(){if(spinning)return;flt=Object.assign({},FDEF);applyFlt();refresh();};
+  $("whAll").onclick=function(){if(spinning)return;all().forEach(function(s){sel.add(String(s.id));});refresh();};
+  $("whNone").onclick=function(){if(spinning)return;sel.clear();refresh();};
+  $("whAlive").onclick=function(){if(spinning)return;sel.clear();all().forEach(function(s){if(!dead(s))sel.add(String(s.id));});refresh();};
+  $("whClr").onclick=function(){hist=[];$("whHist").textContent="尚無紀錄";refresh();};
+  ["wheel","touchmove"].forEach(function(ev){ov.addEventListener(ev,function(e){e.stopPropagation();},{passive:true});});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&ov.classList.contains("on")){if($("whMask").classList.contains("on"))hideResult();else close();}});
+  window.addEventListener("resize",function(){if(ov.classList.contains("on"))draw();});
+})();
+</script>
+
 </body>
 </html>
