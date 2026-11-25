@@ -3831,7 +3831,6 @@
     </div>
     <div class="wl-bot">
       <button type="button" class="wl-start" id="wlStart"><span>開始測驗</span><b>→</b></button>
-      <button type="button" class="wl-link" id="wlBack1">← 返回機構活動</button>
     </div>
   </div>
 
@@ -3865,9 +3864,6 @@
     </div>
   </div>
 
-  <div class="wl-backwrap">
-    <button class="observe-btn" id="welcomeBackBtn"><span class="dot"></span>返回機構活動</button>
-  </div>
 </section>
 
 
@@ -6146,10 +6142,6 @@ document.getElementById("welcomeEnterBtn").addEventListener("click", () => {
   withTransitionLock(() => jumpToIndex(10, true));  // 機構活動 -> 參企偏好表（直接進入，不滾動）
 });
 
-document.getElementById("welcomeBackBtn").addEventListener("click", () => {
-  withTransitionLock(() => jumpToIndex(8));   // 參企偏好表 -> 返回機構活動
-});
-
 document.getElementById("eventBtn").addEventListener("click", () => {
   withTransitionLock(() => jumpToIndex(8));   // 匿名情感收容室 -> 返回機構活動
 });
@@ -6250,6 +6242,7 @@ menuBackdrop.addEventListener("click", closeMenu);
 document.querySelectorAll(".menu-item.available").forEach((item) => {
   item.addEventListener("click", () => {
     const idx = parseInt(item.dataset.target, 10);
+    try{ if(window.__whForceClose) window.__whForceClose(); }catch(e){}
     closeMenu();
     withTransitionLock(() => jumpToIndex(idx));
   });
@@ -11115,7 +11108,6 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
   };
   $("wlTagAdd").onclick=addCustom;
   $("wlTagIn").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();addCustom();}});
-  $("wlBack1").onclick=function(){$("welcomeBackBtn").click();};
   $("wlStart").onclick=function(){var it=$("wlIntro"),qz=$("wlQuiz"),rm=$("welcomeRoom");
     it.classList.remove("wl-fin");it.classList.add("wl-fout");
     setTimeout(function(){it.classList.remove("wl-fout");rm.classList.remove("wl-cover");it.hidden=true;qz.hidden=false;
@@ -11365,14 +11357,78 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 #wheelOv .wh-scroll{max-height:260px;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
 #wheelOv .wh-chip{padding:5px 10px;font-size:12px}
 #wheelOv .wh-chip.fx{padding:7px 13px}
+
+/* ===== 轉盤:與名冊/行動按鈕統一 ===== */
+#wheelOv{background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(122,14,14,.18) 0%,transparent 70%),var(--bg,#0a0706)}
+#wheelOv .wh-in{max-width:480px}
+#wheelOv .wh-top{font:500 11px var(--mono,monospace);letter-spacing:.3em;color:var(--c-crit,#b5020f)}
+/* 返回:同 modify-btn */
+#wheelOv .wh-x{width:auto;padding:9px 14px;background:transparent;border:1px solid var(--line,#2b201d);border-radius:0;color:var(--bone-dim,#a89f92);font:400 13px var(--mono,monospace);letter-spacing:.08em;transition:background .2s ease,color .2s ease}
+#wheelOv .wh-x:hover{background:rgba(255,255,255,.05);color:var(--bone,#e6ddcf)}
+/* 抽取:同 confirm-btn */
+#wheelOv .wh-go{width:auto;min-width:150px;margin:32px auto 0;padding:9px 30px;background:rgba(181,2,15,.32);border:1px solid var(--c-crit,#b5020f);border-radius:6px;color:var(--bone,#e6ddcf);font:400 13px var(--mono,monospace);letter-spacing:.08em;text-indent:0;box-shadow:none;transition:background .2s ease}
+#wheelOv .wh-go:hover:not(:disabled){background:rgba(181,2,15,.5)}
+/* 結果視窗按鈕:確認=confirm-btn、再抽一次=modify-btn */
+#wheelOv .wh-btns{gap:9px}
+#wheelOv .wh-btns button{padding:13px 14px;border-radius:0;font:400 13px var(--mono,monospace);letter-spacing:.08em;text-indent:0;transition:background .2s ease,color .2s ease}
+#wheelOv .wh-ok{background:rgba(181,2,15,.32);border:1px solid var(--c-crit,#b5020f);color:var(--bone,#e6ddcf)}
+#wheelOv .wh-ok:hover{background:rgba(181,2,15,.5)}
+#wheelOv .wh-again,#wheelOv .wh-view{background:transparent;border:1px solid var(--line,#2b201d);color:var(--bone-dim,#a89f92)}
+#wheelOv .wh-again:hover,#wheelOv .wh-view:hover{background:rgba(255,255,255,.05);color:var(--bone,#e6ddcf)}
+/* 小按鈕與篩選:同名冊 legend-btn */
+#wheelOv .wh-sec span button,#wheelOv .wh-chip{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13);border-radius:4px;color:var(--bone-dim,#a89f92);font-family:inherit;transition:background .2s ease,border-color .2s ease,color .2s ease}
+#wheelOv .wh-sec span button{font-size:12px;padding:5px 11px;margin-left:6px}
+#wheelOv .wh-sec span button:hover,#wheelOv .wh-chip:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.26);color:var(--bone,#e6ddcf)}
+#wheelOv .wh-chip.on{background:rgba(255,255,255,.16);border-color:var(--bone-dim,#a89f92);color:var(--bone,#e6ddcf)}
+#wheelOv .wh-chip.dead{opacity:.6}
+/* 去除陰影與發光,整體扁平 */
+#wheelOv h2{text-shadow:none}
+#wheelOv .wh-box::before{box-shadow:none;border-color:rgba(181,2,15,.45)}
+#wheelOv .wh-ptr{filter:none}
+#wheelOv .wh-rc,#wheelOv .wh-rc:hover{animation:none;box-shadow:none;filter:none}
+#wheelOv .wh-card{filter:none;box-shadow:none}
+#wheelOv .wh-lbl{text-shadow:none;font-family:var(--mono,monospace)}
+/* 面板:直角、同網站邊線 */
+#wheelOv .wh-d{background:var(--bg-panel,#130f0e);border:1px solid var(--line,#2b201d);border-radius:0;width:min(78vw,360px)}
+#wheelOv .wh-d>summary{font:400 13px var(--mono,monospace);letter-spacing:.08em}
+#wheelOv .wh-d[open]>summary{border-bottom-color:var(--line,#2b201d)}
+#wheelOv .wh-d2{border:1px dashed var(--line,#2b201d);border-radius:0}
+#wheelOv .wh-d2>summary{font:400 12px var(--mono,monospace);letter-spacing:.08em}
+#wheelOv .wh-sum{font:400 13px var(--mono,monospace);letter-spacing:.08em;text-indent:0}
+#wheelOv .wh-body .wh-sec,#wheelOv .wh-sec{font:500 11px var(--mono,monospace)}
+/* ===== 轉盤頁:保留左上角目錄 ===== */
+body.wh-open .menu-toggle{z-index:100020}
+body.wh-open .menu-backdrop{z-index:100010}
+body.wh-open .menu-panel{z-index:100015}
+#wheelOv .wh-top{justify-content:center;padding-left:0}
+/* ===== 轉盤進場:漸進式浮現 ===== */
+#wheelOv.on{animation:whOvIn .55s ease-out backwards}
+#wheelOv.out{animation:whOvOut .32s ease-in forwards;pointer-events:none}
+@keyframes whOvIn{from{opacity:0;background:#000}to{opacity:1}}
+@keyframes whOvOut{from{opacity:1}to{opacity:0}}
+@keyframes whRise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes whWheelIn{0%{opacity:0;transform:scale(.55) rotate(-140deg)}60%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes whPtrDrop{from{opacity:0;transform:translateX(-50%) translateY(-26px)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes whLine{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:none}}
+#wheelOv.on .wh-top{animation:whRise .6s ease-out .15s backwards}
+#wheelOv.on h2{animation:whRise .7s ease-out .35s backwards}
+#wheelOv.on .wh-sub{animation:whRise .7s ease-out .55s backwards}
+#wheelOv.on .wh-orn{animation:whLine .8s ease-out .75s backwards}
+#wheelOv.on .wh-box{animation:whWheelIn 1.15s cubic-bezier(.2,.8,.2,1) .9s backwards}
+#wheelOv.on .wh-ptr{animation:whPtrDrop .55s cubic-bezier(.3,1.5,.5,1) 1.85s backwards}
+#wheelOv.on .wh-go{animation:whRise .7s ease-out 2.05s backwards}
+#wheelOv.on .wh-sum{animation:whRise .7s ease-out 2.25s backwards}
+#wheelOv.on .wh-d{animation:whRise .7s ease-out 2.4s backwards}
+#wheelOv.on .wh-d+.wh-d{animation-delay:2.55s}
+@media (prefers-reduced-motion:reduce){#wheelOv.on,#wheelOv.on *{animation-duration:.01s!important;animation-delay:0s!important}}
 </style>
 <div id="wheelOv" role="dialog" aria-label="實驗體大轉盤"><div class="wh-mask" id="whMask"><div class="wh-card">
     <div class="wh-lbl">抽 中</div>
     <div class="card wh-rc" id="whCard"></div>
-    <div class="wh-btns"><button type="button" class="wh-ok" id="whOk">確認</button><button type="button" class="wh-again" id="whAgain">再抽一次</button></div>
+    <div class="wh-btns"><button type="button" class="wh-ok" id="whOk">確認</button><button type="button" class="wh-again" id="whAgain">再抽一次</button><button type="button" class="wh-view" id="whView">前往</button></div>
   </div></div>
   <div class="wh-in">
-  <div class="wh-top"><span>EVENT ⁄ 03</span><button type="button" class="wh-x" id="whClose">返回機構活動</button></div>
+  <div class="wh-top"><span>EVENT ⁄ 03</span></div>
   <h2>實驗體大轉盤</h2><div class="wh-sub">隨機抽取實驗體</div><div class="wh-orn"></div>
   <div class="wh-box"><div class="wh-ptr"></div><canvas id="whCv"></canvas></div>
   <button type="button" class="wh-go" id="whGo">抽取</button>
@@ -11441,10 +11497,11 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
     var a=all();
     if(!inited&&a.length){applyFlt();inited=true;}
     var ids=new Set(a.map(function(s){return String(s.id);}));sel.forEach(function(i){if(!ids.has(i))sel.delete(i);});
-    ov.classList.add("on");ov.scrollTop=0;document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";
+    clearTimeout(closeT);ov.classList.remove("out");ov.classList.add("on");document.body.classList.add("wh-open");ov.scrollTop=0;document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";
     refresh();
   }
-  function close(){if(spinning)return;hideResult();ov.classList.remove("on");document.documentElement.style.overflow="";document.body.style.overflow="";}
+  var closeT=0;
+  function close(force){if((spinning&&!force)||ov.classList.contains("out"))return;hideResult();ov.classList.add("out");document.body.classList.remove("wh-open");document.documentElement.style.overflow="";document.body.style.overflow="";closeT=setTimeout(function(){ov.classList.remove("on","out");},320);}
   function rnd(n){if(window.crypto&&crypto.getRandomValues){var u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n;}return Math.floor(Math.random()*n);}
   function spin(){
     var list=cands(),n=list.length;if(spinning||!n)return;
@@ -11463,7 +11520,8 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       hist.unshift(s.id+" "+s.name);
       $("whHist").innerHTML=hist.slice(0,30).map(function(h,i){return (hist.length-i)+". "+esc(h);}).join("<br>");
       if($("whRm").checked)sel.delete(String(s.id));
-      showResult(s);refresh();
+      if(ov.classList.contains("on")&&!ov.classList.contains("out"))showResult(s);
+      refresh();
     }
     requestAnimationFrame(step);
   }
@@ -11484,14 +11542,24 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
       '<div class="stat-row"><div class="stat-label"><span>SAN</span><span>'+s.san+'/3</span></div><div class="segs">'+bar(s.san,"san")+'</div></div>'+
       '<div class="item-count">繃帶 x<b>'+(s.bandages||0)+'</b>　／　針筒 x<b>'+(s.syringes||0)+'</b>'+(s.saliva>0?'　／　唾液 x<b>'+s.saliva+'</b>':'')+'　　　死亡 x<b>'+(s.deathCount||0)+'</b>／瘋狂 x<b>'+(s.madCount||0)+'</b></div>'+
       '<div class="note">'+note+'</div>';
+    lastPick=s;
     $("whMask").classList.add("on");
     $("whMask").scrollTop=0;
   }
+  var lastPick=null;
   function hideResult(){$("whMask").classList.remove("on");}
   $("whOk").onclick=hideResult;
+  $("whView").onclick=function(){
+    var s=lastPick;if(!s||spinning)return;
+    close();
+    setTimeout(function(){
+      try{jumpToIndex(2,true);}catch(e){}
+      setTimeout(function(){try{jumpToSubject(s.id);}catch(e){console.warn("goto failed",e);}},200);
+    },340);
+  };
   $("whAgain").onclick=function(){hideResult();setTimeout(spin,150);};
   $("wheelEnterBtn").addEventListener("click",open);
-  $("whClose").onclick=close;$("whGo").onclick=spin;
+  $("whGo").onclick=spin;window.__whForceClose=function(){if(ov.classList.contains("on"))close(true);};
   $("whChips").addEventListener("click",function(e){
     var c=e.target.closest(".wh-chip");if(!c||spinning)return;
     var id=c.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);refresh();});
