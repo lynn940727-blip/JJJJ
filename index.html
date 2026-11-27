@@ -3005,6 +3005,8 @@
 #eventRoom .event-card-soon{border-style:dashed;background:rgba(255,255,255,.015)}
 #eventRoom .event-list{gap:44px}
 @media (min-width:700px){#eventRoom .event-list{gap:36px}}
+/* 機構活動：倒序顯示（賭場之夜在最上面） */
+#eventRoom #casinoEnterBtn{order:1}#eventRoom #wheelEnterBtn{order:2}#eventRoom #welcomeEnterBtn{order:3}#eventRoom #emoEnterBtn{order:4}
 #eventRoom .event-card-poster{border:1px solid #b0141f;box-shadow:0 18px 50px rgba(0,0,0,.7)}
 #eventRoom button.event-card-poster:hover,#eventRoom button.event-card-poster:focus-visible,#eventRoom button.event-card-poster:active{border-color:#ff2b3d;box-shadow:0 0 14px rgba(214,16,30,.32),0 22px 55px rgba(0,0,0,.7)}
 #eventRoom .event-card-poster{container-type:inline-size}
@@ -3755,7 +3757,7 @@
   <div class="roster-eyebrow">檔案 ⁄ 機構活動</div>
   <div class="roster-head">
     <h2>機構活動</h2>
-    <div class="roster-head-right"><div class="meta">活動數量 003</div></div>
+    <div class="roster-head-right"><div class="meta">活動數量 004</div></div>
   </div>
   <div class="roster-divider"></div>
   <div class="event-list">
@@ -3777,9 +3779,443 @@
       <span class="ep-title"><span class="ep-t1">實驗體</span><span class="ep-t2">大轉盤</span></span>
       <span class="event-card-go">more <i>→</i></span>
     </button>
+    <button type="button" class="event-card event-card-poster" id="casinoEnterBtn" aria-label="血池肉林　賭場之夜　進入活動">
+      <img class="event-poster" alt="" src="">
+      <span class="ep-tag">EVENT ⁄ 04</span>
+      <span class="ep-title"><span class="ep-t1">血池肉林</span><span class="ep-t2">賭場之夜</span></span>
+      <span class="event-card-go">more <i>→</i></span>
+    </button>
   </div>
 </section>
 <script>(function(){var im=document.querySelectorAll("#eventRoom .event-poster");for(var i=1;i<im.length;i++)im[i].src=im[0].src;})();</script>
+
+<style>
+#casinoOv{position:fixed;inset:0;z-index:100005;background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(122,14,14,.18) 0%,transparent 70%),var(--bg,#0a0706);color:var(--bone,#e6ddcf);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#casinoOv.on{display:block;animation:whOvIn .55s ease-out backwards}
+#casinoOv.out{display:block;animation:whOvOut .32s ease-in forwards;pointer-events:none}
+#casinoOv .cs-in{max-width:1100px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 18px 40px;text-align:center}
+#casinoOv .cs-top{position:relative;display:flex;justify-content:center;align-items:center;min-height:42px;font:500 11px var(--mono,monospace);letter-spacing:.3em;color:var(--c-crit,#b5020f)}
+#casinoOv .cs-chip{position:absolute;right:0;top:50%;transform:translateY(-50%);padding:6px 12px;border:1px solid rgba(255,255,255,.13);border-radius:4px;background:rgba(255,255,255,.045);font:400 12px var(--mono,monospace);letter-spacing:.08em;color:var(--bone-dim,#a89f92);white-space:nowrap}
+#casinoOv .cs-chip b{color:var(--bone,#e6ddcf);font-weight:600;margin-left:4px}
+#casinoOv .cs-quick{margin:32px auto 0;max-width:640px;padding:0 4px;text-align:left}
+#casinoOv .cs-rules{margin:32px auto 0;max-width:640px;padding:18px 20px;border:1px solid var(--line,#2b201d);background:var(--bg-panel,#130f0e);text-align:left}
+#casinoOv .cs-rules{margin-top:64px;padding-bottom:22px}
+#casinoOv .cs-qh{font:500 13px var(--mono,monospace);letter-spacing:.12em;color:var(--bone,#e6ddcf);padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line,#2b201d)}
+#casinoOv .cs-qh span{margin-left:10px;font-size:10px;letter-spacing:.3em;color:var(--c-crit,#b5020f)}
+#casinoOv .cs-quick ul,#casinoOv .cs-rules ul,#casinoOv .cs-rules ol{margin:0;padding-left:20px;font-size:14px;line-height:1.9;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-quick b{color:#ff2230;font-weight:700}
+#casinoOv .cs-quick p{margin:0 0 8px;font-size:15px;line-height:1.9;color:var(--bone,#e6ddcf)}
+#casinoOv .cs-quick p.cs-tip{margin:12px 0 0;font-size:12px;line-height:1.7;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-more{display:block;margin:14px 0 0 auto;padding:0;background:none;border:0;color:var(--bone-dim,#a89f92);font:500 12px var(--mono,monospace);letter-spacing:.2em;cursor:pointer;transition:color .2s ease}
+#casinoOv .cs-more i{font-style:normal;display:inline-block;transition:transform .2s ease}
+#casinoOv .cs-more:hover{color:var(--bone,#e6ddcf)}
+#casinoOv .cs-more:hover i{transform:translateX(3px)}
+#casinoOv .cs-rules .cs-q{margin-bottom:2px;color:var(--bone,#e6ddcf)}
+#casinoOv .cs-rules .cs-a{color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-rules b{color:inherit;font-weight:700}
+#casinoOv .cs-rules .hi{color:#ff2230;font-weight:700}
+#casinoOv .cs-rules li{margin-bottom:2px}
+#casinoOv .cs-rules h4{margin:22px 0 8px;font:600 13px var(--mono,monospace);letter-spacing:.14em;color:var(--c-crit,#b5020f)}
+#casinoOv .cs-rules p{margin:0 0 8px;font-size:14px;line-height:1.9;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-fm{padding:10px 14px;border-left:3px solid var(--c-crit,#b5020f);background:rgba(255,255,255,.04);color:var(--bone,#e6ddcf)!important;font-family:var(--mono,monospace);letter-spacing:.08em}
+#casinoOv .cs-tbl{width:100%;margin:10px 0 4px;border-collapse:collapse;font-size:14px}
+#casinoOv .cs-tbl th,#casinoOv .cs-tbl td{padding:9px 12px;border:1px solid var(--line,#2b201d);text-align:center;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-tbl th{font:500 12px var(--mono,monospace);letter-spacing:.1em;color:var(--bone,#e6ddcf);background:rgba(255,255,255,.04)}
+#casinoOv .cs-tbl td:last-child{color:var(--bone,#e6ddcf);font-weight:600}
+#casinoOv.on .cs-quick{animation:whRise .7s ease-out .7s backwards}
+#casinoOv .cs-rank{margin-top:4px;font:400 11px var(--mono,monospace);letter-spacing:.12em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-bet{display:block;margin:10px auto 0;padding:5px 16px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13);border-radius:4px;color:var(--bone-dim,#a89f92);font:400 12px var(--mono,monospace);letter-spacing:.08em;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease}
+#casinoOv .cs-bet:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.26);color:var(--bone,#e6ddcf)}
+#casinoOv .cs-mask{position:fixed;inset:0;z-index:100030;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,3,3,.78);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#casinoOv .cs-mask.on{display:flex;animation:whOvIn .25s ease-out backwards}
+#casinoOv .cs-modal{width:100%;max-width:340px;padding:22px 20px 18px;border:1px solid var(--line,#2b201d);border-radius:6px;background:var(--bg-panel,#130f0e);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#casinoOv .cs-mt{font:600 15px var(--mono,monospace);letter-spacing:.12em;color:var(--bone,#e6ddcf)}
+#casinoOv .cs-ms{margin-top:8px;font:400 12px/1.7 var(--mono,monospace);letter-spacing:.1em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-ms b{font-size:18px;color:#ff2230;margin:0 2px}
+#casinoOv .cs-mv{display:flex;align-items:center;justify-content:center;gap:22px;margin:22px 0 14px}
+#casinoOv .cs-mv button{width:38px;height:38px;border:1px solid rgba(255,255,255,.18);border-radius:50%;background:rgba(255,255,255,.05);color:var(--bone,#e6ddcf);font-size:18px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#casinoOv .cs-mv button:active{background:rgba(255,255,255,.14)}
+#casinoOv .cs-mv span{min-width:64px;font:700 38px var(--mono,monospace);color:#ff2230}
+#casinoOv #csRange{width:100%;margin:4px 0 10px;accent-color:#ff2230;touch-action:pan-y}
+#casinoOv .cs-mi{min-height:34px;font:400 12px/1.7 var(--mono,monospace);letter-spacing:.06em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-mi b{color:var(--bone,#e6ddcf)}
+#casinoOv .cs-mb{display:flex;gap:10px;margin-top:10px}
+#casinoOv .cs-mb button{flex:1;padding:10px 0;border:1px solid rgba(255,255,255,.18);border-radius:4px;background:rgba(255,255,255,.05);color:var(--bone-dim,#a89f92);font:500 13px var(--mono,monospace);letter-spacing:.2em;cursor:pointer}
+#casinoOv .cs-mb .cs-ok{background:#7a0e0e;border-color:#b5020f;color:#fff}
+#casinoOv .cs-mb button:disabled{opacity:.35;cursor:not-allowed}
+#casinoOv h2{line-height:1.25;margin:28px 0 8px;font-family:var(--serif,serif);font-weight:900;font-size:clamp(30px,9vw,44px);letter-spacing:.18em;color:#ff2230}
+#casinoOv .cs-status{margin:22px auto 0;max-width:640px;padding:8px 14px;border:1px solid var(--line,#2b201d);border-left:3px solid var(--c-crit,#b5020f);background:rgba(255,255,255,.04);font:500 12px var(--mono,monospace);letter-spacing:.1em;color:var(--bone,#e6ddcf);text-align:left}
+#casinoOv .cs-status.closed{border-left-color:#666;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-mine{display:none;margin:18px auto 0;max-width:640px;padding:16px 18px;border:1px solid var(--line,#2b201d);background:var(--bg-panel,#130f0e);text-align:left}
+#casinoOv .cs-mine.on{display:block}
+#casinoOv .cs-mrow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line,#2b201d);font-size:13px;line-height:1.6;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-mrow b{color:var(--bone,#e6ddcf)}
+#casinoOv .cs-mrow .r{white-space:nowrap;text-align:right}
+#casinoOv .cs-mrow .win{color:#ff2230;font-weight:700}
+#casinoOv .cs-mrow .lose{color:#777}
+#casinoOv .cs-mtot{margin-top:10px;text-align:right;font:500 13px var(--mono,monospace);letter-spacing:.08em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-mtot b{font-size:20px;color:#ff2230;margin:0 3px}
+#casinoOv .cs-res{margin-top:6px;font:600 11px var(--mono,monospace);letter-spacing:.1em}
+#casinoOv .cs-res.win{color:#ff2230}
+#casinoOv .cs-res.lose{color:#777}
+#casinoOv .cs-admbtn{display:block;margin:12px auto 0;padding:8px 18px;background:rgba(122,14,14,.25);border:1px solid #b5020f;border-radius:4px;color:var(--bone,#e6ddcf);font:500 12px var(--mono,monospace);letter-spacing:.1em;cursor:pointer}
+#casinoOv #csAdmTa{width:100%;box-sizing:border-box;margin:14px 0 8px;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);border-radius:4px;color:var(--bone,#e6ddcf);font:14px/1.6 var(--mono,monospace);resize:vertical}
+#casinoOv #csAdmPv .bad{color:#ff2230}
+#casinoOv .cs-total{margin:10px auto 0;font:400 12px var(--mono,monospace);letter-spacing:.08em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-total b{font-size:16px;color:var(--bone,#e6ddcf);margin-left:4px}
+#casinoOv .cs-bet:disabled{opacity:.45;cursor:not-allowed}
+#casinoOv .cs-bet.on:disabled{opacity:1;cursor:default}
+#casinoOv .cs-sub{font:400 12px var(--mono,monospace);letter-spacing:.3em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-roster{margin:44px auto 0;text-align:left}
+#casinoOv.on .cs-top{animation:whRise .6s ease-out .15s backwards}
+#casinoOv.on h2{animation:whRise .7s ease-out .35s backwards}
+#casinoOv.on .cs-sub{animation:whRise .7s ease-out .55s backwards}
+#casinoOv.on .cs-roster{animation:whRise .7s ease-out .8s backwards}
+#casinoOv.on .cs-status,#casinoOv.on .cs-admbtn,#casinoOv.on .cs-mine{animation:whRise .7s ease-out .9s backwards}
+#casinoOv .cs-adm{margin:40px auto 0;max-width:640px;padding:18px 20px;border:1px solid #7a0e0e;background:var(--bg-panel,#130f0e);text-align:left}
+#casinoOv .cs-ai{font:400 12px/1.8 var(--mono,monospace);letter-spacing:.06em;color:var(--bone-dim,#a89f92);margin-bottom:12px;word-break:break-all}
+#casinoOv .cs-ai b{color:var(--bone,#e6ddcf)}
+#casinoOv .cs-ag{display:flex;gap:10px}
+#casinoOv .cs-ag button{flex:1;padding:11px 0;border:1px solid #b5020f;border-radius:4px;background:rgba(122,14,14,.25);color:var(--bone,#e6ddcf);font:500 13px var(--mono,monospace);letter-spacing:.14em;cursor:pointer}
+#casinoOv .cs-ag button:disabled{opacity:.35;cursor:not-allowed}
+#casinoOv .cs-an{margin:12px 0 0;font-size:13px;line-height:1.8;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-reset{display:block;width:100%;margin-top:16px;padding:11px 0;border:1px dashed rgba(255,255,255,.28);border-radius:4px;background:none;color:var(--bone-dim,#a89f92);font:500 13px var(--mono,monospace);letter-spacing:.14em;cursor:pointer}
+#casinoOv .cs-reset:hover{border-color:#ff2230;color:#ff2230}
+#casinoOv .cs-reset:disabled{opacity:.35;cursor:not-allowed}
+#casinoOv .cs-bet.adm{border-style:dashed}
+body.cs-open .menu-toggle{z-index:100020}
+body.cs-open .menu-backdrop{z-index:100010}
+body.cs-open .menu-panel{z-index:100015}
+</style>
+<div id="casinoOv" aria-hidden="true"><div class="cs-in">
+  <div class="cs-top"><span>EVENT ⁄ 04</span><div class="cs-chip" id="csChipBox">籌碼 <b id="csChips">0</b></div></div>
+  <h2>賭場之夜</h2>
+  <div class="cs-sub">CASINO NIGHT</div>
+  <div class="cs-quick">
+    <p>猜猜哪些實驗體能進入<b>總排名前十名</b>！可全押一人或分開下注。</p>
+    <p>押對就能得分，押的籌碼越多，分數越高。</p>
+    <p class="cs-tip">Tips：押中目前排名越後面的實驗體，獎勵越多！快來尋找你的黑馬吧！</p>
+    <button type="button" class="cs-more" id="csMore">more <i>→</i></button>
+  </div>
+  <div class="cs-status" id="csStatus"></div>
+    <div class="cs-mine" id="csMine"></div>
+  <div class="cs-roster" id="csRoster"></div>
+  <div class="cs-rules" id="csRules">
+    <div class="cs-qh">詳細規則 <span>DETAILS</span></div>
+    <h4>一、押注時間</h4>
+    <p class="cs-fm">11/27～12/4 23:59</p>
+    <h4>二、怎麼下注？</h4>
+    <p>每位資助者有 <b class="hi">20 個籌碼</b>，每位醫療隊有 <b class="hi">10 個籌碼</b>，可以<b>全部押在同一名實驗體</b>身上，也可以<b>分開押給不同人</b>。</p>
+    <p>目標是猜中哪些實驗體能進入 <b class="hi">總排行前十名</b>！</p>
+    <p><b>下好離手</b>：確認押注後無法修改或取消。</p>
+    <h4>三、倍率與積分</h4>
+    <p><b>猜中才能獲得分數</b>，沒進入前十名則不計分。</p>
+    <p><b>排名越前面，押中後獎勵越少；排名越後面，押中後獎勵越多。</b></p>
+    <p>倍率以 WEEK 1＋WEEK 2 的總排名為準，之後不再變動。</p>
+    <table class="cs-tbl">
+      <tr><th>排名</th><th>倍率</th></tr>
+      <tr><td>第 1～3 名</td><td>1 倍</td></tr>
+      <tr><td>第 4～10 名</td><td>2 倍</td></tr>
+      <tr><td>第 11～30 名</td><td>3 倍</td></tr>
+      <tr><td>第 31～50 名</td><td>4 倍</td></tr>
+      <tr><td>第 51～80 名</td><td>4.5 倍</td></tr>
+    </table>
+    <h4>四、舉例說明</h4>
+    <p class="cs-dim">假設你拿出 10 個籌碼下注：</p>
+    <ul>
+      <li>押目前第 1 名，押中獲得 <b>10 分</b>。<span class="cs-dim">（1 倍）</span></li>
+      <li>押目前第 20 名，押中獲得 <b>30 分</b>。<span class="cs-dim">（3 倍）</span></li>
+    </ul>
+    <p class="cs-dim" style="margin-top:8px">如果分別押了 A、B 兩名實驗體，而且兩人都進入前十名，就能將兩筆獲得的分數<b>加在一起</b>。</p>
+    <h4>五、常見問題 <span style="letter-spacing:.2em;font-weight:400">FAQ</span></h4>
+    <p class="cs-q">Q：可以用自己的資助者或醫療隊押自己的實驗體嗎？</p>
+    <p class="cs-a"><b>A：可以！</b></p>
+  </div>
+  <div class="cs-adm" id="csAdmPanel" style="display:none">
+    <div class="cs-qh">管理員編輯 <span>ADMIN</span></div>
+    <div class="cs-ai" id="csAdmInfo"></div>
+    <div class="cs-ag">
+      <button type="button" id="csAdmBtn">上傳／修改前十名</button>
+      <button type="button" id="csAdmPubBtn">公布結果</button>
+    </div>
+    <div class="cs-ag" style="margin-top:10px">
+      <button type="button" id="csAdmCloseBtn">截止押注</button>
+    </div>
+    <p class="cs-an">管理員籌碼無限，可在任何時間押注、修改或取消自己的押注（點實驗體的押注按鈕；數量設為 0＝取消）。</p>
+    <button type="button" class="cs-reset" id="csAdmReset">⟲ 一鍵重置（恢復到尚未下注）</button>
+  </div>
+</div>
+<div class="cs-mask" id="csAdmMask"><div class="cs-modal">
+  <div class="cs-mt">上傳總排行前十名</div>
+  <div class="cs-ms">輸入實驗體編號（可用逗號、空格或換行分隔）。上傳後按「公布結果」，所有人才會看到結算與籌碼數量</div>
+  <textarea id="csAdmTa" rows="3" placeholder="例如：22 37 57 26 42 73 5 45 11 6"></textarea>
+  <div class="cs-mi" id="csAdmPv" style="text-align:left"></div>
+  <div class="cs-mb" style="margin-top:0"><button type="button" id="csAdmPub" class="cs-ok">公布結果</button></div>
+  <div class="cs-mb"><button type="button" id="csAdmCancel">取消</button><button type="button" id="csAdmClear">清除結果</button><button type="button" class="cs-ok" id="csAdmSave">上傳</button></div>
+</div></div>
+<div class="cs-mask" id="csMask"><div class="cs-modal">
+  <div class="cs-mt" id="csMt"></div>
+  <div class="cs-ms" id="csMs"></div>
+  <div class="cs-mv"><button type="button" id="csMinus" aria-label="減少">－</button><span id="csVal">0</span><button type="button" id="csPlus" aria-label="增加">＋</button></div>
+  <input type="range" id="csRange" min="0" max="0" step="1" value="0">
+  <div class="cs-mi" id="csMi"></div>
+  <div class="cs-mb"><button type="button" class="cs-cancel" id="csCancel">取消</button><button type="button" class="cs-ok" id="csOk">確認</button></div>
+</div></div></div>
+<script>(function(){
+  var ov=document.getElementById("casinoOv"),t=0;
+  function open(){clearTimeout(t);ov.classList.remove("out");ov.classList.add("on");ov.scrollTop=0;ov.setAttribute("aria-hidden","false");document.body.classList.add("cs-open");document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";}
+  function close(){if(!ov.classList.contains("on")||ov.classList.contains("out"))return;ov.classList.add("out");document.body.classList.remove("cs-open");document.documentElement.style.overflow="";document.body.style.overflow="";t=setTimeout(function(){ov.classList.remove("on","out");ov.setAttribute("aria-hidden","true");},320);}
+  /* 實驗體名單:跟總名冊的「實驗體」同一份資料(名字、頭像同步) */
+  var host=document.getElementById("csRoster"),lastSig="";
+  function esc(x){return String(x==null?"":x).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  var bets={},chipTotal=0,curList=[];
+  var RANKS={1:22,2:37,3:57,4:26,5:42,6:73,7:5,8:45,9:11,10:6,11:57,12:32,13:14,14:17,15:23,16:73,17:13,18:47,19:67,20:67,21:64,22:61,23:61,24:34,25:78,26:18,27:29,28:48,30:44,31:16,32:56,33:77,34:33,35:8,36:41,37:55,38:19,39:72,40:30,41:4,42:2,43:67,44:52,45:42,46:61,47:60,48:15,49:28,50:12,51:20,52:73,53:24,55:9,56:52,57:38,58:67,59:1,60:39,61:46,62:3,63:10,64:54,65:21,66:25,67:73,68:40,69:59,70:36,71:7,72:67,73:66,74:50,75:35,76:64,77:27,78:50,79:49,80:31};/* 押注開始前的排行榜名次(編號→名次),之後有更新再換這份 */
+  var TIERS=[{x:"1",lo:1,hi:3},{x:"2",lo:4,hi:10},{x:"3",lo:11,hi:30},{x:"4",lo:31,hi:50},{x:"4.5",lo:51,hi:80}];
+  /* 押注期間(台灣時間)與 WEEK 4 結算 */
+  var BET_START=new Date("2026-11-27T00:00:00+08:00").getTime(),BET_END=new Date("2026-12-04T23:59:59+08:00").getTime();
+  var resIds=[],published=false,allBets=null,betsRef=null,manualClosed=false;
+  var top10=null;/* WEEK 4 榜單公布後=前十名的名字集合,沒公布=null */
+  function phase(){if(manualClosed)return"closed";var n=Date.now();return n<BET_START?"before":(n<=BET_END?"open":"closed");}
+  function multOf(rk){var m=0;TIERS.forEach(function(t){if(rk>=t.lo&&rk<=t.hi)m=parseFloat(t.x);});return m;}
+  function totalsOf(){
+    if(!allBets)return null;var t={};
+    Object.keys(allBets).forEach(function(u){var b=allBets[u];b=b?(Array.isArray(b)?b:Object.values(b)):[];b.forEach(function(r){if(r&&r.id!=null)t[String(r.id)]=(t[String(r.id)]||0)+(Number(r.n)||0);});});
+    return t;
+  }
+  function f1(n){return String(Math.round(n*10)/10);}
+  function isAdmin2(){try{return !!(window.Auth&&Auth.isAdmin);}catch(e){return false;}}
+  function renderStatus(){
+    var el=document.getElementById("csStatus"),ph=phase();
+    el.className="cs-status"+(ph==="open"?"":" closed");
+    el.textContent=(isAdmin2()&&resIds.length&&!published?"（管理員：已上傳前十名，尚未公布）　":"")+(top10?"總排行前十名已公布，押注結算完成":(ph==="before"?"押注尚未開始　11/27 00:00 開放":(ph==="open"?"押注中　截止 12/4 23:59":"押注已截止　等待總排行前十名公布")));
+    var pb=document.getElementById("csAdmPubBtn"),pi=document.getElementById("csAdmInfo");
+    if(pb){pb.textContent=published?"取消公布":"公布結果";pb.disabled=!published&&!resIds.length;}
+    var cb=document.getElementById("csAdmCloseBtn");if(cb)cb.textContent=manualClosed?"重新開放押注":"截止押注";
+    var st="押注："+(manualClosed?"已手動截止":(phase()==="open"?"進行中":(phase()==="before"?"尚未開始":"已截止（時間到）")))+"<br>";
+    if(pi)pi.innerHTML=st+(resIds.length?("目前已上傳前十名：<b>"+resIds.map(esc).join("、")+"</b>　（"+(published?"已公布":"尚未公布")+"）"):"尚未上傳前十名");
+  }
+  function renderMine(list){
+    var box=document.getElementById("csMine"),rows=list.filter(function(p){return p.bet&&p.rk;});
+    if(!rows.length){box.className="cs-mine";box.innerHTML="";return;}
+    rows.sort(function(a,b){return a.n-b.n;});
+    var pot=0,got=0,h='<div class="cs-qh">我的押注 <span>MY BETS</span></div>';
+    rows.forEach(function(p){
+      var m=multOf(p.rk),pts=p.bet*m,hit=top10?top10.has(String(p.id)):null;
+      pot+=pts;if(hit)got+=pts;
+      h+='<div class="cs-mrow"><span>NO.'+esc(p.id)+' <b>'+esc(p.name||"—")+'</b><br>'+p.bet+' 籌碼 × '+m+' 倍</span><span class="r">'+(hit===null?'押中得 <b>'+f1(pts)+'</b> 分':(hit?'<span class="win">進前十　+'+f1(pts)+' 分</span>':'<span class="lose">未進前十　0 分</span>'))+'</span></div>';
+    });
+    h+='<div class="cs-mtot">'+(top10?'獲得總分 <b>'+f1(got)+'</b> 分':'全部押中最高 <b>'+f1(pot)+'</b> 分')+'</div>';
+    box.className="cs-mine on";box.innerHTML=h;
+  }
+  /* 已淘汰(029、054)不列入、不能押 */
+  function retired(x){try{return typeof RETIRED_IDS!=="undefined"&&(RETIRED_IDS.has(String(x.id))||RETIRED_IDS.has(("000"+parseInt(x.id,10)).slice(-3)));}catch(e){return false;}}
+  function render(){
+    var list=[];try{list=(subjects||[]).filter(function(x){return x&&!x.deleted&&!retired(x);}).map(function(x){var n=parseInt(x.id,10);return {id:String(x.id),name:String(x.name||""),av:x.avatarUrl||"",rk:RANKS[n]||0,n:n,bet:bets[String(x.id)]||0};});}catch(e){}
+    curList=list;
+    renderStatus();renderMine(list);
+    var sig=phase()+"|"+(isAdm()?"A":"U")+"|"+JSON.stringify(totalsOf())+"|"+(top10?Array.from(top10).join(";"):"-")+"#"+list.map(function(p){return p.id+"|"+p.name+"|"+p.rk+"|"+p.bet+"|"+(p.av?p.av.length:0);}).join(",");
+    if(sig===lastSig)return;lastSig=sig;
+    if(!list.length){host.innerHTML='<div class="mr-none">— 尚無資料 —</div>';return;}
+    var tots=totalsOf();
+    function BTN(p,ph,A){return '<button type="button" class="cs-bet'+(p.bet?' on':'')+(A?' adm':'')+'" data-id="'+esc(p.id)+'"'+((A||(ph==="open"&&!p.bet))?'':' disabled')+'>'+(p.bet?'已押 '+p.bet+(A?'・編輯':''):(A?'押注':(ph==="before"?'尚未開放':(ph==="closed"?'已截止':'押注'))))+'</button>';}
+    function tile(p){
+      var av=p.av?'<div class="mr-av"><img src="'+esc(p.av)+'" alt="" loading="lazy"></div>':'<div class="mr-av empty"><span>＋</span></div>';
+      var ph=phase(),mid="";
+      if(p.rk){
+        var bt=BTN(p,ph,isAdm());if(published&&tots)mid='<div class="cs-total">籌碼<b>'+(tots[p.id]||0)+'</b></div>'+(isAdm()?bt:'');
+        else mid=bt;
+        if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win">進前十 +'+f1(p.bet*multOf(p.rk))+' 分</div>':'<div class="cs-res lose">未進前十</div>';
+      }
+      return '<div class="mr-tile">'+av+'<div class="mr-tid">NO. <b>'+esc(p.id)+'</b></div><div class="mr-tname">'+esc(p.name||"—")+'</div>'+(p.rk?'<div class="cs-rank">第 '+p.rk+' 名</div>'+mid:'')+'</div>';
+    }
+    function group(title,en,arr){
+      if(!arr.length)return "";
+      return '<div class="mr-group"><div class="mr-ghead"><h3>'+title+'</h3><span class="en">'+en+'</span><span class="ct">'+arr.length+' 人</span></div><div class="mr-grid">'+arr.map(tile).join("")+'</div></div>';
+    }
+    function byRank(a,b){return a.rk-b.rk||a.n-b.n;}
+    var html="";
+    TIERS.forEach(function(t){
+      html+=group(t.x+' 倍','第 '+t.lo+'～'+t.hi+' 名',list.filter(function(p){return p.rk>=t.lo&&p.rk<=t.hi;}).sort(byRank));
+    });
+    html+=group('未開放押注','NO RANK',list.filter(function(p){return !p.rk;}).sort(function(a,b){return a.n-b.n;}));
+    host.innerHTML=html;
+  }
+  /* 籌碼:登入帳號名下每個資助者 20 個、每個醫療隊 10 個,進入活動頁就依持有角色計算 */
+  var CHIP_SPONSOR=20,CHIP_MEDIC=10,ADM_CHIPS=1e9;
+  function owned(app){var n=0,u="";try{u=Auth.uid()||"";}catch(e){}if(!u)return 0;try{(app&&app.getSubjects?app.getSubjects():[]).forEach(function(x){if(x&&!x.deleted&&x.owner===u)n++;});}catch(e){}return n;}
+  function myUid(){var u="";try{u=Auth.uid()||"";}catch(e){}return String(u).replace(/[.#$\[\]\/]/g,"_");}
+  /* 押注以資料庫為準(換裝置也看得到)；下好離手：只能新增，不能改、不能刪 */
+  var minRef=null,minUid="";
+  function betsDb(){
+    if(typeof firebase==="undefined"||!firebase.database)return null;
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    return firebase.database();
+  }
+  function subMine(){
+    var u=myUid();
+    if(u===minUid)return;
+    if(minRef){try{minRef.off();}catch(e){}minRef=null;}
+    minUid=u;bets={};lastSig="";
+    if(!u)return;
+    try{
+      var db=betsDb();if(!db){minUid="";return;}
+      minRef=db.ref("casino/bets/"+u);
+      minRef.on("value",function(sn){
+        var v=sn.val()||{},nb={};
+        (Array.isArray(v)?v:Object.values(v)).forEach(function(r){if(r&&r.id!=null&&Number(r.n)>0)nb[String(r.id)]=Number(r.n);});
+        bets=nb;lastSig="";
+        if(ov.classList.contains("on")){render();updateChips();}
+      },function(){});
+    }catch(e){minUid="";}
+  }
+  function spent(ex){var n=0;for(var k in bets)if(k!==ex)n+=bets[k]||0;return n;}
+  function updateChips(){
+    try{var ab=document.getElementById("csAdmPanel");if(ab)ab.style.display=isAdm()?"block":"none";}catch(e){}
+    var sp=owned(window.sponsorApp),md=owned(window.medicApp);
+    chipTotal=isAdm()?ADM_CHIPS:sp*CHIP_SPONSOR+md*CHIP_MEDIC;
+    subMine();
+    var used=spent(""),left=Math.max(0,chipTotal-used);
+    document.getElementById("csChips").textContent=isAdm()?"∞":left;
+    document.getElementById("csChipBox").title=isAdm()?"管理員：籌碼無限，可隨時押注／修改／取消":(sp||md)?("資助者 "+sp+" 位 × "+CHIP_SPONSOR+"　醫療隊 "+md+" 位 × "+CHIP_MEDIC+"　共 "+chipTotal+"，已押 "+used):"登入並擁有資助者或醫療隊角色後獲得籌碼";
+  }
+  setInterval(function(){if(ov.classList.contains("on")&&!document.hidden){render();updateChips();}},3000);
+  document.getElementById("csMore").addEventListener("click",function(){var r=document.getElementById("csRules");if(r)r.scrollIntoView({behavior:"smooth",block:"start"});});
+  /* 押注視窗:點「押注」後拉桿選籌碼,每名實驗體最多 100(不明寫) */
+  var betId="",betCap=0;
+  var mask=document.getElementById("csMask"),rng=document.getElementById("csRange"),valEl=document.getElementById("csVal"),okBtn=document.getElementById("csOk"),miEl=document.getElementById("csMi");
+  function fmt(n){return String(Math.round(n*10)/10);}
+  function curMult(){var p=null;curList.forEach(function(x){if(x.id===betId)p=x;});var m=0;TIERS.forEach(function(t){if(p&&p.rk>=t.lo&&p.rk<=t.hi)m=parseFloat(t.x);});return m;}
+  function setVal(v){v=Math.max(0,Math.min(betCap,parseInt(v,10)||0));rng.value=v;valEl.textContent=v;
+    var mult=curMult(),p=null;curList.forEach(function(x){if(x.id===betId)p=x;});
+    document.getElementById("csMs").innerHTML="目前第 "+(p?p.rk:0)+" 名（"+mult+" 倍）<br>押中可得 <b>"+fmt(v*mult)+"</b> 分";
+    var left=Math.max(0,chipTotal-spent(betId)-v);
+    miEl.innerHTML=isAdm()?"管理員：籌碼無限，可隨時修改；設為 0 即取消這筆押注（點中間的數字可直接輸入）":betCap<=0?(chipTotal?"籌碼已用完":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　剩餘籌碼 <b>"+left+"</b><br>下好離手，確認後無法修改");
+    okBtn.textContent="確認";
+  }
+  function openBet(id){
+    if(!isAdm()&&phase()!=="open")return;
+    if(bets[id]&&!isAdm())return;/* 下好離手(管理員除外) */
+    updateChips();var p=null;curList.forEach(function(x){if(x.id===id)p=x;});if(!p)return;
+    betId=id;betCap=isAdm()?999:Math.min(100,Math.max(0,chipTotal-spent(id)));
+    document.getElementById("csMt").textContent="NO. "+p.id+"　"+(p.name||"—");
+    rng.min=0;rng.max=betCap;rng.disabled=betCap<=0;okBtn.disabled=false;
+    document.getElementById("csMinus").disabled=document.getElementById("csPlus").disabled=betCap<=0;
+    setVal(isAdm()&&bets[id]?bets[id]:0);mask.classList.add("on");
+  }
+  function closeBet(){mask.classList.remove("on");betId="";}
+  host.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-bet");if(b)openBet(b.dataset.id);});
+  rng.addEventListener("input",function(){setVal(rng.value);});
+  valEl.addEventListener("click",function(){if(!isAdm())return;var s=prompt("輸入籌碼數量（0＝取消押注）",rng.value);if(s!==null)setVal(s);});
+  document.getElementById("csMinus").addEventListener("click",function(){setVal((parseInt(rng.value,10)||0)-1);});
+  document.getElementById("csPlus").addEventListener("click",function(){setVal((parseInt(rng.value,10)||0)+1);});
+  document.getElementById("csCancel").addEventListener("click",closeBet);
+  mask.addEventListener("click",function(e){if(e.target===mask)closeBet();});
+  okBtn.addEventListener("click",function(){
+    if(!isAdm()&&phase()!=="open"){closeBet();lastSig="";render();return;}
+    var v=parseInt(rng.value,10)||0;
+    if(isAdm()){
+      if(!betId){closeBet();return;}
+      var aid=betId,adb=betsDb(),au=myUid();
+      if(!adb||!au){alert("資料庫尚未連線，請稍後再試");return;}
+      okBtn.disabled=true;
+      var aref=adb.ref("casino/bets/"+au+"/"+aid),ap=v>0?aref.set({id:aid,n:v}):aref.remove();
+      ap.then(function(){okBtn.disabled=false;if(v>0)bets[aid]=v;else delete bets[aid];lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert("管理員修改押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：需允許管理員覆寫／刪除押注）");});
+      return;
+    }
+    if(bets[betId]||betCap<=0||v<=0){closeBet();return;}
+    var id=betId,db=betsDb(),u=myUid();
+    if(!db||!u){alert("資料庫尚未連線，請稍後再試");return;}
+    okBtn.disabled=true;
+    db.ref("casino/bets/"+u+"/"+id).set({id:id,n:v}).then(function(){okBtn.disabled=false;bets[id]=v;lastSig="";closeBet();render();updateChips();},function(){okBtn.disabled=false;closeBet();alert("押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&mask.classList.contains("on")){e.stopPropagation();closeBet();}},true);
+  function dbRef(){
+    if(typeof firebase==="undefined"||!firebase.database)return null;
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    return firebase.database().ref("casino/result");
+  }
+  function subW4(tries){
+    try{
+      var ref=dbRef();if(!ref)throw 0;
+      ref.on("value",function(snap){
+        var v=snap.val()||{},ids=v.ids?(Array.isArray(v.ids)?v.ids:Object.values(v.ids)):[];
+        resIds=ids.filter(function(x){return x!=null&&x!=="";}).map(String);
+        published=!!v.published&&resIds.length>0;
+        top10=published?new Set(resIds):null;
+        /* 公布後才讀取所有人的押注 */
+        if(published&&!betsRef){
+          betsRef=firebase.database().ref("casino/bets");
+          betsRef.on("value",function(sn){allBets=sn.val()||{};lastSig="";if(ov.classList.contains("on"))render();},function(){});
+        }else if(!published&&betsRef){betsRef.off();betsRef=null;allBets=null;}
+        lastSig="";if(ov.classList.contains("on"))render();
+      },function(){});
+    }catch(e){if((tries||0)<10)setTimeout(function(){subW4((tries||0)+1);},1500);}
+  }
+  /* 管理員:手動上傳總排行前十名(填實驗體編號) */
+  var admBtn=document.getElementById("csAdmBtn"),admMask=document.getElementById("csAdmMask"),admTa=document.getElementById("csAdmTa"),admPv=document.getElementById("csAdmPv");
+  function isAdm(){try{return !!(window.Auth&&Auth.isAdmin);}catch(e){return false;}}
+  function admIds(){var seen={},out=[];(admTa.value.match(/\d+/g)||[]).forEach(function(x){x=("00"+parseInt(x,10)).slice(-3);if(!seen[x]){seen[x]=1;out.push(x);}});return out;}
+  function admPreview(){
+    var ids=admIds(),h=ids.length?"共 "+ids.length+" 筆"+(ids.length!==10?"（不是 10 筆，請確認）":"")+"<br>":"";
+    ids.forEach(function(id){var p=null;curList.forEach(function(x){if(x.id===id)p=x;});h+=p?"NO."+esc(id)+" "+esc(p.name||"—")+"<br>":'<span class="bad">找不到編號 '+esc(id)+'</span><br>';});
+    admPv.innerHTML=h;
+  }
+  function admClose(){admMask.classList.remove("on");}
+  admBtn.addEventListener("click",function(){
+    if(!isAdm())return;
+    admTa.value=resIds.join(" ");admPreview();document.getElementById("csAdmPub").textContent=published?"取消公布":"公布結果";admMask.classList.add("on");
+  });
+  admTa.addEventListener("input",admPreview);
+  document.getElementById("csAdmCancel").addEventListener("click",admClose);
+  admMask.addEventListener("click",function(e){if(e.target===admMask)admClose();});
+  document.getElementById("csAdmSave").addEventListener("click",function(){
+    if(!isAdm())return;var ids=admIds();
+    if(!ids.length){alert("請先填入實驗體編號");return;}
+    var bad=ids.filter(function(id){return !curList.some(function(x){return x.id===id;});});
+    if(bad.length){alert("找不到編號："+bad.join("、"));return;}
+    if(ids.length!==10&&!confirm("目前是 "+ids.length+" 筆，不是 10 筆，確定要上傳嗎？"))return;
+    try{dbRef().update({ids:ids,updated:Date.now()}).then(admClose,function(err){alert("上傳失敗："+(err&&err.message||err));});}catch(e){alert("資料庫尚未連線，請稍後再試");}
+  });
+  document.getElementById("csAdmPub").addEventListener("click",function(){
+    if(!isAdm())return;
+    if(!published){
+      if(!resIds.length){alert("請先上傳前十名");return;}
+      if(!confirm("確定公布結果？所有人會看到結算與每個實驗體被押的籌碼數量。"))return;
+    }else if(!confirm("確定取消公布？"))return;
+    try{dbRef().update({published:!published}).then(admClose,function(err){alert("操作失敗："+(err&&err.message||err));});}catch(e){alert("資料庫尚未連線，請稍後再試");}
+  });
+  document.getElementById("csAdmClear").addEventListener("click",function(){
+    if(!isAdm()||!confirm("確定清除已公布的結果？所有人的結算會恢復成未公布。"))return;
+    try{dbRef().remove().then(admClose,function(err){alert("清除失敗："+(err&&err.message||err));});}catch(e){alert("資料庫尚未連線，請稍後再試");}
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&admMask.classList.contains("on")){e.stopPropagation();admClose();}},true);
+  document.getElementById("csAdmPubBtn").addEventListener("click",function(){document.getElementById("csAdmPub").click();});
+  document.getElementById("csAdmReset").addEventListener("click",function(){
+    if(!isAdm())return;
+    if(!confirm("確定一鍵重置？\n\n將清除「所有人」的押注，並清除已上傳／已公布的前十名結果與手動截止，恢復到尚未下注前。\n此動作無法復原。"))return;
+    var db=betsDb();if(!db){alert("資料庫尚未連線，請稍後再試");return;}
+    var btn=this;btn.disabled=true;
+    Promise.all([db.ref("casino/bets").remove(),db.ref("casino/result").remove(),db.ref("casino/closed").remove()]).then(function(){btn.disabled=false;manualClosed=false;bets={};allBets=null;resIds=[];published=false;top10=null;lastSig="";render();updateChips();alert("已重置：所有押注與結果已清除");},function(err){btn.disabled=false;alert("重置失敗："+(err&&err.message||err)+"\n（多半是資料庫規則：需允許管理員寫入／刪除 casino/bets 與 casino/result）");});
+  });
+  function subClosed(tries){
+    try{
+      var db=betsDb();if(!db)throw 0;
+      db.ref("casino/closed").on("value",function(sn){manualClosed=!!sn.val();lastSig="";if(ov.classList.contains("on")){render();updateChips();}},function(){});
+    }catch(e){if((tries||0)<10)setTimeout(function(){subClosed((tries||0)+1);},1500);}
+  }
+  document.getElementById("csAdmCloseBtn").addEventListener("click",function(){
+    if(!isAdm())return;
+    var db=betsDb();if(!db){alert("資料庫尚未連線，請稍後再試");return;}
+    var on=!manualClosed;
+    if(!confirm(on?"確定截止押注？\n所有人（管理員除外）會立即無法再押注。":"確定重新開放押注？"))return;
+    (on?db.ref("casino/closed").set(true):db.ref("casino/closed").remove()).then(function(){},function(err){alert("操作失敗："+(err&&err.message||err)+"\n（多半是資料庫規則：需允許管理員寫入 casino/closed）");});
+  });
+  subClosed(0);
+  subW4(0);
+  window.__csForceClose=close;
+  document.getElementById("casinoEnterBtn").addEventListener("click",function(){render();updateChips();open();});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
+})();</script>
 
 <footer>
   <p>血池肉林 收容設施 ｜ 本報告僅供內部觀測使用</p>
@@ -4221,6 +4657,11 @@ const SharedStore = (function(){
         Object.keys(fields).forEach(f => { if(!ALLOW[f]) delete fields[f]; });
         if(!Object.keys(fields).length) fields = null;
       }
+      // 一般玩家不能「新增」或「刪除」整筆角色紀錄（規則只准管理員；一般玩家只能改既有紀錄的 HP／SAN／狀態等）。
+      // 例如淘汰的時雨蝶、天蠶蛾、時雨月、資助者A：資料庫還留著舊紀錄，但程式名冊已經沒有 → 網頁想把它們刪掉，
+      // 玩家端硬送只會 PERMISSION_DENIED，還會害玩家自己的行動被判失敗。這種情況直接略過、不當成錯誤，
+      // 也不記成已寫入（管理員登入後的下一次儲存會真正清掉這些舊紀錄）。
+      if(window.Auth && Auth.uid() && !Auth.isAdmin && (j.del || !j.old)){ console.warn("skip record create/delete (not admin)", j.k, j.del ? "del" : "new"); return; }
       if(!j.del && !fields){ st.known[j.k] = j.c; st.rec[j.k] = j.rec; return; }
       // 先當作已寫入（避免重複送出）；失敗時還原，下次再試
       if(j.del){ delete st.known[j.k]; delete st.rec[j.k]; }
@@ -6242,7 +6683,7 @@ menuBackdrop.addEventListener("click", closeMenu);
 document.querySelectorAll(".menu-item.available").forEach((item) => {
   item.addEventListener("click", () => {
     const idx = parseInt(item.dataset.target, 10);
-    try{ if(window.__whForceClose) window.__whForceClose(); }catch(e){}
+    try{ if(window.__whForceClose) window.__whForceClose(); if(window.__csForceClose) window.__csForceClose(); }catch(e){}
     closeMenu();
     withTransitionLock(() => jumpToIndex(idx));
   });
@@ -11385,6 +11826,7 @@ window.sponsorApp={adjustCount,getCount,getSubjects:()=>subjects.slice(),openAva
 #wheelOv h2{text-shadow:none}
 #wheelOv .wh-box::before{box-shadow:none;border-color:rgba(181,2,15,.45)}
 #wheelOv .wh-ptr{filter:none}
+#wheelOv .wh-box{cursor:pointer;-webkit-tap-highlight-color:transparent}
 #wheelOv .wh-rc,#wheelOv .wh-rc:hover{animation:none;box-shadow:none;filter:none}
 #wheelOv .wh-card{filter:none;box-shadow:none}
 #wheelOv .wh-lbl{text-shadow:none;font-family:var(--mono,monospace)}
@@ -11503,6 +11945,7 @@ body.wh-open .menu-panel{z-index:100015}
   var closeT=0;
   function close(force){if((spinning&&!force)||ov.classList.contains("out"))return;hideResult();ov.classList.add("out");document.body.classList.remove("wh-open");document.documentElement.style.overflow="";document.body.style.overflow="";closeT=setTimeout(function(){ov.classList.remove("on","out");},320);}
   function rnd(n){if(window.crypto&&crypto.getRandomValues){var u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n;}return Math.floor(Math.random()*n);}
+  var stopHook=null;
   function spin(){
     var list=cands(),n=list.length;if(spinning||!n)return;
     var w=rnd(n),a=Math.PI*2/n,TAU=Math.PI*2;
@@ -11510,11 +11953,27 @@ body.wh-open .menu-panel{z-index:100015}
     var base=1.5*Math.PI-(w+0.5)*a+jitter;
     var delta=(((base-rot)%TAU)+TAU)%TAU+TAU*(5+rnd(3));
     var from=rot,dur=4800+rnd(1200),t0=performance.now();
-    spinning=true;$("whGo").disabled=true;
+    var mode=0,v=0,lastR=rot,lastT=t0,sFrom=0,sD=0,sT=1,sT0=0;
+    spinning=true;$("whGo").disabled=true;$("whGo").textContent="點轉盤可停止";
+    /* 點一下:從目前速度漸漸減速,停在原本抽中的那格 */
+    stopHook=function(){
+      if(mode)return;
+      var vv=Math.max(v,0.004),D=(((base-rot)%TAU)+TAU)%TAU;
+      while(3*D/vv<1300)D+=TAU;
+      mode=1;sFrom=rot;sD=D;sT=Math.min(3*D/vv,3200);sT0=performance.now();
+    };
     function step(now){
-      var p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,4);
-      rot=from+delta*e;draw();
+      var p;
+      if(!mode){
+        p=Math.min(1,(now-t0)/dur);var e=1-Math.pow(1-p,4);
+        rot=from+delta*e;
+        if(now>lastT){v=(rot-lastR)/(now-lastT);lastR=rot;lastT=now;}
+      }else{
+        p=Math.min(1,(now-sT0)/sT);rot=sFrom+sD*(1-Math.pow(1-p,3));
+      }
+      draw();
       if(p<1){requestAnimationFrame(step);return;}
+      stopHook=null;$("whGo").textContent="抽取";
       spinning=false;rot=((rot%TAU)+TAU)%TAU;
       var s=list[w];
       hist.unshift(s.id+" "+s.name);
@@ -11559,7 +12018,8 @@ body.wh-open .menu-panel{z-index:100015}
   };
   $("whAgain").onclick=function(){hideResult();setTimeout(spin,150);};
   $("wheelEnterBtn").addEventListener("click",open);
-  $("whGo").onclick=spin;window.__whForceClose=function(){if(ov.classList.contains("on"))close(true);};
+  $("whGo").onclick=spin;
+  ov.querySelector(".wh-box").addEventListener("click",function(){if(spinning&&stopHook)stopHook();});window.__whForceClose=function(){if(ov.classList.contains("on"))close(true);};
   $("whChips").addEventListener("click",function(e){
     var c=e.target.closest(".wh-chip");if(!c||spinning)return;
     var id=c.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);refresh();});
