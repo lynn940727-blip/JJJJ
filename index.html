@@ -3887,6 +3887,7 @@
 #casinoOv .cs-reset{display:block;width:100%;margin-top:16px;padding:11px 0;border:1px dashed rgba(255,255,255,.28);border-radius:4px;background:none;color:var(--bone-dim,#a89f92);font:500 13px var(--mono,monospace);letter-spacing:.14em;cursor:pointer}
 #casinoOv .cs-reset:hover{border-color:#ff2230;color:#ff2230}
 #casinoOv .cs-reset:disabled{opacity:.35;cursor:not-allowed}
+#casinoOv .cs-bet{white-space:nowrap}
 #casinoOv .cs-bet.adm{border-style:dashed}
 #casinoOv .cs-mc{display:none;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
 #casinoOv .cs-mcb{padding:7px 12px;border:1px solid rgba(255,255,255,.18);border-radius:4px;background:rgba(255,255,255,.05);color:var(--bone-dim,#a89f92);font:500 12px var(--mono,monospace);letter-spacing:.08em;cursor:pointer}
@@ -4128,7 +4129,7 @@ body.cs-open .menu-panel{z-index:100015}
     if(sig===lastSig)return;lastSig=sig;
     if(!list.length){host.innerHTML='<div class="mr-none">— 尚無資料 —</div>';return;}
     var tots=totalsOf();
-    function BTN(p,ph,A){return '<button type="button" class="cs-bet'+(p.bet?' on':'')+(A?' adm':'')+'" data-id="'+esc(p.id)+'"'+(((A||ph==="open")&&p.can)?'':' disabled')+'>'+(p.bet?'已押 '+p.bet+(((A||ph==="open")&&p.can)?'・再押':''):(A?'押注':(ph==="before"?'尚未開放':(ph==="closed"?'已截止':'押注'))))+'</button>';}
+    function BTN(p,ph,A){return '<button type="button" class="cs-bet'+(p.bet?' on':'')+(A?' adm':'')+'" data-id="'+esc(p.id)+'"'+(((A||ph==="open")&&p.can)?'':' disabled')+'>'+(p.bet?'已押 '+p.bet+(((A||ph==="open")&&p.can)?' ＋':''):(A?'押注':(ph==="before"?'尚未開放':(ph==="closed"?'已截止':'押注'))))+'</button>';}
     function tile(p){
       var av=p.av?'<div class="mr-av"><img src="'+esc(p.av)+'" alt="" loading="lazy"></div>':'<div class="mr-av empty"><span>＋</span></div>';
       var ph=phase(),mid="";
