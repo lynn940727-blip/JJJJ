@@ -3889,6 +3889,7 @@
 #casinoOv .cs-reset:disabled{opacity:.35;cursor:not-allowed}
 #casinoOv .cs-bet{white-space:nowrap}
 #casinoOv .cs-bet.adm{border-style:dashed}
+#casinoOv .cs-bet.cs-edit{margin-top:6px;border-style:dashed}
 #casinoOv .cs-mc{display:none;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
 #casinoOv .cs-mcb{padding:7px 12px;border:1px solid rgba(255,255,255,.18);border-radius:4px;background:rgba(255,255,255,.05);color:var(--bone-dim,#a89f92);font:500 12px var(--mono,monospace);letter-spacing:.08em;cursor:pointer}
 #casinoOv .cs-mcb small{display:block;margin-top:2px;font-size:10px;opacity:.8}
@@ -3919,7 +3920,7 @@ body.cs-open .menu-panel{z-index:100015}
     <h4>二、怎麼下注？</h4>
     <p>每位資助者有 <b class="hi">20 個籌碼</b>，每位醫療隊有 <b class="hi">10 個籌碼</b>，可以<b>全部押在同一名實驗體</b>身上，也可以<b>分開押給不同人</b>。</p>
     <p>目標是猜中哪些實驗體能進入 <b class="hi">總排行前十名</b>！</p>
-    <p><b>下好離手</b>：確認押注後無法修改或取消。</p>
+    <p><b>24 小時內可修改</b>：押注後 24 小時內，可以在「編輯」修改籌碼數量，或調成 0 取消這筆押注；超過 24 小時就不能再改。<b>押注時間截止後一律不能修改</b>，就算還沒滿 24 小時也一樣。</p>
     <h4>三、倍率與積分</h4>
     <p><b>猜中才能獲得分數</b>，沒進入前十名則不計分。</p>
     <p><b>排名越前面，押中後獎勵越少；排名越後面，押中後獎勵越多。</b></p>
@@ -3943,7 +3944,7 @@ body.cs-open .menu-panel{z-index:100015}
     <p class="cs-q">Q：可以用自己的資助者或醫療隊押自己的實驗體嗎？</p>
     <p class="cs-a"><b>A：可以！</b></p>
   </div>
-  <div style="margin:22px auto 0;text-align:center;font:400 10px var(--mono,monospace);letter-spacing:.24em;color:#5a544d">BUILD 1128-F</div>
+  <div style="margin:22px auto 0;text-align:center;font:400 10px var(--mono,monospace);letter-spacing:.24em;color:#5a544d">BUILD 1128-H</div>
   <div class="cs-adm" id="csAdmPanel" style="display:none">
     <div class="cs-qh">管理員編輯 <span>ADMIN</span></div>
     <div class="cs-ai" id="csAdmInfo"></div>
@@ -3988,6 +3989,8 @@ body.cs-open .menu-panel{z-index:100015}
   var TIERS=[{x:"1",lo:1,hi:3},{x:"2",lo:4,hi:10},{x:"3",lo:11,hi:30},{x:"4",lo:31,hi:50},{x:"4.5",lo:51,hi:80}];
   /* 押注期間(台灣時間)與 WEEK 4 結算 */
   var BET_START=new Date("2026-11-27T00:00:00+08:00").getTime(),BET_END=new Date("2026-12-04T23:59:59+08:00").getTime();
+  /* 押注後 24 小時內可修改；沒有時間戳的舊押注，寬限到 11/29 23:59 */
+  var EDIT_MS=24*3600*1000,LEGACY_EDIT_UNTIL=new Date("2026-11-29T23:59:59+08:00").getTime();
   var resIds=[],published=false,allBets=null,betsRef=null,manualClosed=false,betsDeny=false,nickMap={},nickBusy={},boardHtml="",histHtml="",topHtml="";
   var top10=null;/* WEEK 4 榜單公布後=前十名的名字集合,沒公布=null */
   function phase(){if(manualClosed)return"closed";var n=Date.now();return n<BET_START?"before":(n<=BET_END?"open":"closed");}
@@ -4013,7 +4016,7 @@ body.cs-open .menu-panel{z-index:100015}
     var want=(published||isAdm())&&!betsDeny;
     if(want&&!betsRef){
       betsRef=firebase.database().ref("casino/bets");
-      betsRef.on("value",function(sn){allBets=sn.val()||{};lastSig="";if(ov.classList.contains("on"))render();},function(){betsRef=null;allBets=null;betsDeny=true;});
+      betsRef.on("value",function(sn){allBets=sn.val()||{};if(isAdm())syncTally();lastSig="";if(ov.classList.contains("on"))render();},function(){betsRef=null;allBets=null;betsDeny=true;});
     }else if(!want&&betsRef){betsRef.off();betsRef=null;allBets=null;}
   }
   function betRows(){
@@ -4049,6 +4052,24 @@ body.cs-open .menu-panel{z-index:100015}
   }
   function spentBy(c){var n=0;myRecs.forEach(function(r){if(r.c===c)n+=r.n;});return n;}
   function leftOf(ch){return Math.max(0,ch.chips-spentBy(ch.c));}
+  function canEditRec(r){if(isAdmin2()||published||top10||phase()!=="open")return false;var n=Date.now();return r.t?(n-r.t<=EDIT_MS):(n<=LEGACY_EDIT_UNTIL);}
+  var tally={},tallyRefs={};
+  function mySubjIds(){var me=myUid(),o={};if(!me)return o;try{(subjects||[]).forEach(function(x){if(x&&!x.deleted&&x.owner&&String(x.owner).replace(/[.#$\[\]\/]/g,"_")===me)o[String(x.id)]=1;});}catch(e){}return o;}
+  function ensureTally(){
+    var want=mySubjIds(),db=null;
+    try{db=betsDb();}catch(e){}
+    Object.keys(tallyRefs).forEach(function(id){if(!want[id]){try{tallyRefs[id].off();}catch(e){}delete tallyRefs[id];delete tally[id];lastSig="";}});
+    if(!db)return;
+    Object.keys(want).forEach(function(id){
+      if(tallyRefs[id])return;
+      var ref=db.ref("casino/tally/"+id+"/n");tallyRefs[id]=ref;
+      ref.on("value",function(sn){tally[id]=Number(sn.val())||0;lastSig="";if(ov.classList.contains("on"))render();},function(){tally[id]=null;});
+    });
+  }
+  function tallyAdd(db,id,delta){if(!delta)return;try{db.ref("casino/tally/"+id+"/n").transaction(function(c){return Math.max(0,(Number(c)||0)+delta);}).catch(function(){});}catch(e){}}
+  function syncTally(){var t=totalsOf();if(!t)return;var o={};Object.keys(t).forEach(function(k){if(t[k]>0)o[k]={n:t[k]};});try{firebase.database().ref("casino/tally").set(o).catch(function(){});}catch(e){}}
+  function editRecsFor(id){return myRecs.filter(function(r){return r.id===id&&canEditRec(r);});}
+  function editLeft(r){var ms=Math.max(0,Math.min(r.t?r.t+EDIT_MS:LEGACY_EDIT_UNTIL,BET_END)-Date.now());return Math.floor(ms/3600000)+" 小時 "+Math.floor(ms%3600000/60000)+" 分";}
   function availChars(id){return myChars().filter(function(ch){return leftOf(ch)>0&&!myRecs.some(function(r){return r.c===ch.c&&r.id===id;});});}
   function charName(c,cn){var n="";allChars().forEach(function(x){if(x.c===c)n=x.name;});return n||cn||"";}
   function nickOf(u){return (nickMap[u]||"").trim()||"（未命名）";}
@@ -4132,20 +4153,21 @@ body.cs-open .menu-panel{z-index:100015}
   /* 已淘汰(029、054)不列入、不能押 */
   function retired(x){try{return typeof RETIRED_IDS!=="undefined"&&(RETIRED_IDS.has(String(x.id))||RETIRED_IDS.has(("000"+parseInt(x.id,10)).slice(-3)));}catch(e){return false;}}
   function render(){
-    var list=[];try{list=(subjects||[]).filter(function(x){return x&&!x.deleted&&!retired(x);}).map(function(x){var n=parseInt(x.id,10);return {id:String(x.id),name:String(x.name||""),av:x.avatarUrl||"",rk:RANKS[n]||0,n:n,bet:bets[String(x.id)]||0,can:availChars(String(x.id)).length>0};});}catch(e){}
+    var list=[],mySubj=mySubjIds();try{list=(subjects||[]).filter(function(x){return x&&!x.deleted&&!retired(x);}).map(function(x){var n=parseInt(x.id,10);return {id:String(x.id),name:String(x.name||""),av:x.avatarUrl||"",rk:RANKS[n]||0,n:n,bet:bets[String(x.id)]||0,can:availChars(String(x.id)).length>0,ed:editRecsFor(String(x.id)).length,own:!!mySubj[String(x.id)],tl:tally[String(x.id)]};});}catch(e){}
     curList=list;
     renderStatus();renderMine(list);renderBoard();renderTop();renderHist();
-    var sig=phase()+"|"+(isAdm()?"A":"U")+"|"+JSON.stringify(totalsOf())+"|"+(top10?Array.from(top10).join(";"):"-")+"#"+list.map(function(p){return p.id+"|"+p.name+"|"+p.rk+"|"+p.bet+"|"+(p.can?1:0)+"|"+(p.av?p.av.length:0);}).join(",");
+    var sig=phase()+"|"+(isAdm()?"A":"U")+"|"+JSON.stringify(totalsOf())+"|"+(top10?Array.from(top10).join(";"):"-")+"#"+list.map(function(p){return p.id+"|"+p.name+"|"+p.rk+"|"+p.bet+"|"+(p.can?1:0)+"|"+p.ed+"|"+(p.own?p.tl:"-")+"|"+(p.av?p.av.length:0);}).join(",");
     if(sig===lastSig)return;lastSig=sig;
     if(!list.length){host.innerHTML='<div class="mr-none">— 尚無資料 —</div>';return;}
     var tots=totalsOf();
     function BTN(p,ph,A){return '<button type="button" class="cs-bet'+(p.bet?' on':'')+(A?' adm':'')+'" data-id="'+esc(p.id)+'"'+(((A||ph==="open")&&p.can)?'':' disabled')+'>'+(p.bet?'已押 '+p.bet+(((A||ph==="open")&&p.can)?' ＋':''):(A?'押注':(ph==="before"?'尚未開放':(ph==="closed"?'已截止':'押注'))))+'</button>';}
+    function EDT(p){return p.ed?'<button type="button" class="cs-bet cs-edit" data-id="'+esc(p.id)+'" data-edit="1">編輯</button>':'';}
     function tile(p){
       var av=p.av?'<div class="mr-av"><img src="'+esc(p.av)+'" alt="" loading="lazy"></div>':'<div class="mr-av empty"><span>＋</span></div>';
       var ph=phase(),mid="";
       if(p.rk){
         var bt=BTN(p,ph,isAdm());if((published||isAdm())&&tots)mid='<div class="cs-total">籌碼<b>'+(tots[p.id]||0)+'</b></div>'+(isAdm()?bt:'');
-        else mid=bt;
+        else mid=bt+EDT(p)+((p.own&&typeof p.tl==="number")?'<div class="cs-total">被押注 <b>'+p.tl+'</b> 籌碼</div>':'');
         if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win"><span class="t">NO.10</span><span class="p"><b>+'+f1(p.bet*multOf(p.rk))+'</b><i>分</i></span></div>':'<div class="cs-res lose">未進前十</div>';
       }
       return '<div class="mr-tile">'+av+'<div class="mr-tid">NO. <b>'+esc(p.id)+'</b></div><div class="mr-tname">'+esc(p.name||"—")+'</div>'+(p.rk?'<div class="cs-rank">第 '+p.rk+' 名</div>'+mid:'')+'</div>';
@@ -4184,14 +4206,14 @@ body.cs-open .menu-panel{z-index:100015}
       minRef=db.ref("casino/bets/"+u);
       minRef.on("value",function(sn){
         var v=sn.val()||{},recs=[],nb={};
-        Object.keys(v).forEach(function(k){var r=v[k];if(r&&r.id!=null&&Number(r.n)>0){var o={k:k,id:String(r.id),n:Number(r.n),c:String(r.c||""),cn:String(r.cn||"")};recs.push(o);nb[o.id]=(nb[o.id]||0)+o.n;}});
+        Object.keys(v).forEach(function(k){var r=v[k];if(r&&r.id!=null&&Number(r.n)>0){var o={k:k,id:String(r.id),n:Number(r.n),c:String(r.c||""),cn:String(r.cn||""),t:Number(r.t)||0};recs.push(o);nb[o.id]=(nb[o.id]||0)+o.n;}});
         myRecs=recs;bets=nb;lastSig="";
         if(ov.classList.contains("on")){render();updateChips();}
       },function(){});
     }catch(e){minUid="";}
   }
   function updateChips(){
-    try{var ab=document.getElementById("csAdmPanel");if(ab)ab.style.display=isAdm()?"block":"none";ensureBets();}catch(e){}
+    try{var ab=document.getElementById("csAdmPanel");if(ab)ab.style.display=isAdm()?"block":"none";ensureBets();ensureTally();}catch(e){}
     subMine();
     var chs=myChars(),tot=0,used=0,sp=0,md=0;
     chs.forEach(function(ch){if(ch.fac==="P")sp++;else if(ch.fac==="M")md++;tot+=ch.chips;used+=spentBy(ch.c);});
@@ -4203,16 +4225,17 @@ body.cs-open .menu-panel{z-index:100015}
   setInterval(function(){if(ov.classList.contains("on")&&!document.hidden){render();updateChips();}},3000);
   document.getElementById("csMore").addEventListener("click",function(){var r=document.getElementById("csRules");if(r)r.scrollIntoView({behavior:"smooth",block:"start"});});
   /* 押注視窗:點「押注」後拉桿選籌碼,每名實驗體最多 100(不明寫) */
-  var betId="",betCap=0,betC=null,betChars=[];
+  var betId="",betCap=0,betC=null,betChars=[],editMode=false;
+  function curRec(){var r=null;if(betC)myRecs.forEach(function(x){if(x.c===betC.c&&x.id===betId)r=x;});return r;}
   var mask=document.getElementById("csMask"),rng=document.getElementById("csRange"),valEl=document.getElementById("csVal"),okBtn=document.getElementById("csOk"),miEl=document.getElementById("csMi"),mcEl=document.getElementById("csMc");
   function fmt(n){return String(Math.round(n*10)/10);}
   function curMult(){var p=null;curList.forEach(function(x){if(x.id===betId)p=x;});var m=0;TIERS.forEach(function(t){if(p&&p.rk>=t.lo&&p.rk<=t.hi)m=parseFloat(t.x);});return m;}
   function setVal(v){v=Math.max(0,Math.min(betCap,parseInt(v,10)||0));rng.value=v;valEl.textContent=v;
     var mult=curMult(),p=null;curList.forEach(function(x){if(x.id===betId)p=x;});
     document.getElementById("csMs").innerHTML="目前第 "+(p?p.rk:0)+" 名（"+mult+" 倍）<br>押中可得 <b>"+fmt(v*mult)+"</b> 分";
-    var left=betC?Math.max(0,leftOf(betC)-v):0;
-    miEl.innerHTML=isAdm()?"管理員：籌碼無限，下好離手後同樣無法修改（要重來請用一鍵重置）。點中間的數字可直接輸入":(!betC?(myChars().length?"你的角色籌碼已用完，或都已押過這名實驗體":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　"+esc(betC.name||"—")+" 剩餘籌碼 <b>"+left+"</b><br>下好離手，確認後無法修改"));
-    okBtn.textContent="確認";
+    var left=betC?Math.max(0,(editMode?betCap:leftOf(betC))-v):0;
+    miEl.innerHTML=isAdm()?"管理員：籌碼無限，下好離手後同樣無法修改（要重來請用一鍵重置）。點中間的數字可直接輸入":(!betC?(myChars().length?"你的角色籌碼已用完，或都已押過這名實驗體":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　"+esc(betC.name||"—")+" 剩餘籌碼 <b>"+left+"</b><br>"+(editMode?"押注截止前、24 小時內可修改，剩 "+editLeft(curRec()||{t:0})+"　調成 0 即取消這筆押注":"押注截止前、24 小時內可再修改")));
+    okBtn.textContent=editMode?(v===0?"取消這筆押注":"確認修改"):"確認";
   }
   function renderMc(){
     var h="";
@@ -4220,20 +4243,31 @@ body.cs-open .menu-panel{z-index:100015}
     mcEl.innerHTML=h;mcEl.style.display=h?"flex":"none";
   }
   function applyCap(){
-    betCap=betC?(isAdm()?999:leftOf(betC)):0;
+    betCap=betC?(isAdm()?999:leftOf(betC)+(editMode?(curRec()||{n:0}).n:0)):0;
     rng.min=0;rng.max=betCap;rng.disabled=betCap<=0;
     document.getElementById("csMinus").disabled=document.getElementById("csPlus").disabled=betCap<=0;
   }
   function openBet(id){
     if(!isAdm()&&phase()!=="open")return;
     updateChips();var p=null;curList.forEach(function(x){if(x.id===id)p=x;});if(!p)return;
-    betId=id;betChars=availChars(id);betC=betChars[0]||null;
+    editMode=false;betId=id;betChars=availChars(id);betC=betChars[0]||null;
     document.getElementById("csMt").textContent="NO. "+p.id+"　"+(p.name||"—");
     okBtn.disabled=false;renderMc();applyCap();setVal(0);mask.classList.add("on");
   }
-  function closeBet(){mask.classList.remove("on");betId="";betC=null;betChars=[];}
-  host.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-bet");if(b)openBet(b.dataset.id);});
-  mcEl.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-mcb");if(!b)return;betChars.forEach(function(ch){if(ch.c===b.dataset.c)betC=ch;});renderMc();applyCap();setVal(rng.value);});
+  function closeBet(){mask.classList.remove("on");betId="";betC=null;betChars=[];editMode=false;}
+  function openEdit(id){
+    if(isAdm())return;
+    updateChips();var p=null;curList.forEach(function(x){if(x.id===id)p=x;});if(!p)return;
+    var recs=editRecsFor(id);if(!recs.length)return;
+    var cs=myChars();betChars=[];
+    recs.forEach(function(r){cs.forEach(function(ch){if(ch.c===r.c)betChars.push(ch);});});
+    if(!betChars.length)return;
+    editMode=true;betId=id;betC=betChars[0];
+    document.getElementById("csMt").textContent="編輯　NO. "+p.id+"　"+(p.name||"—");
+    okBtn.disabled=false;renderMc();applyCap();setVal((curRec()||{n:0}).n);mask.classList.add("on");
+  }
+  host.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-bet");if(b){if(b.dataset.edit)openEdit(b.dataset.id);else openBet(b.dataset.id);}});
+  mcEl.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-mcb");if(!b)return;betChars.forEach(function(ch){if(ch.c===b.dataset.c)betC=ch;});renderMc();applyCap();setVal(editMode?(curRec()||{n:0}).n:rng.value);});
   rng.addEventListener("input",function(){setVal(rng.value);});
   valEl.addEventListener("click",function(){if(!isAdm())return;var s=prompt("輸入籌碼數量",rng.value);if(s!==null)setVal(s);});
   document.getElementById("csMinus").addEventListener("click",function(){setVal((parseInt(rng.value,10)||0)-1);});
@@ -4241,6 +4275,17 @@ body.cs-open .menu-panel{z-index:100015}
   document.getElementById("csCancel").addEventListener("click",closeBet);
   mask.addEventListener("click",function(e){if(e.target===mask)closeBet();});
   okBtn.addEventListener("click",function(){
+    if(editMode){
+      var rec=curRec(),nv=parseInt(rng.value,10)||0;
+      if(!rec||!canEditRec(rec)){closeBet();lastSig="";render();alert("已超過 24 小時（或押注已結算），無法再修改");return;}
+      if(nv===rec.n||nv<0||nv>betCap){closeBet();return;}
+      var edb=betsDb(),eu=myUid();
+      if(!edb||!eu){alert("資料庫尚未連線，請稍後再試");return;}
+      var eref=edb.ref("casino/bets/"+eu+"/"+rec.k);
+      okBtn.disabled=true;var oldN=rec.n,eid=rec.id;
+      (nv<=0?eref.remove():eref.update({n:nv})).then(function(){tallyAdd(edb,eid,nv-oldN);okBtn.disabled=false;closeBet();lastSig="";render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert("修改失敗（可能已超過 24 小時，或資料庫規則尚未開放修改）");});
+      return;
+    }
     if(!isAdm()&&phase()!=="open"){closeBet();lastSig="";render();return;}
     var v=parseInt(rng.value,10)||0;
     if(!betId||!betC||v<=0){closeBet();return;}
@@ -4249,9 +4294,9 @@ body.cs-open .menu-panel{z-index:100015}
     if(myRecs.some(function(r){return r.c===ch.c&&r.id===id;})){closeBet();return;}
     var db=betsDb(),u=myUid();
     if(!db||!u){alert("資料庫尚未連線，請稍後再試");return;}
-    var key=ch.c+"_"+id,rec={id:id,n:v,c:ch.c,cn:String(ch.name||"").slice(0,40)};
+    var key=ch.c+"_"+id,rec={id:id,n:v,c:ch.c,cn:String(ch.name||"").slice(0,40),t:firebase.database.ServerValue.TIMESTAMP};
     okBtn.disabled=true;
-    db.ref("casino/bets/"+u+"/"+key).set(rec).then(function(){okBtn.disabled=false;myRecs.push({k:key,id:id,n:v,c:ch.c,cn:rec.cn});bets[id]=(bets[id]||0)+v;lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert(isAdm()?("管理員押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：請確認已更新成角色押注的新規則）"):"押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
+    db.ref("casino/bets/"+u+"/"+key).set(rec).then(function(){tallyAdd(db,id,v);okBtn.disabled=false;myRecs.push({k:key,id:id,n:v,c:ch.c,cn:rec.cn,t:Date.now()});bets[id]=(bets[id]||0)+v;lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert(isAdm()?("管理員押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：請確認已更新成角色押注的新規則）"):"押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
   });
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&mask.classList.contains("on")){e.stopPropagation();closeBet();}},true);
   function dbRef(){
