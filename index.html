@@ -3855,11 +3855,14 @@
 #casinoOv .cs-mrow .lose{color:#777}
 #casinoOv .cs-mtot{margin-top:10px;text-align:right;font:500 13px var(--mono,monospace);letter-spacing:.08em;color:var(--bone-dim,#a89f92)}
 #casinoOv .cs-mtot b{font-size:20px;color:#ff2230;margin:0 3px}
-#casinoOv .cs-res{margin:12px auto 0;max-width:150px;padding:8px 10px;border-radius:4px;text-align:center;font:600 12px var(--mono,monospace);letter-spacing:.12em}
-#casinoOv .cs-res.win{background:#b5020f;border:1px solid #ff2230;color:#fff;box-shadow:0 0 14px rgba(255,34,48,.35)}
-#casinoOv .cs-res.win .t{display:block;font-size:13px}
-#casinoOv .cs-res.win .p{display:block;margin-top:2px;font-size:20px;font-weight:700;letter-spacing:.06em}
-#casinoOv .cs-res.lose{border:1px solid rgba(255,255,255,.14);color:#8a8a8a}
+#casinoOv .cs-res{position:relative;margin:12px auto 0;padding:10px 8px 11px;text-align:center;font:500 11px var(--mono,monospace);letter-spacing:.14em}
+#casinoOv .cs-res.win{border:1px solid rgba(255,34,48,.45);border-radius:2px;background:linear-gradient(180deg,rgba(181,2,15,.26),rgba(181,2,15,.04) 85%);box-shadow:inset 0 0 22px rgba(181,2,15,.16)}
+#casinoOv .cs-res.win::before{content:"";position:absolute;left:50%;top:-1px;width:34px;height:2px;margin-left:-17px;background:#ff2230;box-shadow:0 0 8px rgba(255,34,48,.8)}
+#casinoOv .cs-res.win .t{display:block;font-size:10px;letter-spacing:.34em;color:#ff5a64}
+#casinoOv .cs-res.win .p{display:block;margin-top:5px;font-family:var(--serif);color:var(--bone,#e6ddcf);line-height:1}
+#casinoOv .cs-res.win .p b{font-size:30px;font-weight:700;letter-spacing:.02em;text-shadow:0 0 14px rgba(255,34,48,.35)}
+#casinoOv .cs-res.win .p i{margin-left:4px;font-size:13px;font-style:normal;letter-spacing:.2em;color:var(--bone-dim,#a89f92)}
+#casinoOv .cs-res.lose{padding:7px 8px;border:1px dashed rgba(255,255,255,.14);border-radius:2px;color:#6f6a64;letter-spacing:.22em}
 #casinoOv .cs-admbtn{display:block;margin:12px auto 0;padding:8px 18px;background:rgba(122,14,14,.25);border:1px solid #b5020f;border-radius:4px;color:var(--bone,#e6ddcf);font:500 12px var(--mono,monospace);letter-spacing:.1em;cursor:pointer}
 #casinoOv #csAdmTa{width:100%;box-sizing:border-box;margin:14px 0 8px;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);border-radius:4px;color:var(--bone,#e6ddcf);font:14px/1.6 var(--mono,monospace);resize:vertical}
 #casinoOv #csAdmPv .bad{color:#ff2230}
@@ -4132,7 +4135,7 @@ body.cs-open .menu-panel{z-index:100015}
       if(p.rk){
         var bt=BTN(p,ph,isAdm());if((published||isAdm())&&tots)mid='<div class="cs-total">籌碼<b>'+(tots[p.id]||0)+'</b></div>'+(isAdm()?bt:'');
         else mid=bt;
-        if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win"><span class="t">✔ 進前十</span><span class="p">+'+f1(p.bet*multOf(p.rk))+' 分</span></div>':'<div class="cs-res lose">✕ 未進前十</div>';
+        if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win"><span class="t">TOP 10・進前十</span><span class="p"><b>+'+f1(p.bet*multOf(p.rk))+'</b><i>分</i></span></div>':'<div class="cs-res lose">未進前十</div>';
       }
       return '<div class="mr-tile">'+av+'<div class="mr-tid">NO. <b>'+esc(p.id)+'</b></div><div class="mr-tname">'+esc(p.name||"—")+'</div>'+(p.rk?'<div class="cs-rank">第 '+p.rk+' 名</div>'+mid:'')+'</div>';
     }
