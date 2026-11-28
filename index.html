@@ -3855,9 +3855,11 @@
 #casinoOv .cs-mrow .lose{color:#777}
 #casinoOv .cs-mtot{margin-top:10px;text-align:right;font:500 13px var(--mono,monospace);letter-spacing:.08em;color:var(--bone-dim,#a89f92)}
 #casinoOv .cs-mtot b{font-size:20px;color:#ff2230;margin:0 3px}
-#casinoOv .cs-res{margin-top:6px;font:600 11px var(--mono,monospace);letter-spacing:.1em}
-#casinoOv .cs-res.win{color:#ff2230}
-#casinoOv .cs-res.lose{color:#777}
+#casinoOv .cs-res{margin:12px auto 0;max-width:150px;padding:8px 10px;border-radius:4px;text-align:center;font:600 12px var(--mono,monospace);letter-spacing:.12em}
+#casinoOv .cs-res.win{background:#b5020f;border:1px solid #ff2230;color:#fff;box-shadow:0 0 14px rgba(255,34,48,.35)}
+#casinoOv .cs-res.win .t{display:block;font-size:13px}
+#casinoOv .cs-res.win .p{display:block;margin-top:2px;font-size:20px;font-weight:700;letter-spacing:.06em}
+#casinoOv .cs-res.lose{border:1px solid rgba(255,255,255,.14);color:#8a8a8a}
 #casinoOv .cs-admbtn{display:block;margin:12px auto 0;padding:8px 18px;background:rgba(122,14,14,.25);border:1px solid #b5020f;border-radius:4px;color:var(--bone,#e6ddcf);font:500 12px var(--mono,monospace);letter-spacing:.1em;cursor:pointer}
 #casinoOv #csAdmTa{width:100%;box-sizing:border-box;margin:14px 0 8px;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);border-radius:4px;color:var(--bone,#e6ddcf);font:14px/1.6 var(--mono,monospace);resize:vertical}
 #casinoOv #csAdmPv .bad{color:#ff2230}
@@ -3883,6 +3885,10 @@
 #casinoOv .cs-reset:hover{border-color:#ff2230;color:#ff2230}
 #casinoOv .cs-reset:disabled{opacity:.35;cursor:not-allowed}
 #casinoOv .cs-bet.adm{border-style:dashed}
+#casinoOv .cs-mc{display:none;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
+#casinoOv .cs-mcb{padding:7px 12px;border:1px solid rgba(255,255,255,.18);border-radius:4px;background:rgba(255,255,255,.05);color:var(--bone-dim,#a89f92);font:500 12px var(--mono,monospace);letter-spacing:.08em;cursor:pointer}
+#casinoOv .cs-mcb small{display:block;margin-top:2px;font-size:10px;opacity:.8}
+#casinoOv .cs-mcb.on{border-color:#ff2230;background:rgba(181,2,15,.3);color:#fff}
 body.cs-open .menu-toggle{z-index:100020}
 body.cs-open .menu-backdrop{z-index:100010}
 body.cs-open .menu-panel{z-index:100015}
@@ -3958,6 +3964,7 @@ body.cs-open .menu-panel{z-index:100015}
 <div class="cs-mask" id="csMask"><div class="cs-modal">
   <div class="cs-mt" id="csMt"></div>
   <div class="cs-ms" id="csMs"></div>
+  <div class="cs-mc" id="csMc"></div>
   <div class="cs-mv"><button type="button" id="csMinus" aria-label="減少">－</button><span id="csVal">0</span><button type="button" id="csPlus" aria-label="增加">＋</button></div>
   <input type="range" id="csRange" min="0" max="0" step="1" value="0">
   <div class="cs-mi" id="csMi"></div>
@@ -3970,7 +3977,7 @@ body.cs-open .menu-panel{z-index:100015}
   /* 實驗體名單:跟總名冊的「實驗體」同一份資料(名字、頭像同步) */
   var host=document.getElementById("csRoster"),lastSig="";
   function esc(x){return String(x==null?"":x).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-  var bets={},chipTotal=0,curList=[];
+  var bets={},myRecs=[],chipTotal=0,curList=[];
   var RANKS={1:22,2:37,3:57,4:26,5:42,6:73,7:5,8:45,9:11,10:6,11:57,12:32,13:14,14:17,15:23,16:73,17:13,18:47,19:67,20:67,21:64,22:61,23:61,24:34,25:78,26:18,27:29,28:48,30:44,31:16,32:56,33:77,34:33,35:8,36:41,37:55,38:19,39:72,40:30,41:4,42:2,43:67,44:52,45:42,46:61,47:60,48:15,49:28,50:12,51:20,52:73,53:24,55:9,56:52,57:38,58:67,59:1,60:39,61:46,62:3,63:10,64:54,65:21,66:25,67:73,68:40,69:59,70:36,71:7,72:67,73:66,74:50,75:35,76:64,77:27,78:50,79:49,80:31};/* 押注開始前的排行榜名次(編號→名次),之後有更新再換這份 */
   var TIERS=[{x:"1",lo:1,hi:3},{x:"2",lo:4,hi:10},{x:"3",lo:11,hi:30},{x:"4",lo:31,hi:50},{x:"4.5",lo:51,hi:80}];
   /* 押注期間(台灣時間)與 WEEK 4 結算 */
@@ -4007,7 +4014,7 @@ body.cs-open .menu-panel{z-index:100015}
     var out=[];if(!allBets)return out;
     Object.keys(allBets).forEach(function(u){
       var b=allBets[u];b=b?(Array.isArray(b)?b:Object.values(b)):[];
-      var rows=b.filter(function(r){return r&&r.id!=null&&Number(r.n)>0;}).map(function(r){return {id:String(r.id),n:Number(r.n)};});
+      var rows=b.filter(function(r){return r&&r.id!=null&&Number(r.n)>0;}).map(function(r){return {id:String(r.id),n:Number(r.n),c:String(r.c||""),cn:String(r.cn||"")};});
       if(rows.length)out.push({u:u,rows:rows,tot:rows.reduce(function(s,r){return s+r.n;},0)});
     });
     return out;
@@ -4020,13 +4027,36 @@ body.cs-open .menu-panel{z-index:100015}
     need.forEach(function(u){nickBusy[u]=1;});
     Promise.all(need.map(function(u){return firebase.database().ref("users/"+u+"/nick").once("value").then(function(s){nickMap[u]=s.val()||"";},function(){nickMap[u]="";});})).then(function(){need.forEach(function(u){delete nickBusy[u];});boardHtml="";histHtml="";if(ov.classList.contains("on")){renderBoard();renderHist();}});
   }
+  /* 以「角色」為單位：每位資助者 20 籌碼、每位醫療隊 10 籌碼，各角色籌碼獨立、押注獨立、積分獨立計算 */
+  function cidOf(f,x){return f+String(x.id).replace(/[^A-Za-z0-9\-]/g,"-");}
+  function allChars(){
+    var out=[];
+    [["P",window.sponsorApp,CHIP_SPONSOR],["M",window.medicApp,CHIP_MEDIC]].forEach(function(a){
+      try{(a[1]&&a[1].getSubjects?a[1].getSubjects():[]).forEach(function(x){if(x&&!x.deleted&&x.owner&&x.id!=null)out.push({u:String(x.owner).replace(/[.#$\[\]\/]/g,"_"),c:cidOf(a[0],x),name:String(x.name||""),fac:a[0],chips:a[2]});});}catch(e){}
+    });
+    return out;
+  }
+  function myChars(){
+    var me=myUid(),l=me?allChars().filter(function(c){return c.u===me;}):[];
+    if(isAdm()){l.forEach(function(c){c.chips=ADM_CHIPS;});l.unshift({u:me,c:"ADM",name:"管理員",fac:"A",chips:ADM_CHIPS});}
+    return l;
+  }
+  function spentBy(c){var n=0;myRecs.forEach(function(r){if(r.c===c)n+=r.n;});return n;}
+  function leftOf(ch){return Math.max(0,ch.chips-spentBy(ch.c));}
+  function availChars(id){return myChars().filter(function(ch){return leftOf(ch)>0&&!myRecs.some(function(r){return r.c===ch.c&&r.id===id;});});}
+  function charName(c,cn){var n="";allChars().forEach(function(x){if(x.c===c)n=x.name;});return n||cn||"";}
   function nickOf(u){return (nickMap[u]||"").trim()||"（未命名）";}
-  /* 公布後：全員可見的押注積分排行榜 */
+  /* 公布後：全員可見的押注積分排行榜（以角色計分；同一帳號只顯示積分最高的那個角色） */
   function renderBoard(){
     var box=document.getElementById("csBoard");if(!box)return;
     if(!top10||!allBets){if(boardHtml!==""){boardHtml="";box.className="cs-mine";box.innerHTML="";}return;}
-    var rows=betRows();rows.forEach(function(r){r.pts=r.rows.reduce(function(s,x){return s+ptsOf(x);},0);});
-    rows=rows.filter(function(r){return r.pts>0;}).sort(function(a,b){return b.pts-a.pts;});
+    var best={};
+    betRows().forEach(function(r){
+      var by={};
+      r.rows.forEach(function(x){var k=x.c||"?",e=by[k]||(by[k]={u:r.u,c:k,cn:"",pts:0});e.pts+=ptsOf(x);if(x.cn)e.cn=x.cn;});
+      Object.keys(by).forEach(function(k){var e=by[k];if(e.pts>0&&(!best[r.u]||e.pts>best[r.u].pts))best[r.u]=e;});
+    });
+    var rows=Object.keys(best).map(function(u){return best[u];}).sort(function(a,b){return b.pts-a.pts;});
     var me=myUid(),h='<div class="cs-qh">押注積分排行榜 <span>TOP BETTORS</span></div>';
     if(!rows.length)h+='<div class="cs-mrow"><span>本次沒有人押中前十名</span></div>';
     else{
@@ -4034,73 +4064,75 @@ body.cs-open .menu-panel{z-index:100015}
       rows.forEach(function(r,i){if(r.pts!==prev){rk=i+1;prev=r.pts;}r.rk=rk;if(rk<=10)shown.push(r);});
       loadNicks(shown.map(function(r){return r.u;}));
       shown.forEach(function(r){
-        h+='<div class="cs-mrow"'+(r.u===me?' style="background:rgba(181,2,15,.12)"':'')+'><span><b>'+r.rk+'</b>　'+esc(nickOf(r.u))+(r.u===me?'（你）':'')+'</span><span class="r"><span class="win">+'+f1(r.pts)+' 分</span></span></div>';
+        h+='<div class="cs-mrow"'+(r.u===me?' style="background:rgba(181,2,15,.12)"':'')+'><span><b>'+r.rk+'</b>　'+esc(charName(r.c,r.cn)||nickOf(r.u))+(r.u===me?'（你）':'')+'</span><span class="r"><span class="win">+'+f1(r.pts)+' 分</span></span></div>';
       });
     }
     if(h!==boardHtml){boardHtml=h;box.className="cs-mine on";box.innerHTML=h;}
   }
-  /* 管理員：下注名單（已下注／未下注，不公開） */
-  function playerChips(){
-    var m={};
-    [[window.sponsorApp,CHIP_SPONSOR],[window.medicApp,CHIP_MEDIC]].forEach(function(a){
-      try{(a[0]&&a[0].getSubjects?a[0].getSubjects():[]).forEach(function(x){if(x&&!x.deleted&&x.owner){var u=String(x.owner).replace(/[.#$\[\]\/]/g,"_");m[u]=(m[u]||0)+a[1];}});}catch(e){}
-    });
-    return m;
-  }
+  /* 管理員：下注名單（以角色為單位，已下注／未下注，不公開） */
   function renderHist(){
     var box=document.getElementById("csAdmHist"),sum=document.getElementById("csAdmHistSum");if(!box)return;
     if(!isAdm()){return;}
     if(!allBets){box.innerHTML='<div class="cs-mrow"><span>讀取中…（若一直沒資料，請確認資料庫規則已更新）</span></div>';return;}
-    var rows=betRows().sort(function(a,b){return b.tot-a.tot;}),all=rows.reduce(function(s,r){return s+r.tot;},0);
-    var chips=playerChips(),did={};rows.forEach(function(r){did[r.u]=1;});
-    var none=Object.keys(chips).filter(function(u){return !did[u];}).sort(function(a,b){return chips[b]-chips[a];});
-    loadNicks(rows.map(function(r){return r.u;}).concat(none));
-    var h='<div class="cs-qh" style="margin:6px 0">已下注　'+rows.length+' 人</div>';
-    if(!rows.length)h+='<div class="cs-mrow"><span>目前還沒有人下注</span></div>';
-    rows.forEach(function(r){
-      r.rows.sort(function(a,b){return parseInt(a.id,10)-parseInt(b.id,10);});
-      var pts=r.rows.reduce(function(s,x){return s+ptsOf(x);},0);
-      h+='<div class="cs-mrow" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px"><b>'+esc(nickOf(r.u))+'</b><span>已押 '+r.tot+(chips[r.u]?' / 共 '+chips[r.u]:'')+' 籌碼'+(top10?'　<span style="color:#ff2230">+'+f1(pts)+' 分</span>':'')+'</span></div>';
-      r.rows.forEach(function(x){h+='<div style="font-size:12px">NO.'+esc(x.id)+' '+esc(nameOfId(x.id)||"—")+'　× '+x.n+(top10?(top10.has(x.id)?'　進前十':'　未進前十'):'')+'</div>';});
+    var chars=allChars(),cmap={};chars.forEach(function(c){cmap[c.u+"|"+c.c]=c;});
+    var sp={};
+    betRows().forEach(function(r){r.rows.forEach(function(x){var k=r.u+"|"+(x.c||"?"),e=sp[k]||(sp[k]={u:r.u,c:x.c||"?",cn:x.cn,recs:[],tot:0});e.recs.push(x);e.tot+=x.n;});});
+    var done=Object.keys(sp).map(function(k){return sp[k];}).sort(function(a,b){return b.tot-a.tot;});
+    var none=chars.filter(function(c){return !sp[c.u+"|"+c.c];}).sort(function(a,b){return b.chips-a.chips;});
+    var all=done.reduce(function(s,e){return s+e.tot;},0);
+    loadNicks(done.map(function(e){return e.u;}).concat(none.map(function(c){return c.u;})));
+    var h='<div class="cs-qh" style="margin:6px 0">已下注　'+done.length+' 個角色</div>';
+    if(!done.length)h+='<div class="cs-mrow"><span>目前還沒有人下注</span></div>';
+    done.forEach(function(e){
+      e.recs.sort(function(a,b){return parseInt(a.id,10)-parseInt(b.id,10);});
+      var c=cmap[e.u+"|"+e.c],pts=e.recs.reduce(function(s,x){return s+ptsOf(x);},0);
+      h+='<div class="cs-mrow" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px"><b>'+esc((c?c.name:e.cn)||"—")+'<span style="font-weight:400;font-size:12px">（'+esc(nickOf(e.u))+'）</span></b><span>已押 '+e.tot+(c?' / 共 '+c.chips:'')+' 籌碼'+(top10?'　<span style="color:#ff2230">+'+f1(pts)+' 分</span>':'')+'</span></div>';
+      e.recs.forEach(function(x){h+='<div style="font-size:12px">NO.'+esc(x.id)+' '+esc(nameOfId(x.id)||"—")+'　× '+x.n+(top10?(top10.has(x.id)?'　進前十':'　未進前十'):'')+'</div>';});
       h+='</div>';
     });
-    h+='<div class="cs-qh" style="margin:14px 0 6px">未下注　'+none.length+' 人</div>';
-    if(!none.length)h+='<div class="cs-mrow"><span>所有持有籌碼的玩家都已下注</span></div>';
-    none.forEach(function(u){h+='<div class="cs-mrow"><span><b>'+esc(nickOf(u))+'</b></span><span class="r">持有 '+chips[u]+' 籌碼</span></div>';});
-    if(sum)sum.textContent="下注名單（僅管理員可見）　已下注 "+rows.length+" 人・未下注 "+none.length+" 人・共 "+all+" 籌碼";
+    h+='<div class="cs-qh" style="margin:14px 0 6px">未下注　'+none.length+' 個角色</div>';
+    if(!none.length)h+='<div class="cs-mrow"><span>所有角色都已下注</span></div>';
+    none.forEach(function(c){h+='<div class="cs-mrow"><span><b>'+esc(c.name||"—")+'</b><span style="font-size:12px">（'+esc(nickOf(c.u))+'）</span></span><span class="r">持有 '+c.chips+' 籌碼</span></div>';});
+    if(sum)sum.textContent="下注名單（僅管理員可見）　已下注 "+done.length+" 個角色・未下注 "+none.length+" 個角色・共 "+all+" 籌碼";
     if(h!==histHtml){histHtml=h;box.innerHTML=h;}
   }
   function renderMine(list){
-    var box=document.getElementById("csMine"),rows=list.filter(function(p){return p.bet&&p.rk;});
+    var box=document.getElementById("csMine"),P={};list.forEach(function(p){P[p.id]=p;});
+    var rows=myRecs.filter(function(r){return P[r.id]&&P[r.id].rk;});
     if(!rows.length){box.className="cs-mine";box.innerHTML="";return;}
-    rows.sort(function(a,b){return a.n-b.n;});
-    var pot=0,got=0,h='<div class="cs-qh">我的押注 <span>MY BETS</span></div>';
-    rows.forEach(function(p){
-      var m=multOf(p.rk),pts=p.bet*m,hit=top10?top10.has(String(p.id)):null;
-      pot+=pts;if(hit)got+=pts;
-      h+='<div class="cs-mrow"><span>NO.'+esc(p.id)+' <b>'+esc(p.name||"—")+'</b><br>'+p.bet+' 籌碼 × '+m+' 倍</span><span class="r">'+(hit===null?'押中得 <b>'+f1(pts)+'</b> 分':(hit?'<span class="win">進前十　+'+f1(pts)+' 分</span>':'<span class="lose">未進前十　0 分</span>'))+'</span></div>';
+    var by={},order=[];
+    rows.forEach(function(r){var k=r.c||"?";if(!by[k]){by[k]=[];order.push(k);}by[k].push(r);});
+    var h='<div class="cs-qh">我的押注 <span>MY BETS</span></div>';
+    order.forEach(function(k){
+      var arr=by[k].sort(function(a,b){return parseInt(a.id,10)-parseInt(b.id,10);}),pot=0,got=0;
+      h+='<div class="cs-mrow" style="color:var(--bone,#e6ddcf)"><span><b>'+esc(charName(k,arr[0].cn)||"—")+'</b></span></div>';
+      arr.forEach(function(r){
+        var p=P[r.id],m=multOf(p.rk),pts=r.n*m,hit=top10?top10.has(String(r.id)):null;
+        pot+=pts;if(hit)got+=pts;
+        h+='<div class="cs-mrow"><span>NO.'+esc(p.id)+' <b>'+esc(p.name||"—")+'</b><br>'+r.n+' 籌碼 × '+m+' 倍</span><span class="r">'+(hit===null?'押中得 <b>'+f1(pts)+'</b> 分':(hit?'<span class="win">進前十　+'+f1(pts)+' 分</span>':'<span class="lose">未進前十　0 分</span>'))+'</span></div>';
+      });
+      h+='<div class="cs-mtot">'+(top10?'獲得 <b>'+f1(got)+'</b> 分':'全部押中最高 <b>'+f1(pot)+'</b> 分')+'</div>';
     });
-    h+='<div class="cs-mtot">'+(top10?'獲得總分 <b>'+f1(got)+'</b> 分':'全部押中最高 <b>'+f1(pot)+'</b> 分')+'</div>';
     box.className="cs-mine on";box.innerHTML=h;
   }
   /* 已淘汰(029、054)不列入、不能押 */
   function retired(x){try{return typeof RETIRED_IDS!=="undefined"&&(RETIRED_IDS.has(String(x.id))||RETIRED_IDS.has(("000"+parseInt(x.id,10)).slice(-3)));}catch(e){return false;}}
   function render(){
-    var list=[];try{list=(subjects||[]).filter(function(x){return x&&!x.deleted&&!retired(x);}).map(function(x){var n=parseInt(x.id,10);return {id:String(x.id),name:String(x.name||""),av:x.avatarUrl||"",rk:RANKS[n]||0,n:n,bet:bets[String(x.id)]||0};});}catch(e){}
+    var list=[];try{list=(subjects||[]).filter(function(x){return x&&!x.deleted&&!retired(x);}).map(function(x){var n=parseInt(x.id,10);return {id:String(x.id),name:String(x.name||""),av:x.avatarUrl||"",rk:RANKS[n]||0,n:n,bet:bets[String(x.id)]||0,can:availChars(String(x.id)).length>0};});}catch(e){}
     curList=list;
     renderStatus();renderMine(list);renderBoard();renderHist();
-    var sig=phase()+"|"+(isAdm()?"A":"U")+"|"+JSON.stringify(totalsOf())+"|"+(top10?Array.from(top10).join(";"):"-")+"#"+list.map(function(p){return p.id+"|"+p.name+"|"+p.rk+"|"+p.bet+"|"+(p.av?p.av.length:0);}).join(",");
+    var sig=phase()+"|"+(isAdm()?"A":"U")+"|"+JSON.stringify(totalsOf())+"|"+(top10?Array.from(top10).join(";"):"-")+"#"+list.map(function(p){return p.id+"|"+p.name+"|"+p.rk+"|"+p.bet+"|"+(p.can?1:0)+"|"+(p.av?p.av.length:0);}).join(",");
     if(sig===lastSig)return;lastSig=sig;
     if(!list.length){host.innerHTML='<div class="mr-none">— 尚無資料 —</div>';return;}
     var tots=totalsOf();
-    function BTN(p,ph,A){return '<button type="button" class="cs-bet'+(p.bet?' on':'')+(A?' adm':'')+'" data-id="'+esc(p.id)+'"'+((A?!p.bet:(ph==="open"&&!p.bet))?'':' disabled')+'>'+(p.bet?'已押 '+p.bet:(A?'押注':(ph==="before"?'尚未開放':(ph==="closed"?'已截止':'押注'))))+'</button>';}
+    function BTN(p,ph,A){return '<button type="button" class="cs-bet'+(p.bet?' on':'')+(A?' adm':'')+'" data-id="'+esc(p.id)+'"'+(((A||ph==="open")&&p.can)?'':' disabled')+'>'+(p.bet?'已押 '+p.bet+(((A||ph==="open")&&p.can)?'・再押':''):(A?'押注':(ph==="before"?'尚未開放':(ph==="closed"?'已截止':'押注'))))+'</button>';}
     function tile(p){
       var av=p.av?'<div class="mr-av"><img src="'+esc(p.av)+'" alt="" loading="lazy"></div>':'<div class="mr-av empty"><span>＋</span></div>';
       var ph=phase(),mid="";
       if(p.rk){
         var bt=BTN(p,ph,isAdm());if((published||isAdm())&&tots)mid='<div class="cs-total">籌碼<b>'+(tots[p.id]||0)+'</b></div>'+(isAdm()?bt:'');
         else mid=bt;
-        if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win">進前十 +'+f1(p.bet*multOf(p.rk))+' 分</div>':'<div class="cs-res lose">未進前十</div>';
+        if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win"><span class="t">✔ 進前十</span><span class="p">+'+f1(p.bet*multOf(p.rk))+' 分</span></div>':'<div class="cs-res lose">✕ 未進前十</div>';
       }
       return '<div class="mr-tile">'+av+'<div class="mr-tid">NO. <b>'+esc(p.id)+'</b></div><div class="mr-tname">'+esc(p.name||"—")+'</div>'+(p.rk?'<div class="cs-rank">第 '+p.rk+' 名</div>'+mid:'')+'</div>';
     }
@@ -4131,55 +4163,63 @@ body.cs-open .menu-panel{z-index:100015}
     var u=myUid();
     if(u===minUid)return;
     if(minRef){try{minRef.off();}catch(e){}minRef=null;}
-    minUid=u;bets={};lastSig="";
+    minUid=u;bets={};myRecs=[];lastSig="";
     if(!u)return;
     try{
       var db=betsDb();if(!db){minUid="";return;}
       minRef=db.ref("casino/bets/"+u);
       minRef.on("value",function(sn){
-        var v=sn.val()||{},nb={};
-        (Array.isArray(v)?v:Object.values(v)).forEach(function(r){if(r&&r.id!=null&&Number(r.n)>0)nb[String(r.id)]=Number(r.n);});
-        bets=nb;lastSig="";
+        var v=sn.val()||{},recs=[],nb={};
+        Object.keys(v).forEach(function(k){var r=v[k];if(r&&r.id!=null&&Number(r.n)>0){var o={k:k,id:String(r.id),n:Number(r.n),c:String(r.c||""),cn:String(r.cn||"")};recs.push(o);nb[o.id]=(nb[o.id]||0)+o.n;}});
+        myRecs=recs;bets=nb;lastSig="";
         if(ov.classList.contains("on")){render();updateChips();}
       },function(){});
     }catch(e){minUid="";}
   }
-  function spent(ex){var n=0;for(var k in bets)if(k!==ex)n+=bets[k]||0;return n;}
   function updateChips(){
     try{var ab=document.getElementById("csAdmPanel");if(ab)ab.style.display=isAdm()?"block":"none";ensureBets();}catch(e){}
-    var sp=owned(window.sponsorApp),md=owned(window.medicApp);
-    chipTotal=isAdm()?ADM_CHIPS:sp*CHIP_SPONSOR+md*CHIP_MEDIC;
     subMine();
-    var used=spent(""),left=Math.max(0,chipTotal-used);
+    var chs=myChars(),tot=0,used=0,sp=0,md=0;
+    chs.forEach(function(ch){if(ch.fac==="P")sp++;else if(ch.fac==="M")md++;tot+=ch.chips;used+=spentBy(ch.c);});
+    chipTotal=isAdm()?ADM_CHIPS:tot;
+    var left=Math.max(0,tot-used);
     document.getElementById("csChips").textContent=isAdm()?"∞":left;
-    document.getElementById("csChipBox").title=isAdm()?"管理員：籌碼無限，可隨時押注／修改／取消":(sp||md)?("資助者 "+sp+" 位 × "+CHIP_SPONSOR+"　醫療隊 "+md+" 位 × "+CHIP_MEDIC+"　共 "+chipTotal+"，已押 "+used):"登入並擁有資助者或醫療隊角色後獲得籌碼";
+    document.getElementById("csChipBox").title=isAdm()?"管理員：籌碼無限，可隨時押注（下好離手）":chs.length?("資助者 "+sp+" 位 × "+CHIP_SPONSOR+"　醫療隊 "+md+" 位 × "+CHIP_MEDIC+"　各角色籌碼獨立，共 "+tot+"，已押 "+used):"登入並擁有資助者或醫療隊角色後獲得籌碼";
   }
   setInterval(function(){if(ov.classList.contains("on")&&!document.hidden){render();updateChips();}},3000);
   document.getElementById("csMore").addEventListener("click",function(){var r=document.getElementById("csRules");if(r)r.scrollIntoView({behavior:"smooth",block:"start"});});
   /* 押注視窗:點「押注」後拉桿選籌碼,每名實驗體最多 100(不明寫) */
-  var betId="",betCap=0;
-  var mask=document.getElementById("csMask"),rng=document.getElementById("csRange"),valEl=document.getElementById("csVal"),okBtn=document.getElementById("csOk"),miEl=document.getElementById("csMi");
+  var betId="",betCap=0,betC=null,betChars=[];
+  var mask=document.getElementById("csMask"),rng=document.getElementById("csRange"),valEl=document.getElementById("csVal"),okBtn=document.getElementById("csOk"),miEl=document.getElementById("csMi"),mcEl=document.getElementById("csMc");
   function fmt(n){return String(Math.round(n*10)/10);}
   function curMult(){var p=null;curList.forEach(function(x){if(x.id===betId)p=x;});var m=0;TIERS.forEach(function(t){if(p&&p.rk>=t.lo&&p.rk<=t.hi)m=parseFloat(t.x);});return m;}
   function setVal(v){v=Math.max(0,Math.min(betCap,parseInt(v,10)||0));rng.value=v;valEl.textContent=v;
     var mult=curMult(),p=null;curList.forEach(function(x){if(x.id===betId)p=x;});
     document.getElementById("csMs").innerHTML="目前第 "+(p?p.rk:0)+" 名（"+mult+" 倍）<br>押中可得 <b>"+fmt(v*mult)+"</b> 分";
-    var left=Math.max(0,chipTotal-spent(betId)-v);
-    miEl.innerHTML=isAdm()?"管理員：籌碼無限，下好離手後同樣無法修改（要重來請用一鍵重置）。點中間的數字可直接輸入":betCap<=0?(chipTotal?"籌碼已用完":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　剩餘籌碼 <b>"+left+"</b><br>下好離手，確認後無法修改");
+    var left=betC?Math.max(0,leftOf(betC)-v):0;
+    miEl.innerHTML=isAdm()?"管理員：籌碼無限，下好離手後同樣無法修改（要重來請用一鍵重置）。點中間的數字可直接輸入":(!betC?(myChars().length?"你的角色籌碼已用完，或都已押過這名實驗體":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　"+esc(betC.name||"—")+" 剩餘籌碼 <b>"+left+"</b><br>下好離手，確認後無法修改"));
     okBtn.textContent="確認";
+  }
+  function renderMc(){
+    var h="";
+    betChars.forEach(function(ch){h+='<button type="button" class="cs-mcb'+(ch===betC?' on':'')+'" data-c="'+esc(ch.c)+'">'+esc(ch.name||"—")+'<small>'+(isAdm()?'∞':'剩 '+leftOf(ch))+'</small></button>';});
+    mcEl.innerHTML=h;mcEl.style.display=h?"flex":"none";
+  }
+  function applyCap(){
+    betCap=betC?(isAdm()?999:leftOf(betC)):0;
+    rng.min=0;rng.max=betCap;rng.disabled=betCap<=0;
+    document.getElementById("csMinus").disabled=document.getElementById("csPlus").disabled=betCap<=0;
   }
   function openBet(id){
     if(!isAdm()&&phase()!=="open")return;
-    if(bets[id])return;/* 下好離手(管理員也一樣) */
     updateChips();var p=null;curList.forEach(function(x){if(x.id===id)p=x;});if(!p)return;
-    betId=id;betCap=isAdm()?999:Math.min(100,Math.max(0,chipTotal-spent(id)));
+    betId=id;betChars=availChars(id);betC=betChars[0]||null;
     document.getElementById("csMt").textContent="NO. "+p.id+"　"+(p.name||"—");
-    rng.min=0;rng.max=betCap;rng.disabled=betCap<=0;okBtn.disabled=false;
-    document.getElementById("csMinus").disabled=document.getElementById("csPlus").disabled=betCap<=0;
-    setVal(0);mask.classList.add("on");
+    okBtn.disabled=false;renderMc();applyCap();setVal(0);mask.classList.add("on");
   }
-  function closeBet(){mask.classList.remove("on");betId="";}
+  function closeBet(){mask.classList.remove("on");betId="";betC=null;betChars=[];}
   host.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-bet");if(b)openBet(b.dataset.id);});
+  mcEl.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cs-mcb");if(!b)return;betChars.forEach(function(ch){if(ch.c===b.dataset.c)betC=ch;});renderMc();applyCap();setVal(rng.value);});
   rng.addEventListener("input",function(){setVal(rng.value);});
   valEl.addEventListener("click",function(){if(!isAdm())return;var s=prompt("輸入籌碼數量",rng.value);if(s!==null)setVal(s);});
   document.getElementById("csMinus").addEventListener("click",function(){setVal((parseInt(rng.value,10)||0)-1);});
@@ -4189,20 +4229,15 @@ body.cs-open .menu-panel{z-index:100015}
   okBtn.addEventListener("click",function(){
     if(!isAdm()&&phase()!=="open"){closeBet();lastSig="";render();return;}
     var v=parseInt(rng.value,10)||0;
-    if(isAdm()){
-      if(!betId||bets[betId]||v<=0){closeBet();return;}
-      var aid=betId,adb=betsDb(),au=myUid();
-      if(!adb||!au){alert("資料庫尚未連線，請稍後再試");return;}
-      okBtn.disabled=true;
-      var aref=adb.ref("casino/bets/"+au+"/"+aid),ap=aref.set({id:aid,n:v});
-      ap.then(function(){okBtn.disabled=false;bets[aid]=v;lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert("管理員押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：需允許管理員寫入押注）");});
-      return;
-    }
-    if(bets[betId]||betCap<=0||v<=0){closeBet();return;}
-    var id=betId,db=betsDb(),u=myUid();
+    if(!betId||!betC||v<=0){closeBet();return;}
+    if(!isAdm()&&v>leftOf(betC)){closeBet();return;}
+    var id=betId,ch=betC;
+    if(myRecs.some(function(r){return r.c===ch.c&&r.id===id;})){closeBet();return;}
+    var db=betsDb(),u=myUid();
     if(!db||!u){alert("資料庫尚未連線，請稍後再試");return;}
+    var key=ch.c+"_"+id,rec={id:id,n:v,c:ch.c,cn:String(ch.name||"").slice(0,40)};
     okBtn.disabled=true;
-    db.ref("casino/bets/"+u+"/"+id).set({id:id,n:v}).then(function(){okBtn.disabled=false;bets[id]=v;lastSig="";closeBet();render();updateChips();},function(){okBtn.disabled=false;closeBet();alert("押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
+    db.ref("casino/bets/"+u+"/"+key).set(rec).then(function(){okBtn.disabled=false;myRecs.push({k:key,id:id,n:v,c:ch.c,cn:rec.cn});bets[id]=(bets[id]||0)+v;lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert(isAdm()?("管理員押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：請確認已更新成角色押注的新規則）"):"押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
   });
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&mask.classList.contains("on")){e.stopPropagation();closeBet();}},true);
   function dbRef(){
@@ -4268,7 +4303,7 @@ body.cs-open .menu-panel{z-index:100015}
     if(!confirm("確定一鍵重置？\n\n將清除「所有人」的押注，並清除已上傳／已公布的前十名結果與手動截止，恢復到尚未下注前。\n此動作無法復原。"))return;
     var db=betsDb();if(!db){alert("資料庫尚未連線，請稍後再試");return;}
     var btn=this;btn.disabled=true;
-    Promise.all([db.ref("casino/bets").remove(),db.ref("casino/result").remove(),db.ref("casino/closed").remove()]).then(function(){btn.disabled=false;manualClosed=false;bets={};allBets=null;boardHtml="";histHtml="";resIds=[];published=false;top10=null;lastSig="";render();updateChips();alert("已重置：所有押注與結果已清除");},function(err){btn.disabled=false;alert("重置失敗："+(err&&err.message||err)+"\n（多半是資料庫規則：需允許管理員寫入／刪除 casino/bets 與 casino/result）");});
+    Promise.all([db.ref("casino/bets").remove(),db.ref("casino/result").remove(),db.ref("casino/closed").remove()]).then(function(){btn.disabled=false;manualClosed=false;bets={};myRecs=[];allBets=null;boardHtml="";histHtml="";resIds=[];published=false;top10=null;lastSig="";render();updateChips();alert("已重置：所有押注與結果已清除");},function(err){btn.disabled=false;alert("重置失敗："+(err&&err.message||err)+"\n（多半是資料庫規則：需允許管理員寫入／刪除 casino/bets 與 casino/result）");});
   });
   function subClosed(tries){
     try{
