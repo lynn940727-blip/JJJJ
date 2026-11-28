@@ -3944,7 +3944,7 @@ body.cs-open .menu-panel{z-index:100015}
     <p class="cs-q">Q：可以用自己的資助者或醫療隊押自己的實驗體嗎？</p>
     <p class="cs-a"><b>A：可以！</b></p>
   </div>
-  <div style="margin:22px auto 0;text-align:center;font:400 10px var(--mono,monospace);letter-spacing:.24em;color:#5a544d">BUILD 1129-A</div>
+  <div style="margin:22px auto 0;text-align:center;font:400 10px var(--mono,monospace);letter-spacing:.24em;color:#5a544d">BUILD 1129-B</div>
   <div class="cs-adm" id="csAdmPanel" style="display:none">
     <div class="cs-qh">管理員編輯 <span>ADMIN</span></div>
     <div class="cs-ai" id="csAdmInfo"></div>
@@ -3956,7 +3956,7 @@ body.cs-open .menu-panel{z-index:100015}
       <button type="button" id="csAdmCloseBtn">截止押注</button>
     </div>
     <details class="cs-hist" id="csAdmHistBox" style="margin-top:14px"><summary id="csAdmHistSum" style="cursor:pointer;font:500 13px var(--mono,monospace);letter-spacing:.1em;color:var(--bone,#e6ddcf)">下注名單（僅管理員可見）</summary><div id="csAdmHist" style="margin-top:8px"></div></details>
-    <p class="cs-an">管理員籌碼無限，可在任何時間押注；和玩家一樣下好離手，不能修改（要重來請用一鍵重置）。</p>
+    <p class="cs-an">管理員籌碼無限，可在任何時間押注；和玩家一樣，押注後 24 小時內可以修改或取消（調成 0），超過 24 小時就不能再改（要重來請用一鍵重置）。</p>
     <button type="button" class="cs-reset" id="csAdmReset">⟲ 一鍵重置（恢復到尚未下注）</button>
   </div>
 </div>
@@ -4052,7 +4052,7 @@ body.cs-open .menu-panel{z-index:100015}
   }
   function spentBy(c){var n=0;myRecs.forEach(function(r){if(r.c===c)n+=r.n;});return n;}
   function leftOf(ch){return Math.max(0,ch.chips-spentBy(ch.c));}
-  function canEditRec(r){if(isAdmin2()||published||top10||phase()!=="open")return false;var n=Date.now();return r.t?(n-r.t<=EDIT_MS):(n<=LEGACY_EDIT_UNTIL);}
+  function canEditRec(r){if(published||top10)return false;if(!isAdmin2()&&phase()!=="open")return false;var n=Date.now();return r.t?(n-r.t<=EDIT_MS):(n<=LEGACY_EDIT_UNTIL);}
   var tally={},tallyRefs={};
   function mySubjIds(){var me=myUid(),o={};if(!me)return o;try{(subjects||[]).forEach(function(x){if(x&&!x.deleted&&x.owner&&String(x.owner).replace(/[.#$\[\]\/]/g,"_")===me)o[String(x.id)]=1;});}catch(e){}return o;}
   function ensureTally(){
@@ -4069,7 +4069,7 @@ body.cs-open .menu-panel{z-index:100015}
   function tallyAdd(db,id,delta){if(!delta)return;try{db.ref("casino/tally/"+id+"/n").transaction(function(c){return Math.max(0,(Number(c)||0)+delta);}).catch(function(){});}catch(e){}}
   function syncTally(){var t=totalsOf();if(!t)return;var o={};Object.keys(t).forEach(function(k){if(t[k]>0)o[k]={n:t[k]};});try{firebase.database().ref("casino/tally").set(o).catch(function(){});}catch(e){}}
   function editRecsFor(id){return myRecs.filter(function(r){return r.id===id&&canEditRec(r);});}
-  function editLeft(r){var ms=Math.max(0,Math.min(r.t?r.t+EDIT_MS:LEGACY_EDIT_UNTIL,BET_END)-Date.now());return Math.floor(ms/3600000)+" 小時 "+Math.floor(ms%3600000/60000)+" 分";}
+  function editLeft(r){var e=r.t?r.t+EDIT_MS:LEGACY_EDIT_UNTIL;if(!isAdmin2())e=Math.min(e,BET_END);var ms=Math.max(0,e-Date.now());return Math.floor(ms/3600000)+" 小時 "+Math.floor(ms%3600000/60000)+" 分";}
   function availChars(id){return myChars().filter(function(ch){return leftOf(ch)>0&&!myRecs.some(function(r){return r.c===ch.c&&r.id===id;});});}
   function charName(c,cn){var n="";allChars().forEach(function(x){if(x.c===c)n=x.name;});return n||cn||"";}
   function nickOf(u){return (nickMap[u]||"").trim()||"（未命名）";}
@@ -4166,7 +4166,7 @@ body.cs-open .menu-panel{z-index:100015}
       var av=p.av?'<div class="mr-av"><img src="'+esc(p.av)+'" alt="" loading="lazy"></div>':'<div class="mr-av empty"><span>＋</span></div>';
       var ph=phase(),mid="";
       if(p.rk){
-        var bt=BTN(p,ph,isAdm());if((published||isAdm())&&tots)mid='<div class="cs-total">籌碼<b>'+(tots[p.id]||0)+'</b></div>'+(isAdm()?bt:'');
+        var bt=BTN(p,ph,isAdm());if((published||isAdm())&&tots)mid='<div class="cs-total">籌碼<b>'+(tots[p.id]||0)+'</b></div>'+(isAdm()?bt+EDT(p):'');
         else mid=bt+EDT(p)+((p.own&&typeof p.tl==="number")?'<div class="cs-total">被押注 <b>'+p.tl+'</b> 籌碼</div>':'');
         if(p.bet&&top10)mid+=top10.has(String(p.id))?'<div class="cs-res win"><span class="t">NO.10</span><span class="p"><b>+'+f1(p.bet*multOf(p.rk))+'</b><i>分</i></span></div>':'<div class="cs-res lose">未進前十</div>';
       }
@@ -4188,7 +4188,7 @@ body.cs-open .menu-panel{z-index:100015}
   var CHIP_SPONSOR=20,CHIP_MEDIC=10,ADM_CHIPS=1e9;
   function owned(app){var n=0,u="";try{u=Auth.uid()||"";}catch(e){}if(!u)return 0;try{(app&&app.getSubjects?app.getSubjects():[]).forEach(function(x){if(x&&!x.deleted&&x.owner===u)n++;});}catch(e){}return n;}
   function myUid(){var u="";try{u=Auth.uid()||"";}catch(e){}return String(u).replace(/[.#$\[\]\/]/g,"_");}
-  /* 押注以資料庫為準(換裝置也看得到)；下好離手：只能新增，不能改、不能刪 */
+  /* 押注以資料庫為準(換裝置也看得到)；押注後 24 小時內可改、可取消 */
   var minRef=null,minUid="";
   function betsDb(){
     if(typeof firebase==="undefined"||!firebase.database)return null;
@@ -4220,7 +4220,7 @@ body.cs-open .menu-panel{z-index:100015}
     chipTotal=isAdm()?ADM_CHIPS:tot;
     var left=Math.max(0,tot-used);
     document.getElementById("csChips").textContent=isAdm()?"∞":left;
-    document.getElementById("csChipBox").title=isAdm()?"管理員：籌碼無限，可隨時押注（下好離手）":chs.length?("資助者 "+sp+" 位 × "+CHIP_SPONSOR+"　醫療隊 "+md+" 位 × "+CHIP_MEDIC+"　各角色籌碼獨立，共 "+tot+"，已押 "+used):"登入並擁有資助者或醫療隊角色後獲得籌碼";
+    document.getElementById("csChipBox").title=isAdm()?"管理員：籌碼無限，可隨時押注（24 小時內可修改）":chs.length?("資助者 "+sp+" 位 × "+CHIP_SPONSOR+"　醫療隊 "+md+" 位 × "+CHIP_MEDIC+"　各角色籌碼獨立，共 "+tot+"，已押 "+used):"登入並擁有資助者或醫療隊角色後獲得籌碼";
   }
   setInterval(function(){if(ov.classList.contains("on")&&!document.hidden){render();updateChips();}},3000);
   document.getElementById("csMore").addEventListener("click",function(){var r=document.getElementById("csRules");if(r)r.scrollIntoView({behavior:"smooth",block:"start"});});
@@ -4234,7 +4234,7 @@ body.cs-open .menu-panel{z-index:100015}
     var mult=curMult(),p=null;curList.forEach(function(x){if(x.id===betId)p=x;});
     document.getElementById("csMs").innerHTML="目前第 "+(p?p.rk:0)+" 名（"+mult+" 倍）<br>押中可得 <b>"+fmt(v*mult)+"</b> 分";
     var left=betC?Math.max(0,(editMode?betCap:leftOf(betC))-v):0;
-    miEl.innerHTML=isAdm()?"管理員：籌碼無限，下好離手後同樣無法修改（要重來請用一鍵重置）。點中間的數字可直接輸入":(!betC?(myChars().length?"你的角色籌碼已用完，或都已押過這名實驗體":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　"+esc(betC.name||"—")+" 剩餘籌碼 <b>"+left+"</b><br>"+(editMode?"押注截止前、24 小時內可修改，剩 "+editLeft(curRec()||{t:0})+"　調成 0 即取消這筆押注":"押注截止前、24 小時內可再修改")));
+    miEl.innerHTML=isAdm()?(editMode?"管理員：編輯押注，剩 "+editLeft(curRec()||{t:0})+"　調成 0 即取消這筆押注。點中間的數字可直接輸入":"管理員：籌碼無限。押注後 24 小時內可修改或取消（調成 0）。點中間的數字可直接輸入"):(!betC?(myChars().length?"你的角色籌碼已用完，或都已押過這名實驗體":"登入並擁有資助者或醫療隊角色後獲得籌碼"):("押中前十名才得分　"+esc(betC.name||"—")+" 剩餘籌碼 <b>"+left+"</b><br>"+(editMode?"押注截止前、24 小時內可修改，剩 "+editLeft(curRec()||{t:0})+"　調成 0 即取消這筆押注":"押注截止前、24 小時內可再修改")));
     okBtn.textContent=editMode?(v===0?"取消這筆押注":"確認修改"):"確認";
   }
   function renderMc(){
@@ -4256,7 +4256,6 @@ body.cs-open .menu-panel{z-index:100015}
   }
   function closeBet(){mask.classList.remove("on");betId="";betC=null;betChars=[];editMode=false;}
   function openEdit(id){
-    if(isAdm())return;
     updateChips();var p=null;curList.forEach(function(x){if(x.id===id)p=x;});if(!p)return;
     var recs=editRecsFor(id);if(!recs.length)return;
     var cs=myChars();betChars=[];
