@@ -3944,7 +3944,7 @@ body.cs-open .menu-panel{z-index:100015}
     <p class="cs-q">Q：可以用自己的資助者或醫療隊押自己的實驗體嗎？</p>
     <p class="cs-a"><b>A：可以！</b></p>
   </div>
-  <div style="margin:22px auto 0;text-align:center;font:400 10px var(--mono,monospace);letter-spacing:.24em;color:#5a544d">BUILD 1128-H</div>
+  <div style="margin:22px auto 0;text-align:center;font:400 10px var(--mono,monospace);letter-spacing:.24em;color:#5a544d">BUILD 1129-A</div>
   <div class="cs-adm" id="csAdmPanel" style="display:none">
     <div class="cs-qh">管理員編輯 <span>ADMIN</span></div>
     <div class="cs-ai" id="csAdmInfo"></div>
@@ -4296,7 +4296,7 @@ body.cs-open .menu-panel{z-index:100015}
     if(!db||!u){alert("資料庫尚未連線，請稍後再試");return;}
     var key=ch.c+"_"+id,rec={id:id,n:v,c:ch.c,cn:String(ch.name||"").slice(0,40),t:firebase.database.ServerValue.TIMESTAMP};
     okBtn.disabled=true;
-    db.ref("casino/bets/"+u+"/"+key).set(rec).then(function(){tallyAdd(db,id,v);okBtn.disabled=false;myRecs.push({k:key,id:id,n:v,c:ch.c,cn:rec.cn,t:Date.now()});bets[id]=(bets[id]||0)+v;lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert(isAdm()?("管理員押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：請確認已更新成角色押注的新規則）"):"押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
+    db.ref("casino/bets/"+u+"/"+key).set(rec).then(function(){tallyAdd(db,id,v);okBtn.disabled=false;if(!myRecs.some(function(r){return r.k===key;})){myRecs.push({k:key,id:id,n:v,c:ch.c,cn:rec.cn,t:Date.now()});bets[id]=(bets[id]||0)+v;}lastSig="";closeBet();render();updateChips();},function(err){okBtn.disabled=false;closeBet();alert(isAdm()?("管理員押注失敗："+(err&&err.message||err)+"\n（多半是資料庫規則擋住：請確認已更新成角色押注的新規則）"):"押注失敗（可能已押過、已截止，或尚未設定暱稱）");});
   });
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&mask.classList.contains("on")){e.stopPropagation();closeBet();}},true);
   function dbRef(){
